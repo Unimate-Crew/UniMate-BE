@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/meket-for-u-server/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/meket-for-u-server/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/meket-for-u-server",
+  "projects": {
+    "api-server": {
+      "type": "application",
+      "root": "apps/api-server",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-server/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-server/tsconfig.app.json"
+      }
+    },
+    "chat-server": {
+      "type": "application",
+      "root": "apps/chat-server",
+      "entryFile": "main",
+      "sourceRoot": "apps/chat-server/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/chat-server/tsconfig.app.json"
+      }
+    },
+    "database": {
+      "type": "library",
+      "root": "libs/database",
+      "entryFile": "index",
+      "sourceRoot": "libs/database/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/database/tsconfig.lib.json"
+      }
+    }
+  }
+}
