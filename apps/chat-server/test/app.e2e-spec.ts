@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { ChatServerModule } from './../src/chat-server.module';
+import { ChatServerModule } from '../src/chat-server.module';
 
 describe('ChatServerController (e2e)', () => {
   let app: INestApplication;
