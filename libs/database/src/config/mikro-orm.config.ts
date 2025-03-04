@@ -1,6 +1,6 @@
 import { defineConfig } from '@mikro-orm/mysql';
 import { LoadStrategy } from '@mikro-orm/core';
-import { User } from '../entity/user.entity';
+import { User } from '../entity/user/user.entity';
 
 export default defineConfig({
   discovery: {

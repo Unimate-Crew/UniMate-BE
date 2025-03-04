@@ -3,8 +3,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseService } from './database.service';
 import mikroOrmConfig from './config/mikro-orm.config';
-import { User } from './entity/user.entity';
-import { UserRepository } from './repository/user.repository';
+import { User } from './entity/user/user.entity';
+import { UserRepository } from './entity/user/user.repository';
 
 @Global()
 @Module({
