@@ -17,8 +17,8 @@ export class UserController {
     return this.userService.findOne(+id);
   }
 
-  // @Post()
-  // create(@Body() createUserDto: CreateUserDto): Promise<User> {
-  //   return this.userService.create(createUserDto);
-  // }
+  @Post()
+  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.userService.create(createUserDto);
+  }
 }
