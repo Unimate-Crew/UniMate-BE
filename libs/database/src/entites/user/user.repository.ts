@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
-import { User } from './user.entity';
 import { Injectable } from '@nestjs/common';
+import type { User } from './user.entity';
 
 @Injectable()
 export class UserRepository extends EntityRepository<User> {
@@ -15,5 +15,4 @@ export class UserRepository extends EntityRepository<User> {
   async persistAndFlush(user: User): Promise<void> {
     await this.em.persistAndFlush(user);
   }
-  
 }

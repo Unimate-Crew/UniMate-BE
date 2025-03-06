@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { User, UserRepository } from '@app/database';
-import { CreateUserDto } from './dto/create-user.dto';
 import { Transactional } from '@mikro-orm/core';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly userRepository: UserRepository,
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.findAll();
@@ -20,7 +18,6 @@ export class UserService {
   @Transactional()
   async create(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepository.create(createUserDto);
-    await this.userRepository.persist(user);
     return user;
   }
 }

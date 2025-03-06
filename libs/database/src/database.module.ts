@@ -2,8 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MySqlDriver } from '@mikro-orm/mysql';
-import { DatabaseService } from './database.service';
-import { User } from './entity/user/user.entity';
+import { User } from './entites/user/user.entity';
 
 @Global()
 @Module({
@@ -33,9 +32,8 @@ import { User } from './entity/user/user.entity';
         debug: true,
       }),
     }),
-    MikroOrmModule.forFeature([User])
+    MikroOrmModule.forFeature([User]),
   ],
-  providers: [DatabaseService],
-  exports: [DatabaseService, MikroOrmModule],
+  exports: [MikroOrmModule],
 })
 export class DatabaseModule {}
