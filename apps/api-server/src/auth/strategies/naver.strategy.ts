@@ -27,7 +27,6 @@ export class NaverStrategy extends PassportStrategy(Strategy, 'naver') {
     try {
       // eslint-disable-next-line no-underscore-dangle
       const jsonProfile = profile._json;
-      console.log('Naver Profile:', jsonProfile);
       const user: User = await this.authService.validateNaverUser({
         id: jsonProfile.id,
         name: jsonProfile.name,

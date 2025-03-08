@@ -80,8 +80,6 @@ export class AuthService {
     // 가입이 완료되지 않은 사용자인 경우
     // 회원가입 페이지로 리다이렉트 (사용자 ID를 쿼리 파라미터로 전달)
     const signUpUrl = new URL('/signup', baseRedirectUrl);
-    signUpUrl.searchParams.append('userId', user.getId().toString());
-
     // 임시 토큰 생성 (회원가입 완료 시 사용)
     const tempToken = await this.generateAccessToken(
       user.getId(),
@@ -120,15 +118,6 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
-  }
-
-  private getRedirectUrlFromState(state: string): string {
-    try {
-      const decoded = JSON.parse(Buffer.from(state, 'base64').toString());
-      return decoded.redirectUrl || '/';
-    } catch (error) {
-      return '/'; // 기본 리다이렉트 URL
-    }
   }
 
   private async generateAccessToken(
