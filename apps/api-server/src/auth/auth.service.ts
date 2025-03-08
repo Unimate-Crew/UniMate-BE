@@ -32,11 +32,6 @@ export class AuthService {
     return user;
   }
 
-  generateState(redirectUrl: string): string {
-    // state 파라미터에 redirectUrl을 안전하게 인코딩
-    return Buffer.from(JSON.stringify({ redirectUrl })).toString('base64');
-  }
-
   async handleSocialLoginCallback(
     user: User,
     redirectUrlParam: string,
