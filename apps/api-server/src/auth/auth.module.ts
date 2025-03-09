@@ -7,6 +7,7 @@ import { User } from '@app/database';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { NaverStrategy } from './strategies/naver.strategy';
+import { KakaoStrategy } from './strategies/kakao.strategy';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
@@ -27,6 +28,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
   providers: [
     AuthService,
     NaverStrategy,
+    KakaoStrategy,
     JwtAccessStrategy,
     JwtRefreshStrategy,
   ],
