@@ -1,15 +1,29 @@
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { Logger } from 'winston';
 import { WinstonModule } from 'nest-winston';
+import * as session from 'express-session';
 import { ApiServerModule } from './api-server.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiServerModule);
   const logger = app.get(Logger);
+  const configService = app.get(ConfigService);
 
   app.useLogger(
     WinstonModule.createLogger({
       instance: logger,
+    }),
+  );
+
+  app.use(
+    session({
+      secret: configService.get('SESSION_SECRET'),
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 60000, // 1분
+      },
     }),
   );
 
