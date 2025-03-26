@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProvider, User, UserRepository } from '@app/database';
 import { NaverProfileDto } from './dto/naver-profile.dto';
+import { KakaoProfileDto } from './dto/kakao-profile.dto';
 import { TokenPayloadDto, TokenType } from './dto/token-payload.dto';
 import { SocialLoginCallbackResultDto } from './dto/social-login-callback.dto';
 import { TokensDto } from './dto/tokens.dto';
@@ -27,6 +28,23 @@ export class AuthService {
         providerId: profile.id,
       });
       await this.userRepository.persistAndFlush(user);
+    }
+
+    return user;
+  }
+
+  async validateKakaoUser(profile: KakaoProfileDto): Promise<User> {
+    let user: User | null = await this.userRepository.findByProviderId(
+      AuthProvider.KAKAO,
+      profile.providerId,
+    );
+
+    if (!user) {
+      user = this.userRepository.create({
+        provider: AuthProvider.KAKAO,
+        providerId: profile.providerId,
+      });
+      await this.userRepository.flush();
     }
 
     return user;

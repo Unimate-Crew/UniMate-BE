@@ -16,6 +16,10 @@ export class UserRepository extends EntityRepository<User> {
     await this.em.persist(user);
   }
 
+  async flush(): Promise<void> {
+    await this.em.flush();
+  }
+
   async persistAndFlush(user: User): Promise<void> {
     await this.em.persistAndFlush(user);
   }

@@ -14,6 +14,7 @@ import { User } from '@app/database';
 import { AuthService } from './auth.service';
 import { SocialLoginRequestDto } from './dto/social-login.dto';
 import { TokensDto } from './dto/tokens.dto';
+import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -45,6 +46,26 @@ export class AuthController {
       );
 
     return res.redirect(finalRedirectUrl);
+  }
+
+  @Get('kakao')
+  @UseGuards(KakaoAuthGuard)
+  async kakaoAuth(): Promise<void> {}
+
+  @Get('kakao/callback')
+  @UseGuards(KakaoAuthGuard)
+  async kakaoAuthCallback(
+    @Req() req: Request,
+    @Query('state') state: any,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { targetUrl } = JSON.parse(state);
+    const { redirectUrl } = await this.authService.handleSocialLoginCallback(
+      req.user as User,
+      targetUrl,
+    );
+
+    return res.redirect(redirectUrl);
   }
 
   @Post('refresh')
