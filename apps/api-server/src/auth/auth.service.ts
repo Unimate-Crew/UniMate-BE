@@ -133,7 +133,7 @@ export class AuthService {
     };
   }
 
-  private async generateAccessToken(
+  async generateAccessToken(
     userId: number,
     provider: AuthProvider,
   ): Promise<string> {
