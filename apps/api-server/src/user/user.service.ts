@@ -1,11 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { User, UserRepository } from '@app/database';
-import { Transactional } from '@mikro-orm/core';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { User, UserRepository, AuthProvider } from '@app/database';
+import { SignUpDto } from './dto/sign-up.dto';
+import { SnsServiceFactory } from '../sns/sns.service.factory';
+import { SignInDto } from './dto/sign-in.dto';
+import { ErrorCode } from '../common/error-code';
+import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly snsServiceFactory: SnsServiceFactory,
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.findAll();
@@ -15,9 +21,78 @@ export class UserService {
     return this.userRepository.findOne(id);
   }
 
-  @Transactional()
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(createUserDto);
+  private async validateSnsUserInfo(
+    provider: AuthProvider,
+    providerId: string,
+    accessToken: string,
+  ): Promise<void> {
+    const snsService = this.snsServiceFactory.getService(provider);
+    const snsUserInfo = await snsService.getUserInfo(accessToken);
+
+    if (snsUserInfo.id !== providerId) {
+      throw new UnauthorizedException({
+        code: ErrorCode.SNS_USER_INFO_MISMATCH,
+        message: 'Requested user ID does not match the authenticated user',
+      });
+    }
+  }
+
+  async signUp(signUpDto: SignUpDto): Promise<User> {
+    const { provider, providerId, accessToken, nickname, profileImageUrl } =
+      signUpDto;
+
+    await this.validateSnsUserInfo(provider, providerId, accessToken);
+
+    let user: User | null = await this.userRepository.findByProviderId(
+      provider,
+      providerId,
+    );
+
+    if (!user) {
+      user = this.userRepository.create({
+        provider,
+        providerId,
+        nickname,
+        profileImageUrl,
+      });
+      await this.userRepository.flush();
+    }
+
     return user;
+  }
+
+  async signIn(signInDto: SignInDto): Promise<User> {
+    const { provider, providerId, accessToken } = signInDto;
+
+    await this.validateSnsUserInfo(provider, providerId, accessToken);
+
+    const user = await this.userRepository.findByProviderId(
+      provider,
+      providerId,
+    );
+
+    if (!user) {
+      throw new UnauthorizedException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: 'User not found',
+      });
+    }
+
+    return user;
+  }
+
+  async checkUserExists(
+    checkUserExistsDto: CheckUserExistsDto,
+  ): Promise<boolean> {
+    const { provider, providerId, accessToken } = checkUserExistsDto;
+
+    await this.validateSnsUserInfo(provider, providerId, accessToken);
+
+    const user = await this.userRepository.findByProviderId(
+      provider,
+      providerId,
+    );
+
+    return !!user;
   }
 }

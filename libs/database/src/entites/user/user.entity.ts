@@ -17,6 +17,12 @@ export class User {
   @Property({ nullable: true })
   private name?: string;
 
+  @Property()
+  private nickname!: string;
+
+  @Property({ nullable: true })
+  private profileImageUrl?: string;
+
   @Property({ nullable: true })
   private phoneNumber?: string;
 
@@ -48,6 +54,14 @@ export class User {
 
   public getName(): string {
     return this.name;
+  }
+
+  public getNickname(): string {
+    return this.nickname;
+  }
+
+  public getProfileImageUrl(): string | undefined {
+    return this.profileImageUrl;
   }
 
   public getProvider(): AuthProvider {
