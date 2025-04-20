@@ -58,12 +58,12 @@ export class UserController {
   @Post('signin')
   async signIn(@Body() signInDto: SignInDto): Promise<SignInResponseDto> {
     const user = await this.userService.signIn(signInDto);
-    const tokens = await this.authService.generateAccessToken(
+    const token = await this.authService.generateAccessToken(
       user.getId(),
       user.getProvider(),
     );
 
-    return SignInResponseDto.of(tokens);
+    return SignInResponseDto.of(token);
   }
 
   @ApiOperation({
