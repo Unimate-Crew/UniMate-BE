@@ -1,7 +1,7 @@
 import { AuthProvider } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SignUpDto {
+export class SignInDto {
   @ApiProperty({
     description: '인증 제공자 (NAVER, KAKAO 등)',
     enum: AuthProvider,
@@ -23,18 +23,4 @@ export class SignUpDto {
     required: true,
   })
   accessToken!: string;
-
-  @ApiProperty({
-    description: '유저 닉네임',
-    example: '홍길동',
-    required: true,
-  })
-  nickname!: string;
-
-  @ApiProperty({
-    description: '프로필 이미지 URL',
-    example: 'https://example.com/profile.jpg',
-    required: false,
-  })
-  profileImageUrl?: string;
 }

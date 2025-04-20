@@ -1,17 +1,18 @@
-import { User } from '@app/database';
+import { ApiProperty } from '@nestjs/swagger';
 import { TokensDto } from '../../auth/dto/tokens.dto';
 
 export class SignUpResponseDto {
-  user: User;
-
+  @ApiProperty({
+    description: '발급된 토큰 정보',
+    type: TokensDto,
+  })
   tokens: TokensDto;
 
-  private constructor(user: User, tokens: TokensDto) {
-    this.user = user;
+  private constructor(tokens: TokensDto) {
     this.tokens = tokens;
   }
 
-  static of(user: User, tokens: TokensDto): SignUpResponseDto {
-    return new SignUpResponseDto(user, tokens);
+  static of(tokens: TokensDto): SignUpResponseDto {
+    return new SignUpResponseDto(tokens);
   }
 }
