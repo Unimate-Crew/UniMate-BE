@@ -3,6 +3,9 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MySqlDriver } from '@mikro-orm/mysql';
 import { User } from './entites/user/user.entity';
+import { UsState } from './entites/city/us-state.entity';
+import { UsCounty } from './entites/city/us-county.entity';
+import { UsCity } from './entites/city/us-city.entity';
 
 @Global()
 @Module({
@@ -32,7 +35,7 @@ import { User } from './entites/user/user.entity';
         debug: true,
       }),
     }),
-    MikroOrmModule.forFeature([User]),
+    MikroOrmModule.forFeature([User, UsState, UsCounty, UsCity]),
   ],
   exports: [MikroOrmModule],
 })

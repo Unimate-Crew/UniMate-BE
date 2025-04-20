@@ -1,14 +1,22 @@
 import { Module } from '@nestjs/common';
-import { LoggerModule } from '@app/logger/logger.module';
+import { LoggerModule } from '@app/logger';
 import { DatabaseModule } from '@app/database';
-import { ApiServerController } from './api-server.controller';
 import { ApiServerService } from './api-server.service';
-import { CommonModule } from './common/common.module';
+import { ApiServerController } from './api-server.controller';
 import { UserModule } from './user/user.module';
+import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
+import { CityModule } from './city/city.module';
 
 @Module({
-  imports: [CommonModule, LoggerModule, UserModule, DatabaseModule, AuthModule],
+  imports: [
+    CommonModule,
+    LoggerModule,
+    UserModule,
+    DatabaseModule,
+    AuthModule,
+    CityModule,
+  ],
   controllers: [ApiServerController],
   providers: [ApiServerService],
 })
