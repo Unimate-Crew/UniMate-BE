@@ -1,7 +1,7 @@
-import { AuthProvider } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
+import { AuthProvider } from '@app/database';
 
-export class SignInDto {
+export class CheckUserExistsDto {
   @ApiProperty({
     description: '인증 제공자 (NAVER, KAKAO 등)',
     enum: AuthProvider,

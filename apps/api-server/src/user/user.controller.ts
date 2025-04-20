@@ -6,8 +6,10 @@ import { AuthService } from '../auth/auth.service';
 import { SignUpResponseDto } from './dto/sign-up-response.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
+import { CheckUserExistsDto } from './dto/check-user-exists.dto';
+import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
 
-@ApiTags('사용자')
+@ApiTags('유저')
 @Controller('users')
 export class UserController {
   constructor(
@@ -17,7 +19,7 @@ export class UserController {
 
   @ApiOperation({
     summary: '회원가입',
-    description: '새로운 사용자를 등록합니다.',
+    description: '새로운 유저를 등록합니다.',
   })
   @ApiResponse({
     status: 201,
@@ -38,7 +40,7 @@ export class UserController {
 
   @ApiOperation({
     summary: '로그인',
-    description: '사용자 로그인을 처리합니다.',
+    description: '유저 로그인을 처리합니다.',
   })
   @ApiResponse({
     status: 200,
@@ -62,5 +64,23 @@ export class UserController {
     );
 
     return SignInResponseDto.of(tokens);
+  }
+
+  @ApiOperation({
+    summary: '유저 존재 여부 확인',
+    description: '해당 SNS 계정으로 가입된 유저가 있는지 확인합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '유저 존재 여부 확인 성공',
+    type: CheckUserExistsResponseDto,
+  })
+  @Post('exists')
+  async checkUserExists(
+    @Body() checkUserExistsDto: CheckUserExistsDto,
+  ): Promise<CheckUserExistsResponseDto> {
+    const exists = await this.userService.checkUserExists(checkUserExistsDto);
+
+    return CheckUserExistsResponseDto.of(exists);
   }
 }
