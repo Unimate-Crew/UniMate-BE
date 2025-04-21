@@ -9,4 +9,7 @@ export enum ErrorCode {
 
   // 서버 오류
   INTERNAL_SERVER_ERROR = 'G001',
+
+  // 도시
+  CITY_NOT_FOUND = 'C001',
 }

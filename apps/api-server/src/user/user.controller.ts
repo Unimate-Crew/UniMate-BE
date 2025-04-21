@@ -1,5 +1,19 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { Request } from 'express';
+import { User } from '@app/database';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../auth/auth.service';
@@ -8,8 +22,12 @@ import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
+import { SaveCitiesDto as SaveMyCitiesDto } from './dto/save-cities.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErrorResponse } from '../common/error-response';
 
 @ApiTags('유저')
+@ApiBearerAuth()
 @Controller('users')
 export class UserController {
   constructor(
@@ -82,5 +100,32 @@ export class UserController {
     const exists = await this.userService.checkUserExists(checkUserExistsDto);
 
     return CheckUserExistsResponseDto.of(exists);
+  }
+
+  @Post('/cities')
+  @ApiOperation({ summary: '관심도시 저장 API' })
+  @ApiResponse({
+    status: 204,
+    description: '관심도시 저장 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code는 U001(유저가 존재하지 않음), C001(도시가 존재하지 않음)이 나올 수 있음.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async saveMyCities(
+    @Req() req: Request,
+    @Body() saveMyCitiesDto: SaveMyCitiesDto,
+  ): Promise<void> {
+    const userId = (req.user as User).getId();
+    // await this.userService.saveCities(userId, saveCitiesDto.cityIds);
   }
 }
