@@ -22,9 +22,9 @@ import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
-import { SaveCitiesDto as SaveMyCitiesDto } from './dto/save-cities.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
+import { SaveInterestCitiesDto } from './dto/save-Interest-Cities.dto';
 
 @ApiTags('유저')
 @ApiBearerAuth()
@@ -121,9 +121,9 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
-  async saveMyCities(
+  async saveInterestCities(
     @Req() req: Request,
-    @Body() saveMyCitiesDto: SaveMyCitiesDto,
+    @Body() saveInterestCitiesDto: SaveInterestCitiesDto,
   ): Promise<void> {
     const userId = (req.user as User).getId();
     // await this.userService.saveCities(userId, saveCitiesDto.cityIds);

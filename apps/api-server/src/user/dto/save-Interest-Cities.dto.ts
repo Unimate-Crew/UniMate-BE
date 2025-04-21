@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsNumber } from 'class-validator';
 
-export class SaveCitiesDto {
+export class SaveInterestCitiesDto {
   @ApiProperty({
     description: '사용자가 선택한 관심도시 ID 목록 (최대 3개)',
     example: [1, 2, 3],
