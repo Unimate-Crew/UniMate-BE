@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { CityModule } from './city/city.module';
+import { PostModule } from './post/post.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CityModule } from './city/city.module';
     DatabaseModule,
     AuthModule,
     CityModule,
+    PostModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],

@@ -12,7 +12,10 @@ import { SearchCityDto } from './dto/search-city.dto';
 import { CityInfo, CityListResponse } from './dto/city-response.dto';
 
 @ApiTags('도시')
-@Controller('city')
+@Controller({
+  path: 'cities',
+  version: '1',
+})
 export class CityController {
   constructor(private readonly cityService: CityService) {}
 

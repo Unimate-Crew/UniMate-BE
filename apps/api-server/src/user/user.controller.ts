@@ -30,7 +30,10 @@ import { FindInterestCitiesResponseDto } from './dto/find-interest-cities-respon
 
 @ApiTags('유저')
 @ApiBearerAuth()
-@Controller('users')
+@Controller({
+  path: 'users',
+  version: '1',
+})
 export class UserController {
   constructor(
     private readonly userService: UserService,
