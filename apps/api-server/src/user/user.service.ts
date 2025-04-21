@@ -110,4 +110,24 @@ export class UserService {
     // TODO: 실제 사용자와 도시 간의 관계를 저장하는 로직 구현 필요
     // 현재는 메서드만 정의하고 실제 구현은 추후 필요에 따라 작성
   }
+
+  async getInterestCities(
+    userId: number,
+  ): Promise<{ id: number; name: string }[]> {
+    const user = await this.userRepository.findOne(userId);
+
+    if (!user) {
+      throw new UnauthorizedException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '사용자를 찾을 수 없습니다',
+      });
+    }
+
+    // 관심도시 조회 로직 구현
+    // TODO: 실제 사용자의 관심도시를 조회하는 로직 구현 필요
+    // 현재는 메서드만 정의하고 실제 구현은 추후 필요에 따라 작성
+
+    // 임시 데이터 반환 (실제 구현 시 DB에서 조회하는 로직으로 변경 필요)
+    return [];
+  }
 }

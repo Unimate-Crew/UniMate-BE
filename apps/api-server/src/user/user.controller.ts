@@ -5,6 +5,7 @@ import {
   HttpCode,
   UseGuards,
   Req,
+  Get,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -25,6 +26,7 @@ import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SaveInterestCitiesDto } from './dto/save-Interest-Cities.dto';
+import { FindInterestCitiesResponseDto } from './dto/find-interest-cities-response.dto';
 
 @ApiTags('유저')
 @ApiBearerAuth()
@@ -127,5 +129,35 @@ export class UserController {
   ): Promise<void> {
     const userId = (req.user as User).getId();
     // await this.userService.saveCities(userId, saveCitiesDto.cityIds);
+  }
+
+  @Get('/cities')
+  @ApiOperation({ summary: '관심도시 조회 API' })
+  @ApiResponse({
+    status: 200,
+    description: '관심도시 조회 성공',
+    type: FindInterestCitiesResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code는 U001(유저가 존재하지 않음)이 나올 수 있음.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @UseGuards(JwtAuthGuard)
+  async findInterestCities(
+    @Req() req: Request,
+  ): Promise<FindInterestCitiesResponseDto> {
+    const userId = (req.user as User).getId();
+    // const cities = await this.userService.getInterestCities(userId);
+
+    return FindInterestCitiesResponseDto.of([
+      { id: 1, name: 'New York' },
+      { id: 2, name: 'Los Angeles' },
+      { id: 3, name: 'Chicago' },
+    ]);
   }
 }
