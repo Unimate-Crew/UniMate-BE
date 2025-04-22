@@ -1,0 +1,1 @@
+web: sh -c "node dist/apps/${APP_NAME}/main.js

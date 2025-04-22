@@ -8,7 +8,7 @@ phases:
 
   build:
     commands:
-      - npm run build api-server
+      - npm run build $APP_NAME
   post_build:
     commands:
       - ls -al
