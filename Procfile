@@ -1,1 +1,1 @@
-web: sh -c "node dist/apps/${APP_NAME}/main.js"
+web: node dist/apps/api-server/main.js
