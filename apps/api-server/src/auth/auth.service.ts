@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthProvider, User, UserRepository } from '@app/database';
+import { OAuthProvider, User, UserRepository } from '@app/database';
 import { NaverProfileDto } from './dto/naver-profile.dto';
 import { KakaoProfileDto } from './dto/kakao-profile.dto';
 import { TokenPayloadDto, TokenType } from './dto/token-payload.dto';
@@ -16,7 +16,7 @@ export class AuthService {
 
   async validateNaverUser(profile: NaverProfileDto): Promise<User> {
     let user: User | null = await this.userRepository.findByProviderId(
-      AuthProvider.NAVER,
+      OAuthProvider.NAVER,
       profile.id,
     );
 
@@ -24,7 +24,7 @@ export class AuthService {
       user = this.userRepository.create({
         name: profile.name,
         phoneNumber: profile.mobile,
-        provider: AuthProvider.NAVER,
+        provider: OAuthProvider.NAVER,
         providerId: profile.id,
       });
       await this.userRepository.persistAndFlush(user);
@@ -35,13 +35,13 @@ export class AuthService {
 
   async validateKakaoUser(profile: KakaoProfileDto): Promise<User> {
     let user: User | null = await this.userRepository.findByProviderId(
-      AuthProvider.KAKAO,
+      OAuthProvider.KAKAO,
       profile.providerId,
     );
 
     if (!user) {
       user = this.userRepository.create({
-        provider: AuthProvider.KAKAO,
+        provider: OAuthProvider.KAKAO,
         providerId: profile.providerId,
       });
       await this.userRepository.flush();
@@ -135,7 +135,7 @@ export class AuthService {
 
   async generateAccessToken(
     userId: number,
-    provider: AuthProvider,
+    provider: OAuthProvider,
   ): Promise<string> {
     const payload: TokenPayloadDto = {
       userId,

@@ -6,11 +6,11 @@ import { ErrorCode } from '../common/error-code';
 export class KakaoSnsService implements SnsService {
   private readonly API_URL = 'https://kapi.kakao.com/v2/user/me';
 
-  async getUserInfo(accessToken: string): Promise<SnsUserInfo> {
+  async getUserInfo(oAuthToken: string): Promise<SnsUserInfo> {
     try {
       const response = await fetch(this.API_URL, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${oAuthToken}`,
         },
       });
 

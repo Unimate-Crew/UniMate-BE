@@ -6,11 +6,11 @@ import { ErrorCode } from '../common/error-code';
 export class NaverSnsService implements SnsService {
   private readonly API_URL = 'https://openapi.naver.com/v1/nid/me';
 
-  async getUserInfo(accessToken: string): Promise<SnsUserInfo> {
+  async getUserInfo(oAuthToken: string): Promise<SnsUserInfo> {
     try {
       const response = await fetch(this.API_URL, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${oAuthToken}`,
         },
       });
 
