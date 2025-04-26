@@ -6,6 +6,12 @@ export enum CurrencyType {
   USD = 'USD',
 }
 
+export enum TradeStatus {
+  FOR_SALE = 'FOR_SALE', // 판매중
+  RESERVED = 'RESERVED', // 예약중
+  COMPLETED = 'COMPLETED', // 거래완료
+}
+
 export class PostItemDto {
   @ApiProperty({
     description: '게시글 ID',
@@ -73,6 +79,13 @@ export class PostItemDto {
     example: '서울',
   })
   cityName: string;
+
+  @ApiProperty({
+    description: '거래 상태',
+    example: TradeStatus.FOR_SALE,
+    enum: TradeStatus,
+  })
+  tradeStatus: TradeStatus;
 }
 
 export class GetPostsResponseDto {

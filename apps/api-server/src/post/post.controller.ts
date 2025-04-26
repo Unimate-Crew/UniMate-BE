@@ -10,6 +10,7 @@ import { GetPostsRequestDto } from './dto/get-posts-request.dto';
 import {
   CurrencyType,
   GetPostsResponseDto,
+  TradeStatus,
 } from './dto/get-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
@@ -62,6 +63,7 @@ export class PostController {
           commentCount: 5,
           cityId: 1,
           cityName: 'Massachusetts',
+          tradeStatus: TradeStatus.FOR_SALE,
         },
         {
           id: 2,
@@ -75,6 +77,7 @@ export class PostController {
           commentCount: 3,
           cityId: 2,
           cityName: 'Massachusetts',
+          tradeStatus: TradeStatus.RESERVED,
         },
         {
           id: 3,
@@ -88,6 +91,7 @@ export class PostController {
           commentCount: 8,
           cityId: 3,
           cityName: 'New York',
+          tradeStatus: TradeStatus.FOR_SALE,
         },
         {
           id: 4,
@@ -101,6 +105,7 @@ export class PostController {
           commentCount: 12,
           cityId: 4,
           cityName: 'New York',
+          tradeStatus: TradeStatus.COMPLETED,
         },
         {
           id: 5,
@@ -114,6 +119,7 @@ export class PostController {
           commentCount: 4,
           cityId: 5,
           cityName: 'New York',
+          tradeStatus: TradeStatus.FOR_SALE,
         },
       ],
       false,
