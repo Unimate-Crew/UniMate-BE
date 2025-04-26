@@ -6,6 +6,7 @@ import {
   UseGuards,
   Req,
   Get,
+  Put,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -107,11 +108,17 @@ export class UserController {
     return CheckUserExistsResponseDto.of(exists);
   }
 
-  @Post('/cities')
+  @Put('/cities')
   @ApiOperation({ summary: '관심도시 저장 API' })
   @ApiResponse({
-    status: 204,
+    status: 200,
     description: '관심도시 저장 성공',
+    schema: {
+      type: 'object',
+      properties: {
+        savedInterestCityIds: { type: 'array', items: { type: 'number' } },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -129,9 +136,13 @@ export class UserController {
   async saveInterestCities(
     @Req() req: Request,
     @Body() saveInterestCitiesDto: SaveInterestCitiesDto,
-  ): Promise<void> {
+  ): Promise<any> {
     const userId = (req.user as User).getId();
     // await this.userService.saveCities(userId, saveCitiesDto.cityIds);
+
+    return {
+      savedInterestCityIds: [1, 2, 3],
+    };
   }
 
   @Get('/cities')
