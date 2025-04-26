@@ -61,6 +61,18 @@ export class PostItemDto {
     example: 5,
   })
   commentCount: number;
+
+  @ApiProperty({
+    description: '도시 ID',
+    example: 1,
+  })
+  cityId: number;
+
+  @ApiProperty({
+    description: '도시 이름',
+    example: '서울',
+  })
+  cityName: string;
 }
 
 export class GetPostsResponseDto {

@@ -45,67 +45,6 @@ export class PostService {
    * 실제 구현에서는 필요 없는 메서드입니다.
    */
   private getMockPosts(): (PostItemDto & { cityId: number })[] {
-    return [
-      {
-        id: 1,
-        title: '뉴욕 여행 가이드북 팝니다',
-        createdAt: '2023-06-15T09:30:00.000Z',
-        universityName: '서울대학교',
-        thumbnailUrl: 'https://example.com/images/post1.jpg',
-        price: 15000,
-        currencyType: CurrencyType.KRW,
-        likeCount: 24,
-        commentCount: 5,
-        cityId: 1, // 뉴욕
-      },
-      {
-        id: 2,
-        title: '로마 여행 필수 아이템 판매합니다',
-        createdAt: '2023-06-14T10:45:00.000Z',
-        universityName: '연세대학교',
-        thumbnailUrl: 'https://example.com/images/post2.jpg',
-        price: 30000,
-        currencyType: CurrencyType.KRW,
-        likeCount: 15,
-        commentCount: 3,
-        cityId: 2, // 로마
-      },
-      {
-        id: 3,
-        title: '파리 현지 가이드 구합니다',
-        createdAt: '2023-06-13T11:20:00.000Z',
-        universityName: '고려대학교',
-        thumbnailUrl: 'https://example.com/images/post3.jpg',
-        price: 50,
-        currencyType: CurrencyType.EUR,
-        likeCount: 32,
-        commentCount: 8,
-        cityId: 3, // 파리
-      },
-      {
-        id: 4,
-        title: '런던 한 달 살기 팁 공유',
-        createdAt: '2023-06-12T13:15:00.000Z',
-        universityName: '서강대학교',
-        thumbnailUrl: 'https://example.com/images/post4.jpg',
-        price: 10000,
-        currencyType: CurrencyType.KRW,
-        likeCount: 41,
-        commentCount: 12,
-        cityId: 4, // 런던
-      },
-      {
-        id: 5,
-        title: '도쿄 숙소 양도합니다',
-        createdAt: '2023-06-11T14:30:00.000Z',
-        universityName: '이화여자대학교',
-        thumbnailUrl: 'https://example.com/images/post5.jpg',
-        price: 200000,
-        currencyType: CurrencyType.KRW,
-        likeCount: 19,
-        commentCount: 4,
-        cityId: 5, // 도쿄
-      },
-    ];
+    return [];
   }
 }
