@@ -28,6 +28,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SaveInterestCitiesDto } from './dto/save-Interest-Cities.dto';
 import { FindInterestCitiesResponseDto } from './dto/find-interest-cities-response.dto';
+import { SetPrimaryInterestCityDto } from './dto/set-primary-interest-city.dto';
 
 @ApiTags('유저')
 @ApiBearerAuth()
@@ -111,20 +112,13 @@ export class UserController {
   @Put('/cities')
   @ApiOperation({ summary: '관심도시 저장 API' })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: '관심도시 저장 성공',
-    schema: {
-      type: 'object',
-      properties: {
-        savedInterestCityIds: { type: 'array', items: { type: 'number' } },
-      },
-    },
   })
   @ApiResponse({
     status: 404,
     type: ErrorResponse,
-    description:
-      'code는 U001(유저가 존재하지 않음), C001(도시가 존재하지 않음)이 나올 수 있음.',
+    description: 'code: U001(유저가 존재하지 않음), C001(도시가 존재하지 않음)',
   })
   @ApiResponse({
     status: 401,
@@ -139,17 +133,15 @@ export class UserController {
   ): Promise<any> {
     const userId = (req.user as User).getId();
     // await this.userService.saveCities(userId, saveCitiesDto.cityIds);
-
-    return {
-      savedInterestCityIds: [1, 2, 3],
-    };
   }
 
   @Get('/cities')
-  @ApiOperation({ summary: '관심도시 조회 API' })
+  @ApiOperation({
+    summary: '관심도시 리스트 조회 API (기본 관심도시 정보 포함)',
+  })
   @ApiResponse({
     status: 200,
-    description: '관심도시 조회 성공',
+    description: '관심도시 리스트 조회 성공',
     type: FindInterestCitiesResponseDto,
   })
   @ApiResponse({
@@ -166,12 +158,41 @@ export class UserController {
     @Req() req: Request,
   ): Promise<FindInterestCitiesResponseDto> {
     const userId = (req.user as User).getId();
+    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
     // const cities = await this.userService.getInterestCities(userId);
 
+    // 임시 응답 데이터
     return FindInterestCitiesResponseDto.of([
-      { id: 1, name: 'New York' },
-      { id: 2, name: 'Los Angeles' },
-      { id: 3, name: 'Chicago' },
+      { id: 1, name: 'New York', isPrimary: true },
+      { id: 2, name: 'Los Angeles', isPrimary: false },
+      { id: 3, name: 'Chicago', isPrimary: false },
     ]);
+  }
+
+  @Put('/cities/primary')
+  @ApiOperation({ summary: '기본 관심도시 설정 API' })
+  @ApiResponse({
+    status: 204,
+    description: '기본 관심도시 설정 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code: U001(유저가 존재하지 않음), C001(도시가 존재하지 않음), IC001(유저의 관심도시 목록에 해당 도시가 존재하지 않음)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async setPrimaryInterestCity(
+    @Req() req: Request,
+    @Body() setPrimaryInterestCityDto: SetPrimaryInterestCityDto,
+  ): Promise<void> {
+    const userId = (req.user as User).getId();
+    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
+    // await this.userService.setPrimaryInterestCity(userId, setPrimaryInterestCityDto.cityId);
   }
 }

@@ -13,6 +13,13 @@ export class CityDto {
     example: '서울',
   })
   name: string;
+
+  @ApiProperty({
+    description: '기본 관심도시 여부',
+    example: true,
+    default: false,
+  })
+  isPrimary: boolean;
 }
 
 export class FindInterestCitiesResponseDto {

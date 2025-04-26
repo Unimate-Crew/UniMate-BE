@@ -12,4 +12,7 @@ export enum ErrorCode {
 
   // 도시
   CITY_NOT_FOUND = 'C001',
+
+  // 관심도시
+  INTEREST_CITY_NOT_FOUND = 'IC001',
 }
