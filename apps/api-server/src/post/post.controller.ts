@@ -14,6 +14,10 @@ import {
 } from './dto/get-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
+import {
+  SearchPostsRequestDto,
+  SortDirection,
+} from './dto/search-posts-request.dto';
 
 @ApiTags('게시글')
 @ApiBearerAuth()
@@ -118,6 +122,90 @@ export class PostController {
           likeCount: 19,
           commentCount: 4,
           cityId: 5,
+          cityName: 'New York',
+          tradeStatus: TradeStatus.FOR_SALE,
+        },
+      ],
+      false,
+    );
+  }
+
+  @Get('/search')
+  @ApiOperation({
+    summary: '게시글 검색 API',
+    description:
+      '제목 기준으로 키워드 검색, 대학교/가격/카테고리/거래 상태 필터링, 생성일 기준 정렬 기능 제공',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '게시글 검색 성공',
+    type: GetPostsResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  async searchPosts(
+    @Query() query: SearchPostsRequestDto,
+  ): Promise<GetPostsResponseDto> {
+    const {
+      searchKeyword,
+      universityId,
+      currencyType,
+      minPrice,
+      maxPrice,
+      categoryId,
+      tradeStatus,
+      sortDirection = SortDirection.DESC,
+      pageNumber = 1,
+      pageSize = 10,
+      cityId,
+    } = query;
+
+    // 모의 데이터 대신 실제 서비스 호출
+    // const { content, hasNext } = await this.postService.searchPosts(
+    //   searchKeyword,
+    //   universityId,
+    //   currencyType,
+    //   minPrice,
+    //   maxPrice,
+    //   categoryId,
+    //   tradeStatus,
+    //   sortDirection,
+    //   pageNumber,
+    //   pageSize,
+    //   cityId
+    // );
+
+    // 검색 결과 샘플 데이터 (keyword가 '가이드북'일 경우의 응답)
+    return GetPostsResponseDto.of(
+      [
+        {
+          id: 1,
+          title: '메사추세츠 여행 가이드북 팝니다',
+          createdAt: '2023-06-15T09:30:00.000Z',
+          universityName: 'Harvard University',
+          thumbnailUrl: 'https://example.com/images/post1.jpg',
+          price: 15000,
+          currencyType: CurrencyType.KRW,
+          likeCount: 24,
+          commentCount: 5,
+          cityId: 1,
+          cityName: 'Massachusetts',
+          tradeStatus: TradeStatus.FOR_SALE,
+        },
+        {
+          id: 3,
+          title: '뉴욕 여행 가이드북 팝니다',
+          createdAt: '2023-06-13T11:20:00.000Z',
+          universityName: 'Cornell University',
+          thumbnailUrl: 'https://example.com/images/post3.jpg',
+          price: 50,
+          currencyType: CurrencyType.USD,
+          likeCount: 32,
+          commentCount: 8,
+          cityId: 3,
           cityName: 'New York',
           tradeStatus: TradeStatus.FOR_SALE,
         },
