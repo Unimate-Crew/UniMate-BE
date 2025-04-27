@@ -10,19 +10,19 @@ export class UsCity {
   @Property()
   private name!: string;
 
-  @Property({ fieldName: 'state_fips' })
-  private state_fips!: string;
+  @Property({ fieldName: 'state_id' })
+  private stateId!: string;
 
-  @Property({ fieldName: 'county_fips', nullable: true })
-  private county_fips?: string;
+  @Property({ fieldName: 'county_id', nullable: true })
+  private countyId?: string;
 
-  @Property({ nullable: true })
+  @Property({ columnType: 'decimal(10, 6)', nullable: true })
   private latitude?: number;
 
-  @Property({ nullable: true })
+  @Property({ columnType: 'decimal(10, 6)', nullable: true })
   private longitude?: number;
 
-  @Property({ nullable: true })
+  @Property({ columnType: 'bigint', nullable: true })
   private population?: number;
 
   public getId(): string {
@@ -33,12 +33,12 @@ export class UsCity {
     return this.name;
   }
 
-  public getStateFips(): string {
-    return this.state_fips;
+  public getStateId(): string {
+    return this.stateId;
   }
 
-  public getCountyFips(): string | undefined {
-    return this.county_fips;
+  public getCountyId(): string | undefined {
+    return this.countyId;
   }
 
   public getLatitude(): number | undefined {
