@@ -12,7 +12,7 @@ export interface PaginationParams {
  */
 export interface PagedResult<T> {
   // 결과 데이터
-  data: T[];
+  content: T[];
 
   // 페이지 정보
   page: number;
@@ -21,7 +21,7 @@ export interface PagedResult<T> {
   // 메타데이터
   totalItems?: number;
   totalPages?: number;
-  hasMore?: boolean;
+  hasNext?: boolean;
 }
 
 /**
@@ -33,21 +33,21 @@ export function createPagedResult<T>(
   limit: number,
   options?: {
     totalItems?: number;
-    hasMore?: boolean;
+    hasNext?: boolean;
   },
 ): PagedResult<T> {
   const totalItems = options?.totalItems;
   const totalPages = totalItems ? Math.ceil(totalItems / limit) : undefined;
-  const hasMore =
-    options?.hasMore ??
+  const hasNext =
+    options?.hasNext ??
     (totalPages ? page < totalPages : data.length === limit);
 
   return {
-    data,
+    content: data,
     page,
     limit,
     totalItems,
     totalPages,
-    hasMore,
+    hasNext,
   };
 }
