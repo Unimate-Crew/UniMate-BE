@@ -8,12 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CurrencyType, TradeStatus } from './get-posts-response.dto';
-
-export enum SortDirection {
-  DESC = 'DESC', // 최신순
-  ASC = 'ASC', // 오래된순
-}
+import { CurrencyType, SortDirection, TradeStatus } from '../../common/enums';
 
 export class SearchPostsRequestDto {
   @ApiProperty({

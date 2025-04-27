@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PostItemDto, CurrencyType } from './dto/get-posts-response.dto';
+import { PostItemDto } from './dto/get-posts-response.dto';
 
 @Injectable()
 export class PostService {

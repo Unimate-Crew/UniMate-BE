@@ -1,16 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum CurrencyType {
-  KRW = 'KRW',
-  USD = 'USD',
-}
-
-export enum TradeStatus {
-  FOR_SALE = 'FOR_SALE', // 판매중
-  RESERVED = 'RESERVED', // 예약중
-  COMPLETED = 'COMPLETED', // 거래완료
-}
+import { CurrencyType, TradeStatus } from '../../common/enums';
 
 export class PostItemDto {
   @ApiProperty({

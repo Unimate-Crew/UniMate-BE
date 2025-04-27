@@ -7,17 +7,11 @@ import {
 } from '@nestjs/swagger';
 import { PostService } from './post.service';
 import { GetPostsRequestDto } from './dto/get-posts-request.dto';
-import {
-  CurrencyType,
-  GetPostsResponseDto,
-  TradeStatus,
-} from './dto/get-posts-response.dto';
+import { GetPostsResponseDto } from './dto/get-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
-import {
-  SearchPostsRequestDto,
-  SortDirection,
-} from './dto/search-posts-request.dto';
+import { SearchPostsRequestDto } from './dto/search-posts-request.dto';
+import { CurrencyType, SortDirection, TradeStatus } from '../common/enums';
 
 @ApiTags('게시글')
 @ApiBearerAuth()
