@@ -9,6 +9,7 @@ phases:
   build:
     commands:
       - npm run build $APP_NAME
+      - npx mikro-orm migration:up --config=./libs/database/mikro-orm.config.ts
   post_build:
     commands:
       - ls -al

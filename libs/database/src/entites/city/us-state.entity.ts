@@ -4,7 +4,7 @@ import { UsStateRepository } from './us-state.repository';
 @Entity({ repository: () => UsStateRepository, tableName: 'us_state' })
 export class UsState {
   @PrimaryKey()
-  private readonly geoid!: string;
+  private readonly id!: string;
 
   @Property()
   private name!: string;
@@ -12,14 +12,34 @@ export class UsState {
   @Property({ nullable: true })
   private stusab?: string;
 
-  @Property({ nullable: true })
+  @Property({ fieldName: 'land_area', columnType: 'bigint', nullable: true })
+  private landArea?: number;
+
+  @Property({ fieldName: 'water_area', columnType: 'bigint', nullable: true })
+  private waterArea?: number;
+
+  @Property({
+    fieldName: 'land_sqmi',
+    columnType: 'decimal(10, 2)',
+    nullable: true,
+  })
+  private landSqmi?: number;
+
+  @Property({
+    fieldName: 'water_sqmi',
+    columnType: 'decimal(10, 2)',
+    nullable: true,
+  })
+  private waterSqmi?: number;
+
+  @Property({ columnType: 'decimal(10, 6)', nullable: true })
   private latitude?: number;
 
-  @Property({ nullable: true })
+  @Property({ columnType: 'decimal(10, 6)', nullable: true })
   private longitude?: number;
 
-  public getGeoid(): string {
-    return this.geoid;
+  public getId(): string {
+    return this.id;
   }
 
   public getName(): string {
@@ -28,6 +48,22 @@ export class UsState {
 
   public getStusab(): string | undefined {
     return this.stusab;
+  }
+
+  public getLandArea(): number | undefined {
+    return this.landArea;
+  }
+
+  public getWaterArea(): number | undefined {
+    return this.waterArea;
+  }
+
+  public getLandSqmi(): number | undefined {
+    return this.landSqmi;
+  }
+
+  public getWaterSqmi(): number | undefined {
+    return this.waterSqmi;
   }
 
   public getLatitude(): number | undefined {
