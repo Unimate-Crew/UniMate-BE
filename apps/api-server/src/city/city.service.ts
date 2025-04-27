@@ -20,15 +20,13 @@ export class CityService {
     return CityListResponse.fromPagedResult(result);
   }
 
-  async getCityByGeoid(geoid: string): Promise<CityInfo> {
-    const city = await this.cityRepository.findOne({ geoid } as any, {
+  async getCityById(id: string): Promise<CityInfo> {
+    const city = await this.cityRepository.findOne({ id } as any, {
       populate: { state: true, county: true } as any,
     });
 
     if (!city) {
-      throw new NotFoundException(
-        `GEOID가 '${geoid}'인 도시를 찾을 수 없습니다.`,
-      );
+      throw new NotFoundException(`ID가 '${id}'인 도시를 찾을 수 없습니다.`);
     }
 
     return CityInfo.from(city);

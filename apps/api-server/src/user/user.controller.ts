@@ -1,5 +1,21 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  UseGuards,
+  Req,
+  Get,
+  Put,
+} from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { Request } from 'express';
+import { User } from '@app/database';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../auth/auth.service';
@@ -8,9 +24,18 @@ import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErrorResponse } from '../common/error-response';
+import { SaveInterestCitiesDto } from './dto/save-Interest-Cities.dto';
+import { FindInterestCitiesResponseDto } from './dto/find-interest-cities-response.dto';
+import { SetPrimaryInterestCityDto } from './dto/set-primary-interest-city.dto';
 
 @ApiTags('유저')
-@Controller('users')
+@ApiBearerAuth()
+@Controller({
+  path: 'users',
+  version: '1',
+})
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -82,5 +107,92 @@ export class UserController {
     const exists = await this.userService.checkUserExists(checkUserExistsDto);
 
     return CheckUserExistsResponseDto.of(exists);
+  }
+
+  @Put('/cities')
+  @ApiOperation({ summary: '관심도시 저장 API' })
+  @ApiResponse({
+    status: 204,
+    description: '관심도시 저장 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음), C001(도시가 존재하지 않음)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async saveInterestCities(
+    @Req() req: Request,
+    @Body() saveInterestCitiesDto: SaveInterestCitiesDto,
+  ): Promise<any> {
+    const userId = (req.user as User).getId();
+    // await this.userService.saveCities(userId, saveCitiesDto.cityIds);
+  }
+
+  @Get('/cities')
+  @ApiOperation({
+    summary: '관심도시 리스트 조회 API (기본 관심도시 정보 포함)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '관심도시 리스트 조회 성공',
+    type: FindInterestCitiesResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code는 U001(유저가 존재하지 않음)이 나올 수 있음.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @UseGuards(JwtAuthGuard)
+  async findInterestCities(
+    @Req() req: Request,
+  ): Promise<FindInterestCitiesResponseDto> {
+    const userId = (req.user as User).getId();
+    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
+    // const cities = await this.userService.getInterestCities(userId);
+
+    // 임시 응답 데이터
+    return FindInterestCitiesResponseDto.of([
+      { id: 1, name: 'New York', isPrimary: true },
+      { id: 2, name: 'Los Angeles', isPrimary: false },
+      { id: 3, name: 'Chicago', isPrimary: false },
+    ]);
+  }
+
+  @Put('/cities/primary')
+  @ApiOperation({ summary: '기본 관심도시 설정 API' })
+  @ApiResponse({
+    status: 204,
+    description: '기본 관심도시 설정 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code: U001(유저가 존재하지 않음), C001(도시가 존재하지 않음), IC001(유저의 관심도시 목록에 해당 도시가 존재하지 않음)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async setPrimaryInterestCity(
+    @Req() req: Request,
+    @Body() setPrimaryInterestCityDto: SetPrimaryInterestCityDto,
+  ): Promise<void> {
+    const userId = (req.user as User).getId();
+    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
+    // await this.userService.setPrimaryInterestCity(userId, setPrimaryInterestCityDto.cityId);
   }
 }

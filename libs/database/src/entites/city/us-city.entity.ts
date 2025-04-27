@@ -1,10 +1,11 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+// eslint-disable-next-line import/no-cycle
 import { UsCityRepository } from './us-city.repository';
 
 @Entity({ repository: () => UsCityRepository, tableName: 'us_city' })
 export class UsCity {
   @PrimaryKey()
-  private readonly geoid!: string;
+  private readonly id!: string;
 
   @Property()
   private name!: string;
@@ -24,8 +25,8 @@ export class UsCity {
   @Property({ nullable: true })
   private population?: number;
 
-  public getGeoid(): string {
-    return this.geoid;
+  public getId(): string {
+    return this.id;
   }
 
   public getName(): string {

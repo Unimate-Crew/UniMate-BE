@@ -12,7 +12,10 @@ import { SearchCityDto } from './dto/search-city.dto';
 import { CityInfo, CityListResponse } from './dto/city-response.dto';
 
 @ApiTags('도시')
-@Controller('city')
+@Controller({
+  path: 'cities',
+  version: '1',
+})
 export class CityController {
   constructor(private readonly cityService: CityService) {}
 
@@ -34,18 +37,18 @@ export class CityController {
     return this.cityService.searchCities(searchCityDto);
   }
 
-  @Get(':geoid')
-  @ApiOperation({
-    summary: '도시 상세 정보',
-    description: 'GEOID로 도시 정보를 조회합니다.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '도시 상세 정보',
-    type: CityInfo,
-  })
-  @ApiResponse({ status: 404, description: '도시를 찾을 수 없음' })
-  async getCityByGeoid(@Param('geoid') geoid: string): Promise<CityInfo> {
-    return this.cityService.getCityByGeoid(geoid);
-  }
+  // @Get(':id')
+  // @ApiOperation({
+  //   summary: '도시 상세 정보',
+  //   description: 'GEOID로 도시 정보를 조회합니다.',
+  // })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: '도시 상세 정보',
+  //   type: CityInfo,
+  // })
+  // @ApiResponse({ status: 404, description: '도시를 찾을 수 없음' })
+  // async getCityById(@Param('id') id: string): Promise<CityInfo> {
+  //   return this.cityService.getCityById(id);
+  // }
 }
