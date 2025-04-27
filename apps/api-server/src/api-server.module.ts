@@ -8,6 +8,7 @@ import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { CityModule } from './city/city.module';
 import { PostModule } from './post/post.module';
+import { UniversityModule } from './university/university.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PostModule } from './post/post.module';
     AuthModule,
     CityModule,
     PostModule,
+    UniversityModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],
