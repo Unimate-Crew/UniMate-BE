@@ -1,7 +1,7 @@
 import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core';
 import { UserRepository } from './user.repository';
 
-export enum AuthProvider {
+export enum OAuthProvider {
   NAVER = 'NAVER',
   KAKAO = 'KAKAO',
 }
@@ -26,8 +26,8 @@ export class User {
   @Property({ nullable: true })
   private phoneNumber?: string;
 
-  @Enum(() => AuthProvider)
-  private provider!: AuthProvider;
+  @Enum(() => OAuthProvider)
+  private provider!: OAuthProvider;
 
   @Property({ nullable: true })
   private providerId?: string;
@@ -64,7 +64,7 @@ export class User {
     return this.profileImageUrl;
   }
 
-  public getProvider(): AuthProvider {
+  public getProvider(): OAuthProvider {
     return this.provider;
   }
 

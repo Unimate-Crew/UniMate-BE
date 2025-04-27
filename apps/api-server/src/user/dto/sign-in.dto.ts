@@ -1,14 +1,14 @@
-import { AuthProvider } from '@app/database';
+import { OAuthProvider } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SignInDto {
   @ApiProperty({
     description: '인증 제공자 (NAVER, KAKAO 등)',
-    enum: AuthProvider,
-    example: AuthProvider.KAKAO,
+    enum: OAuthProvider,
+    example: OAuthProvider.KAKAO,
     required: true,
   })
-  provider!: AuthProvider;
+  provider!: OAuthProvider;
 
   @ApiProperty({
     description: '인증 제공자로부터 받은 유저 ID',
@@ -22,5 +22,5 @@ export class SignInDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
-  accessToken!: string;
+  oAuthToken!: string;
 }

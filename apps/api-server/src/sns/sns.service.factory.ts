@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuthProvider } from '@app/database';
+import { OAuthProvider } from '@app/database';
 import { SnsService } from './sns.service.interface';
 import { NaverSnsService } from './naver-sns.service';
 import { KakaoSnsService } from './kakao-sns.service';
@@ -11,11 +11,11 @@ export class SnsServiceFactory {
     private readonly kakaoSnsService: KakaoSnsService,
   ) {}
 
-  getService(provider: AuthProvider): SnsService {
+  getService(provider: OAuthProvider): SnsService {
     switch (provider) {
-      case AuthProvider.NAVER:
+      case OAuthProvider.NAVER:
         return this.naverSnsService;
-      case AuthProvider.KAKAO:
+      case OAuthProvider.KAKAO:
         return this.kakaoSnsService;
       default:
         throw new Error(`Unsupported provider: ${provider}`);

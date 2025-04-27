@@ -3,5 +3,5 @@ export interface SnsUserInfo {
 }
 
 export interface SnsService {
-  getUserInfo(accessToken: string): Promise<SnsUserInfo>;
+  getUserInfo(oAuthToken: string): Promise<SnsUserInfo>;
 }

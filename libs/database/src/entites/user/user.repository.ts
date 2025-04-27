@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
-import type { User, AuthProvider } from './user.entity';
+import type { User, OAuthProvider } from './user.entity';
 
 @Injectable()
 export class UserRepository extends EntityRepository<User> {
@@ -25,7 +25,7 @@ export class UserRepository extends EntityRepository<User> {
   }
 
   async findByProviderId(
-    provider: AuthProvider,
+    provider: OAuthProvider,
     providerId: string,
   ): Promise<User | null> {
     return this.findOne({ provider, providerId });

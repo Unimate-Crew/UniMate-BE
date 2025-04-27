@@ -1,4 +1,4 @@
-import { AuthProvider } from '@app/database';
+import { OAuthProvider } from '@app/database';
 
 export enum TokenType {
   ACCESS = 'ACCESS',
@@ -7,6 +7,6 @@ export enum TokenType {
 
 export interface TokenPayloadDto {
   userId: number;
-  provider: AuthProvider;
+  provider: OAuthProvider;
   type: TokenType;
 }

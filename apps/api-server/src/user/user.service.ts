@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { User, UserRepository, AuthProvider } from '@app/database';
+import { User, UserRepository, OAuthProvider } from '@app/database';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
 import { SignInDto } from './dto/sign-in.dto';
@@ -22,12 +22,12 @@ export class UserService {
   }
 
   private async validateSnsUserInfo(
-    provider: AuthProvider,
+    provider: OAuthProvider,
     providerId: string,
-    accessToken: string,
+    oAuthToken: string,
   ): Promise<void> {
     const snsService = this.snsServiceFactory.getService(provider);
-    const snsUserInfo = await snsService.getUserInfo(accessToken);
+    const snsUserInfo = await snsService.getUserInfo(oAuthToken);
 
     if (snsUserInfo.id !== providerId) {
       throw new UnauthorizedException({
@@ -38,10 +38,10 @@ export class UserService {
   }
 
   async signUp(signUpDto: SignUpDto): Promise<User> {
-    const { provider, providerId, accessToken, nickname, profileImageUrl } =
+    const { provider, providerId, oAuthToken, nickname, profileImageUrl } =
       signUpDto;
 
-    await this.validateSnsUserInfo(provider, providerId, accessToken);
+    await this.validateSnsUserInfo(provider, providerId, oAuthToken);
 
     let user: User | null = await this.userRepository.findByProviderId(
       provider,
@@ -62,9 +62,9 @@ export class UserService {
   }
 
   async signIn(signInDto: SignInDto): Promise<User> {
-    const { provider, providerId, accessToken } = signInDto;
+    const { provider, providerId, oAuthToken } = signInDto;
 
-    await this.validateSnsUserInfo(provider, providerId, accessToken);
+    await this.validateSnsUserInfo(provider, providerId, oAuthToken);
 
     const user = await this.userRepository.findByProviderId(
       provider,
@@ -84,9 +84,9 @@ export class UserService {
   async checkUserExists(
     checkUserExistsDto: CheckUserExistsDto,
   ): Promise<boolean> {
-    const { provider, providerId, accessToken } = checkUserExistsDto;
+    const { provider, providerId, oAuthToken } = checkUserExistsDto;
 
-    await this.validateSnsUserInfo(provider, providerId, accessToken);
+    await this.validateSnsUserInfo(provider, providerId, oAuthToken);
 
     const user = await this.userRepository.findByProviderId(
       provider,
