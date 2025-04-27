@@ -8,7 +8,12 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CurrencyType, SortDirection, TradeStatus } from '../../common/enums';
+import {
+  CurrencyType,
+  ProductCategory,
+  SortDirection,
+  TradeStatus,
+} from '../../common/enums';
 
 export class SearchPostsRequestDto {
   @ApiProperty({
@@ -63,14 +68,14 @@ export class SearchPostsRequestDto {
   currencyType?: CurrencyType;
 
   @ApiProperty({
-    description: '카테고리 ID 필터',
-    example: 1,
+    description: '카테고리 필터',
+    enum: ProductCategory,
+    example: ProductCategory.ELECTRONICS,
     required: false,
   })
-  @IsInt()
-  @Type(() => Number)
+  @IsEnum(ProductCategory)
   @IsOptional()
-  categoryId?: number;
+  category?: ProductCategory;
 
   @ApiProperty({
     description: '거래 상태 필터',

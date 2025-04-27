@@ -11,7 +11,12 @@ import { GetPostsResponseDto } from './dto/get-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SearchPostsRequestDto } from './dto/search-posts-request.dto';
-import { CurrencyType, SortDirection, TradeStatus } from '../common/enums';
+import {
+  CurrencyType,
+  ProductCategory,
+  SortDirection,
+  TradeStatus,
+} from '../common/enums';
 
 @ApiTags('게시글')
 @ApiBearerAuth()
@@ -149,7 +154,7 @@ export class PostController {
       currencyType,
       minPrice,
       maxPrice,
-      categoryId,
+      category,
       tradeStatus,
       sortDirection = SortDirection.DESC,
       pageNumber = 1,
@@ -164,7 +169,7 @@ export class PostController {
     //   currencyType,
     //   minPrice,
     //   maxPrice,
-    //   categoryId,
+    //   category,
     //   tradeStatus,
     //   sortDirection,
     //   pageNumber,
