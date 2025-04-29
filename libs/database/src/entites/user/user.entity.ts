@@ -17,7 +17,7 @@ export class User {
   @Property({ nullable: true })
   private name?: string;
 
-  @Property()
+  @Property({ unique: true })
   private nickname!: string;
 
   @Property({ nullable: true })

@@ -7,6 +7,7 @@ import {
   Req,
   Get,
   Put,
+  Query,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -29,6 +30,8 @@ import { ErrorResponse } from '../common/error-response';
 import { SaveInterestCitiesDto } from './dto/save-Interest-Cities.dto';
 import { FindInterestCitiesResponseDto } from './dto/find-interest-cities-response.dto';
 import { SetPrimaryInterestCityDto } from './dto/set-primary-interest-city.dto';
+import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
+import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 
 @ApiTags('유저')
 @ApiBearerAuth()
@@ -107,6 +110,25 @@ export class UserController {
     const exists = await this.userService.checkUserExists(checkUserExistsDto);
 
     return CheckUserExistsResponseDto.of(exists);
+  }
+
+  @Get('nickname/exists')
+  @ApiOperation({
+    summary: '닉네임 중복 검사',
+    description: '해당 닉네임이 이미 사용 중인지 확인합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '닉네임 중복 검사 성공',
+    type: CheckNicknameExistsResponseDto,
+  })
+  async checkNicknameExists(
+    @Query() checkNicknameExistsDto: CheckNicknameExistsDto,
+  ): Promise<CheckNicknameExistsResponseDto> {
+    const exists = await this.userService.checkNicknameExists(
+      checkNicknameExistsDto,
+    );
+    return CheckNicknameExistsResponseDto.of(exists);
   }
 
   @Put('/cities')
