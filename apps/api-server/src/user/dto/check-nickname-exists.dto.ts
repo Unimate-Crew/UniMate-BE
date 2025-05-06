@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
+import { IsValidNickname } from '../../common/decorators/nickname.decorator';
 
 export class CheckNicknameExistsDto {
   @ApiProperty({
@@ -8,5 +9,7 @@ export class CheckNicknameExistsDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(10)
+  @IsValidNickname()
   nickname: string;
 }

@@ -122,6 +122,10 @@ export class UserController {
     description: '닉네임 중복 검사 성공',
     type: CheckNicknameExistsResponseDto,
   })
+  @ApiResponse({
+    status: 400,
+    description: '닉네임에 특수문자나 공백이 포함되어 있습니다.',
+  })
   async checkNicknameExists(
     @Query() checkNicknameExistsDto: CheckNicknameExistsDto,
   ): Promise<CheckNicknameExistsResponseDto> {
