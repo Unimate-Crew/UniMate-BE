@@ -4,12 +4,23 @@ import type { User, OAuthProvider } from './user.entity';
 
 @Injectable()
 export class UserRepository extends EntityRepository<User> {
+  async findById(id: number): Promise<User | null> {
+    return this.findOne({ id });
+  }
+
+  async findByProviderId(
+    provider: OAuthProvider,
+    providerId: string,
+  ): Promise<User | null> {
+    return this.findOne({ provider, providerId });
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.findOne({ email });
   }
 
-  async findById(id: number): Promise<User | null> {
-    return this.findOne({ id });
+  async findByNickname(nickname: string): Promise<User | null> {
+    return this.findOne({ nickname });
   }
 
   async persist(user: User): Promise<void> {
@@ -22,12 +33,5 @@ export class UserRepository extends EntityRepository<User> {
 
   async persistAndFlush(user: User): Promise<void> {
     await this.em.persistAndFlush(user);
-  }
-
-  async findByProviderId(
-    provider: OAuthProvider,
-    providerId: string,
-  ): Promise<User | null> {
-    return this.findOne({ provider, providerId });
   }
 }

@@ -5,6 +5,7 @@ import { SnsServiceFactory } from '../sns/sns.service.factory';
 import { SignInDto } from './dto/sign-in.dto';
 import { ErrorCode } from '../common/error-code';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
+import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 
 @Injectable()
 export class UserService {
@@ -92,6 +93,15 @@ export class UserService {
       provider,
       providerId,
     );
+
+    return !!user;
+  }
+
+  async checkNicknameExists(
+    checkNicknameExistsDto: CheckNicknameExistsDto,
+  ): Promise<boolean> {
+    const { nickname } = checkNicknameExistsDto;
+    const user = await this.userRepository.findByNickname(nickname);
 
     return !!user;
   }
