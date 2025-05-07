@@ -7,7 +7,7 @@ import { UserModule } from './user/user.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { CityModule } from './city/city.module';
-import { PostModule } from './post/post.module';
+import { ProductModule } from './product/product.module';
 import { UniversityModule } from './university/university.module';
 
 @Module({
@@ -18,7 +18,7 @@ import { UniversityModule } from './university/university.module';
     DatabaseModule,
     AuthModule,
     CityModule,
-    PostModule,
+    ProductModule,
     UniversityModule,
   ],
   controllers: [ApiServerController],

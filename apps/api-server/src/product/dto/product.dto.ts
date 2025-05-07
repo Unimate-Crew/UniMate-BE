@@ -1,35 +1,34 @@
-// eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyType, TradeStatus } from '../../common/enums';
 
-export class PostItemDto {
+export class ProductDto {
   @ApiProperty({
-    description: '게시글 ID',
+    description: '상품 ID',
     example: 1,
   })
   id: number;
 
   @ApiProperty({
-    description: '게시글 제목',
-    example: '미국 뉴욕 여행 가이드북 팝니다',
+    description: '상품 제목',
+    example: '메사추세츠 여행 가이드북 팝니다',
   })
   title: string;
 
   @ApiProperty({
-    description: '게시글 생성 시간',
+    description: '생성일',
     example: '2023-06-15T09:30:00.000Z',
   })
   createdAt: string;
 
   @ApiProperty({
     description: '대학교 이름',
-    example: '서울대학교',
+    example: 'Harvard University',
   })
   universityName: string;
 
   @ApiProperty({
-    description: '게시글 대표 사진 URL',
-    example: 'https://example.com/images/post1.jpg',
+    description: '썸네일 이미지 URL',
+    example: 'https://example.com/images/product1.jpg',
   })
   thumbnailUrl: string;
 
@@ -41,8 +40,8 @@ export class PostItemDto {
 
   @ApiProperty({
     description: '통화 타입',
-    example: CurrencyType.KRW,
     enum: CurrencyType,
+    example: CurrencyType.KRW,
   })
   currencyType: CurrencyType;
 
@@ -66,35 +65,14 @@ export class PostItemDto {
 
   @ApiProperty({
     description: '도시 이름',
-    example: '서울',
+    example: 'Massachusetts',
   })
   cityName: string;
 
   @ApiProperty({
     description: '거래 상태',
-    example: TradeStatus.FOR_SALE,
     enum: TradeStatus,
+    example: TradeStatus.FOR_SALE,
   })
   tradeStatus: TradeStatus;
-}
-
-export class GetPostsResponseDto {
-  @ApiProperty({
-    description: '게시글 목록',
-    type: [PostItemDto],
-  })
-  content: PostItemDto[];
-
-  @ApiProperty({
-    description: '다음 페이지 존재 여부',
-    example: true,
-  })
-  hasNext: boolean;
-
-  static of(content: PostItemDto[], hasNext: boolean): GetPostsResponseDto {
-    const response = new GetPostsResponseDto();
-    response.content = content;
-    response.hasNext = hasNext;
-    return response;
-  }
 }
