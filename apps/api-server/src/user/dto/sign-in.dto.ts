@@ -1,5 +1,6 @@
 import { OAuthProvider } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class SignInDto {
   @ApiProperty({
@@ -8,6 +9,8 @@ export class SignInDto {
     example: OAuthProvider.KAKAO,
     required: true,
   })
+  @IsEnum(OAuthProvider)
+  @IsNotEmpty()
   provider!: OAuthProvider;
 
   @ApiProperty({
@@ -15,6 +18,8 @@ export class SignInDto {
     example: '123456789',
     required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   providerId!: string;
 
   @ApiProperty({
@@ -22,5 +27,7 @@ export class SignInDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   oAuthToken!: string;
 }
