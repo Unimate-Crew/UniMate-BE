@@ -11,15 +11,11 @@ import { GetPostsResponseDto } from './dto/get-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SearchPostsRequestDto } from './dto/search-posts-request.dto';
-import {
-  CurrencyType,
-  ProductCategory,
-  SortDirection,
-  TradeStatus,
-} from '../common/enums';
+import { CurrencyType, SortDirection, TradeStatus } from '../common/enums';
 
 @ApiTags('게시글')
-@ApiBearerAuth()
+@ApiBearerAuth('accessToken')
+@UseGuards(JwtAuthGuard)
 @Controller({
   path: 'posts',
   version: '1',
@@ -39,7 +35,6 @@ export class PostController {
     description: '잘못된 요청',
     type: ErrorResponse,
   })
-  @UseGuards(JwtAuthGuard)
   async getPosts(
     @Query() query: GetPostsRequestDto,
   ): Promise<GetPostsResponseDto> {
