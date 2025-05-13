@@ -1,5 +1,6 @@
 import { OAuthProvider } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class SignUpDto {
   @ApiProperty({
@@ -8,6 +9,8 @@ export class SignUpDto {
     example: OAuthProvider.KAKAO,
     required: true,
   })
+  @IsEnum(OAuthProvider)
+  @IsNotEmpty()
   provider!: OAuthProvider;
 
   @ApiProperty({
@@ -15,6 +18,8 @@ export class SignUpDto {
     example: '123456789',
     required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   providerId!: string;
 
   @ApiProperty({
@@ -22,6 +27,8 @@ export class SignUpDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   oAuthToken!: string;
 
   @ApiProperty({
@@ -29,6 +36,8 @@ export class SignUpDto {
     example: '홍길동',
     required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   nickname!: string;
 
   @ApiProperty({
@@ -36,5 +45,7 @@ export class SignUpDto {
     example: 'https://example.com/profile.jpg',
     required: false,
   })
+  @IsString()
+  @IsOptional()
   profileImageUrl?: string;
 }
