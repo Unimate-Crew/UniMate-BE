@@ -34,7 +34,6 @@ import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 
 @ApiTags('유저')
-@ApiBearerAuth()
 @Controller({
   path: 'users',
   version: '1',
@@ -150,7 +149,7 @@ export class UserController {
     status: 401,
     description: '인증 실패',
   })
-  @ApiBearerAuth()
+  @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async saveInterestCities(
@@ -179,6 +178,7 @@ export class UserController {
     status: 401,
     description: '인증 실패',
   })
+  @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   async findInterestCities(
     @Req() req: Request,
@@ -211,6 +211,7 @@ export class UserController {
     status: 401,
     description: '인증 실패',
   })
+  @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async setPrimaryInterestCity(

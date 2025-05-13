@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -8,10 +8,11 @@ import {
 import { UniversityService } from './university.service';
 import { SearchUniversitiesRequestDto } from './dto/search-universities-request.dto';
 import { SearchUniversitiesResponseDto } from './dto/search-universities-response.dto';
-import { ErrorResponse } from '../common/error-response';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('대학교')
-@ApiBearerAuth()
+@ApiBearerAuth('accessToken')
+@UseGuards(JwtAuthGuard)
 @Controller({
   path: 'universities',
   version: '1',

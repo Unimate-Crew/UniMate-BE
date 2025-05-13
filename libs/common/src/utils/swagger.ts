@@ -45,7 +45,7 @@ export function setupSwagger(
         description: 'JWT Authorization header using the Bearer scheme.',
         in: 'header',
       },
-      'access_token',
+      'accessToken',
     )
     .build();
 
