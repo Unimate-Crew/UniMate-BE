@@ -5,8 +5,8 @@ import { MySqlDriver } from '@mikro-orm/mysql';
 import { LoadStrategy } from '@mikro-orm/core';
 import * as path from 'path';
 import { User } from './entites/user/user.entity';
-import { UsState } from './entites/city/us-state.entity';
-import { UsCounty } from './entites/city/us-county.entity';
+import { UsState } from './entites/region/us-state.entity';
+import { UsCounty } from './entites/region/us-county.entity';
 import { UsCity } from './entites/city/us-city.entity';
 
 @Global()
