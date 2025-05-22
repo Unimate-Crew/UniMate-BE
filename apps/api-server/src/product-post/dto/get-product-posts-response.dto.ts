@@ -2,21 +2,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyType, TradeStatus } from '../../common/enums';
 
-export class PostItemDto {
+export class ProductPostItemDto {
   @ApiProperty({
-    description: '게시글 ID',
+    description: '상품 게시글 ID',
     example: 1,
   })
   id: number;
 
   @ApiProperty({
-    description: '게시글 제목',
+    description: '상품 게시글 제목',
     example: '미국 뉴욕 여행 가이드북 팝니다',
   })
   title: string;
 
   @ApiProperty({
-    description: '게시글 생성 시간',
+    description: '상품 게시글 생성 시간',
     example: '2023-06-15T09:30:00.000Z',
   })
   createdAt: string;
@@ -28,8 +28,8 @@ export class PostItemDto {
   universityName: string;
 
   @ApiProperty({
-    description: '게시글 대표 사진 URL',
-    example: 'https://example.com/images/post1.jpg',
+    description: '상품 게시글 대표 사진 URL',
+    example: 'https://example.com/images/product-post1.jpg',
   })
   thumbnailUrl: string;
 
@@ -78,12 +78,12 @@ export class PostItemDto {
   tradeStatus: TradeStatus;
 }
 
-export class GetPostsResponseDto {
+export class GetProductPostsResponseDto {
   @ApiProperty({
-    description: '게시글 목록',
-    type: [PostItemDto],
+    description: '상품 게시글 목록',
+    type: [ProductPostItemDto],
   })
-  content: PostItemDto[];
+  content: ProductPostItemDto[];
 
   @ApiProperty({
     description: '다음 페이지 존재 여부',
@@ -91,8 +91,11 @@ export class GetPostsResponseDto {
   })
   hasNext: boolean;
 
-  static of(content: PostItemDto[], hasNext: boolean): GetPostsResponseDto {
-    const response = new GetPostsResponseDto();
+  static of(
+    content: ProductPostItemDto[],
+    hasNext: boolean,
+  ): GetProductPostsResponseDto {
+    const response = new GetProductPostsResponseDto();
     response.content = content;
     response.hasNext = hasNext;
     return response;

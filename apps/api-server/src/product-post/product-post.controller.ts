@@ -5,56 +5,56 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { PostService } from './post.service';
-import { GetPostsRequestDto } from './dto/get-posts-request.dto';
-import { GetPostsResponseDto } from './dto/get-posts-response.dto';
+import { ProductPostService } from './product-post.service';
+import { GetProductPostsRequestDto } from './dto/get-product-posts-request.dto';
+import { GetProductPostsResponseDto } from './dto/get-product-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
-import { SearchPostsRequestDto } from './dto/search-posts-request.dto';
+import { SearchProductPostsRequestDto } from './dto/search-product-posts-request.dto';
 import { CurrencyType, SortDirection, TradeStatus } from '../common/enums';
 
-@ApiTags('게시글')
+@ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
 @UseGuards(JwtAuthGuard)
 @Controller({
-  path: 'posts',
+  path: 'product-posts',
   version: '1',
 })
-export class PostController {
-  constructor(private readonly postService: PostService) {}
+export class ProductPostController {
+  constructor(private readonly productPostService: ProductPostService) {}
 
   @Get()
-  @ApiOperation({ summary: '게시글 목록 조회 API' })
+  @ApiOperation({ summary: '상품 게시글 목록 조회 API' })
   @ApiResponse({
     status: 200,
-    description: '게시글 목록 조회 성공',
-    type: GetPostsResponseDto,
+    description: '상품 게시글 목록 조회 성공',
+    type: GetProductPostsResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: '잘못된 요청',
     type: ErrorResponse,
   })
-  async getPosts(
-    @Query() query: GetPostsRequestDto,
-  ): Promise<GetPostsResponseDto> {
+  async getProductPosts(
+    @Query() query: GetProductPostsRequestDto,
+  ): Promise<GetProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, cityId } = query;
 
     // 모의 데이터 대신 실제 서비스 호출
-    // const { content, hasNext } = await this.postService.getPosts(
+    // const { content, hasNext } = await this.productPostService.getProductPosts(
     //   pageNumber,
     //   pageSize,
     //   cityId,
     // );
 
-    return GetPostsResponseDto.of(
+    return GetProductPostsResponseDto.of(
       [
         {
           id: 1,
           title: '메사추세츠 여행 가이드북 팝니다',
           createdAt: '2023-06-15T09:30:00.000Z',
           universityName: 'Harvard University',
-          thumbnailUrl: 'https://example.com/images/post1.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post1.jpg',
           price: 15000,
           currencyType: CurrencyType.KRW,
           likeCount: 24,
@@ -68,7 +68,7 @@ export class PostController {
           title: '전자레인지 팝니다',
           createdAt: '2023-06-14T10:45:00.000Z',
           universityName: 'Massachusetts Institute of Technology',
-          thumbnailUrl: 'https://example.com/images/post2.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post2.jpg',
           price: 30000,
           currencyType: CurrencyType.KRW,
           likeCount: 15,
@@ -82,7 +82,7 @@ export class PostController {
           title: '뉴욕 여행 가이드북 팝니다',
           createdAt: '2023-06-13T11:20:00.000Z',
           universityName: 'Cornell University',
-          thumbnailUrl: 'https://example.com/images/post3.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post3.jpg',
           price: 50,
           currencyType: CurrencyType.USD,
           likeCount: 32,
@@ -96,7 +96,7 @@ export class PostController {
           title: '냉장고 삽니다',
           createdAt: '2023-06-12T13:15:00.000Z',
           universityName: 'Yale University',
-          thumbnailUrl: 'https://example.com/images/post4.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post4.jpg',
           price: 10000,
           currencyType: CurrencyType.KRW,
           likeCount: 41,
@@ -110,7 +110,7 @@ export class PostController {
           title: '소파 팝니다',
           createdAt: '2023-06-11T14:30:00.000Z',
           universityName: 'Princeton University',
-          thumbnailUrl: 'https://example.com/images/post5.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post5.jpg',
           price: 200000,
           currencyType: CurrencyType.KRW,
           likeCount: 19,
@@ -126,23 +126,23 @@ export class PostController {
 
   @Get('/search')
   @ApiOperation({
-    summary: '게시글 검색 API',
+    summary: '상품 게시글 검색 API',
     description:
       '제목 기준으로 키워드 검색, 대학교/가격/카테고리/거래 상태 필터링, 생성일 기준 정렬 기능 제공',
   })
   @ApiResponse({
     status: 200,
-    description: '게시글 검색 성공',
-    type: GetPostsResponseDto,
+    description: '상품 게시글 검색 성공',
+    type: GetProductPostsResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: '잘못된 요청',
     type: ErrorResponse,
   })
-  async searchPosts(
-    @Query() query: SearchPostsRequestDto,
-  ): Promise<GetPostsResponseDto> {
+  async searchProductPosts(
+    @Query() query: SearchProductPostsRequestDto,
+  ): Promise<GetProductPostsResponseDto> {
     const {
       searchKeyword,
       universityId,
@@ -158,7 +158,7 @@ export class PostController {
     } = query;
 
     // 모의 데이터 대신 실제 서비스 호출
-    // const { content, hasNext } = await this.postService.searchPosts(
+    // const { content, hasNext } = await this.productPostService.searchProductPosts(
     //   searchKeyword,
     //   universityId,
     //   currencyType,
@@ -173,14 +173,14 @@ export class PostController {
     // );
 
     // 검색 결과 샘플 데이터 (keyword가 '가이드북'일 경우의 응답)
-    return GetPostsResponseDto.of(
+    return GetProductPostsResponseDto.of(
       [
         {
           id: 1,
           title: '메사추세츠 여행 가이드북 팝니다',
           createdAt: '2023-06-15T09:30:00.000Z',
           universityName: 'Harvard University',
-          thumbnailUrl: 'https://example.com/images/post1.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post1.jpg',
           price: 15000,
           currencyType: CurrencyType.KRW,
           likeCount: 24,
@@ -194,7 +194,7 @@ export class PostController {
           title: '뉴욕 여행 가이드북 팝니다',
           createdAt: '2023-06-13T11:20:00.000Z',
           universityName: 'Cornell University',
-          thumbnailUrl: 'https://example.com/images/post3.jpg',
+          thumbnailUrl: 'https://example.com/images/product-post3.jpg',
           price: 50,
           currencyType: CurrencyType.USD,
           likeCount: 32,

@@ -15,7 +15,7 @@ import {
   TradeStatus,
 } from '../../common/enums';
 
-export class SearchPostsRequestDto {
+export class SearchProductPostsRequestDto {
   @ApiProperty({
     description: '검색 키워드 (제목 기준 또는 설명으로 검색)',
     example: '가이드북',
