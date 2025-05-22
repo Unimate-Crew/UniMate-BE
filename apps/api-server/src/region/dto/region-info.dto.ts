@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UsCity } from 'libs/database/src/entites/city/us-city.entity';
+import { Region } from '@app/database/entites/region/region.entity';
 
-export class CityInfo {
-  @ApiProperty({ description: '도시 ID' })
+export class RegionInfo {
+  @ApiProperty({ description: '지역 ID' })
   id: string;
 
-  @ApiProperty({ description: '도시 이름' })
+  @ApiProperty({ description: '지역 이름' })
   name: string;
 
   @ApiProperty({ description: '위도', required: false })
@@ -15,12 +15,12 @@ export class CityInfo {
   longitude?: number;
 
   /**
-   * UsCity 엔티티에서 CityInfo DTO 객체를 생성합니다.
-   * @param entity UsCity 엔티티
-   * @returns CityInfo DTO 객체
+   * Region 엔티티에서 RegionInfo DTO 객체를 생성합니다.
+   * @param entity Region 엔티티
+   * @returns RegionInfo DTO 객체
    */
-  static from(entity: UsCity): CityInfo {
-    const dto = new CityInfo();
+  static from(entity: Region): RegionInfo {
+    const dto = new RegionInfo();
     dto.id = entity.getId();
     dto.name = entity.getName();
     dto.latitude = entity.getLatitude();

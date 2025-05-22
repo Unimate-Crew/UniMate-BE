@@ -27,9 +27,9 @@ import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
-import { SaveInterestCitiesDto } from './dto/save-Interest-Cities.dto';
-import { FindInterestCitiesResponseDto } from './dto/find-interest-cities-response.dto';
-import { SetPrimaryInterestCityDto } from './dto/set-primary-interest-city.dto';
+import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
+import { FindInterestRegionsResponseDto } from './dto/find-interest-regions-response.dto';
+import { SetPrimaryInterestRegionDto } from './dto/set-primary-interest-region.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 
@@ -134,16 +134,16 @@ export class UserController {
     return CheckNicknameExistsResponseDto.of(exists);
   }
 
-  @Put('/cities')
-  @ApiOperation({ summary: '관심도시 저장 API' })
+  @Put('/regions')
+  @ApiOperation({ summary: '관심지역 저장 API' })
   @ApiResponse({
     status: 204,
-    description: '관심도시 저장 성공',
+    description: '관심지역 저장 성공',
   })
   @ApiResponse({
     status: 404,
     type: ErrorResponse,
-    description: 'code: U001(유저가 존재하지 않음), C001(도시가 존재하지 않음)',
+    description: 'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음)',
   })
   @ApiResponse({
     status: 401,
@@ -152,22 +152,22 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
-  async saveInterestCities(
+  async saveInterestRegions(
     @Req() req: Request,
-    @Body() saveInterestCitiesDto: SaveInterestCitiesDto,
+    @Body() saveInterestRegionsDto: SaveInterestRegionsDto,
   ): Promise<any> {
     const userId = (req.user as User).getId();
-    // await this.userService.saveCities(userId, saveCitiesDto.cityIds);
+    // await this.userService.saveRegions(userId, saveInterestRegionsDto.regionIds);
   }
 
-  @Get('/cities')
+  @Get('/regions')
   @ApiOperation({
-    summary: '관심도시 리스트 조회 API (기본 관심도시 정보 포함)',
+    summary: '관심지역 리스트 조회 API (기본 관심지역 정보 포함)',
   })
   @ApiResponse({
     status: 200,
-    description: '관심도시 리스트 조회 성공',
-    type: FindInterestCitiesResponseDto,
+    description: '관심지역 리스트 조회 성공',
+    type: FindInterestRegionsResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -180,32 +180,32 @@ export class UserController {
   })
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
-  async findInterestCities(
+  async findInterestRegions(
     @Req() req: Request,
-  ): Promise<FindInterestCitiesResponseDto> {
+  ): Promise<FindInterestRegionsResponseDto> {
     const userId = (req.user as User).getId();
     // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
-    // const cities = await this.userService.getInterestCities(userId);
+    // const regions = await this.userService.getInterestRegions(userId);
 
     // 임시 응답 데이터
-    return FindInterestCitiesResponseDto.of([
+    return FindInterestRegionsResponseDto.of([
       { id: 1, name: 'New York', isPrimary: true },
       { id: 2, name: 'Los Angeles', isPrimary: false },
       { id: 3, name: 'Chicago', isPrimary: false },
     ]);
   }
 
-  @Put('/cities/primary')
-  @ApiOperation({ summary: '기본 관심도시 설정 API' })
+  @Put('/regions/primary')
+  @ApiOperation({ summary: '기본 관심지역 설정 API' })
   @ApiResponse({
     status: 204,
-    description: '기본 관심도시 설정 성공',
+    description: '기본 관심지역 설정 성공',
   })
   @ApiResponse({
     status: 404,
     type: ErrorResponse,
     description:
-      'code: U001(유저가 존재하지 않음), C001(도시가 존재하지 않음), IC001(유저의 관심도시 목록에 해당 도시가 존재하지 않음)',
+      'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음)',
   })
   @ApiResponse({
     status: 401,
@@ -214,12 +214,12 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
-  async setPrimaryInterestCity(
+  async setPrimaryInterestRegion(
     @Req() req: Request,
-    @Body() setPrimaryInterestCityDto: SetPrimaryInterestCityDto,
+    @Body() setPrimaryInterestRegionDto: SetPrimaryInterestRegionDto,
   ): Promise<void> {
     const userId = (req.user as User).getId();
     // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
-    // await this.userService.setPrimaryInterestCity(userId, setPrimaryInterestCityDto.cityId);
+    // await this.userService.setPrimaryInterestRegion(userId, setPrimaryInterestRegionDto.regionId);
   }
 }

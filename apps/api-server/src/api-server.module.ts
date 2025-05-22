@@ -6,7 +6,7 @@ import { ApiServerController } from './api-server.controller';
 import { UserModule } from './user/user.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
-import { CityModule } from './city/city.module';
+import { RegionModule } from './region/region.module';
 import { ProductPostModule } from './product-post/product-post.module';
 import { UniversityModule } from './university/university.module';
 
@@ -17,7 +17,7 @@ import { UniversityModule } from './university/university.module';
     UserModule,
     DatabaseModule,
     AuthModule,
-    CityModule,
+    RegionModule,
     ProductPostModule,
     UniversityModule,
   ],

@@ -31,7 +31,6 @@ export class Region extends BaseEntity {
   @Property({ columnType: 'bigint', nullable: true })
   private population?: number;
 
-  @Property({ nullable: true })
   public getId(): string {
     return this.id;
   }
@@ -42,6 +41,46 @@ export class Region extends BaseEntity {
 
   public setName(name: string): void {
     this.name = name;
+  }
+
+  public getStateId(): string {
+    return this.stateId;
+  }
+
+  public setStateId(stateId: string): void {
+    this.stateId = stateId;
+  }
+
+  public getCountyId(): string | undefined {
+    return this.countyId;
+  }
+
+  public setCountyId(countyId: string): void {
+    this.countyId = countyId;
+  }
+
+  public getLatitude(): number | undefined {
+    return this.latitude;
+  }
+
+  public setLatitude(latitude: number): void {
+    this.latitude = latitude;
+  }
+
+  public getLongitude(): number | undefined {
+    return this.longitude;
+  }
+
+  public setLongitude(longitude: number): void {
+    this.longitude = longitude;
+  }
+
+  public getPopulation(): number | undefined {
+    return this.population;
+  }
+
+  public setPopulation(population: number): void {
+    this.population = population;
   }
 
   public isRegionDeleted(): boolean {
