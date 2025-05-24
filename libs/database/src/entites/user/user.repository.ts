@@ -12,11 +12,7 @@ export class UserRepository extends EntityRepository<User> {
     provider: OAuthProvider,
     providerId: string,
   ): Promise<User | null> {
-    return this.findOne({ provider, providerId });
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return this.findOne({ email });
+    return this.findOne({ provider });
   }
 
   async findByNickname(nickname: string): Promise<User | null> {

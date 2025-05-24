@@ -75,20 +75,20 @@ export class AuthService {
       baseRedirectUrl = 'http://localhost:3000';
     }
 
-    // 이미 가입 완료된 사용자인 경우
-    if (user.getIsSignUpCompleted()) {
-      const tokens = await this.generateTokens(user);
+    // // 이미 가입 완료된 사용자인 경우
+    // if (user.getIsSignUpCompleted()) {
+    //   const tokens = await this.generateTokens(user);
 
-      // URL에 토큰을 쿼리 파라미터로 추가
-      const redirectUrl = new URL(baseRedirectUrl);
-      redirectUrl.searchParams.append('accessToken', tokens.accessToken);
-      redirectUrl.searchParams.append('refreshToken', tokens.refreshToken);
+    //   // URL에 토큰을 쿼리 파라미터로 추가
+    //   const redirectUrl = new URL(baseRedirectUrl);
+    //   redirectUrl.searchParams.append('accessToken', tokens.accessToken);
+    //   redirectUrl.searchParams.append('refreshToken', tokens.refreshToken);
 
-      return {
-        redirectUrl: redirectUrl.toString(),
-        tokens,
-      };
-    }
+    //   return {
+    //     redirectUrl: redirectUrl.toString(),
+    //     tokens,
+    //   };
+    // }
 
     // 가입이 완료되지 않은 사용자인 경우
     // 회원가입 페이지로 리다이렉트 (사용자 ID를 쿼리 파라미터로 전달)

@@ -1,0 +1,106 @@
+import {
+  Entity,
+  PrimaryKey,
+  Property,
+  Collection,
+  OneToMany,
+} from '@mikro-orm/core';
+import { RegionRepository } from './region.repository';
+import { BaseEntity } from '../../common/base.entity';
+
+@Entity({ repository: () => RegionRepository })
+export class Region extends BaseEntity {
+  @PrimaryKey()
+  private readonly id!: string;
+
+  @Property()
+  private name!: string;
+
+  @Property()
+  private stateId!: string;
+
+  @Property()
+  private countyId?: string;
+
+  @Property({ columnType: 'decimal(10, 6)', nullable: true })
+  private latitude?: number;
+
+  @Property({ columnType: 'decimal(10, 6)', nullable: true })
+  private longitude?: number;
+
+  @Property({ columnType: 'bigint', nullable: true })
+  private population?: number;
+
+  public getId(): string {
+    return this.id;
+  }
+
+  public getName(): string {
+    return this.name;
+  }
+
+  public setName(name: string): void {
+    this.name = name;
+  }
+
+  public getStateId(): string {
+    return this.stateId;
+  }
+
+  public setStateId(stateId: string): void {
+    this.stateId = stateId;
+  }
+
+  public getCountyId(): string | undefined {
+    return this.countyId;
+  }
+
+  public setCountyId(countyId: string): void {
+    this.countyId = countyId;
+  }
+
+  public getLatitude(): number | undefined {
+    return this.latitude;
+  }
+
+  public setLatitude(latitude: number): void {
+    this.latitude = latitude;
+  }
+
+  public getLongitude(): number | undefined {
+    return this.longitude;
+  }
+
+  public setLongitude(longitude: number): void {
+    this.longitude = longitude;
+  }
+
+  public getPopulation(): number | undefined {
+    return this.population;
+  }
+
+  public setPopulation(population: number): void {
+    this.population = population;
+  }
+
+  public isRegionDeleted(): boolean {
+    return this.isDeleted;
+  }
+
+  public delete(): void {
+    this.isDeleted = true;
+    this.deletedAt = new Date();
+  }
+
+  public getCreatedAt(): Date {
+    return this.createdAt;
+  }
+
+  public getUpdatedAt(): Date {
+    return this.updatedAt;
+  }
+
+  public getDeletedAt(): Date | undefined {
+    return this.deletedAt;
+  }
+}
