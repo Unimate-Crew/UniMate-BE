@@ -1,6 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
-import { CurrencyType, TradeStatus } from '../../common/enums';
+import { CurrencyType, TradeStatus } from '@app/database/common/enums';
 
 export class ProductPostItemDto {
   @ApiProperty({

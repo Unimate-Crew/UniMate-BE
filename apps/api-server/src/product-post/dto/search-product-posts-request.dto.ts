@@ -13,7 +13,7 @@ import {
   ProductCategory,
   SortDirection,
   TradeStatus,
-} from '../../common/enums';
+} from '@app/database/common/enums';
 
 export class SearchProductPostsRequestDto {
   @ApiProperty({

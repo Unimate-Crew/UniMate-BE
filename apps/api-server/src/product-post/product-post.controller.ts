@@ -5,13 +5,17 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  CurrencyType,
+  SortDirection,
+  TradeStatus,
+} from '@app/database/common/enums';
 import { ProductPostService } from './product-post.service';
 import { GetProductPostsRequestDto } from './dto/get-product-posts-request.dto';
 import { GetProductPostsResponseDto } from './dto/get-product-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SearchProductPostsRequestDto } from './dto/search-product-posts-request.dto';
-import { CurrencyType, SortDirection, TradeStatus } from '../common/enums';
 
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
