@@ -12,10 +12,7 @@ import { SearchRegionDto } from './dto/search-region.dto';
 import { RegionInfo, RegionListResponse } from './dto/region-response.dto';
 
 @ApiTags('지역')
-@Controller({
-  path: 'regions',
-  version: '1',
-})
+@Controller({ path: 'regions' })
 export class RegionController {
   constructor(private readonly regionService: RegionService) {}
 

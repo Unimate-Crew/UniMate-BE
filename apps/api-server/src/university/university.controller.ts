@@ -13,10 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @ApiTags('대학교')
 @ApiBearerAuth('accessToken')
 @UseGuards(JwtAuthGuard)
-@Controller({
-  path: 'universities',
-  version: '1',
-})
+@Controller({ path: 'universities' })
 export class UniversityController {
   constructor(private readonly universityService: UniversityService) {}
 
