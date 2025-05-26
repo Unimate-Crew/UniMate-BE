@@ -16,10 +16,7 @@ import { CurrencyType, SortDirection, TradeStatus } from '../common/enums';
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
 @UseGuards(JwtAuthGuard)
-@Controller({
-  path: 'product-posts',
-  version: '1',
-})
+@Controller({ path: 'product-posts' })
 export class ProductPostController {
   constructor(private readonly productPostService: ProductPostService) {}
 

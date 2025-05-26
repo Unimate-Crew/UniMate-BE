@@ -34,10 +34,7 @@ import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 
 @ApiTags('유저')
-@Controller({
-  path: 'users',
-  version: '1',
-})
+@Controller({ path: 'users' })
 export class UserController {
   constructor(
     private readonly userService: UserService,
