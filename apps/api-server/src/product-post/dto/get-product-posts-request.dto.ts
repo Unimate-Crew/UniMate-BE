@@ -28,12 +28,12 @@ export class GetProductPostsRequestDto {
   pageSize?: number = 10;
 
   @ApiProperty({
-    description: '필터링할 도시 ID',
+    description: '필터링할 지역 ID',
     example: 1,
     required: false,
   })
   @IsInt()
   @IsOptional()
   @Type(() => Number)
-  cityId?: number;
+  regionId?: number;
 }

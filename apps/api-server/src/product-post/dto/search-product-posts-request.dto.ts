@@ -123,12 +123,12 @@ export class SearchProductPostsRequestDto {
   pageSize?: number = 10;
 
   @ApiProperty({
-    description: '도시 ID',
+    description: '지역 ID',
     example: 1,
     required: false,
   })
   @IsInt()
   @Type(() => Number)
   @IsOptional()
-  cityId?: number;
+  regionId?: number;
 }

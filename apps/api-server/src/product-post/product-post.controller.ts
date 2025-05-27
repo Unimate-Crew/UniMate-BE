@@ -42,13 +42,13 @@ export class ProductPostController {
   async getProductPosts(
     @Query() query: GetProductPostsRequestDto,
   ): Promise<GetProductPostsResponseDto> {
-    const { pageNumber = 1, pageSize = 10, cityId } = query;
+    const { pageNumber = 1, pageSize = 10, regionId } = query;
 
     // 모의 데이터 대신 실제 서비스 호출
     // const { content, hasNext } = await this.productPostService.getProductPosts(
     //   pageNumber,
     //   pageSize,
-    //   cityId,
+    //   regionId,
     // );
 
     return GetProductPostsResponseDto.of(
@@ -63,8 +63,8 @@ export class ProductPostController {
           currencyType: CurrencyType.KRW,
           likeCount: 24,
           commentCount: 5,
-          cityId: 1,
-          cityName: 'Massachusetts',
+          regionId: 1,
+          regionName: 'Massachusetts',
           tradeStatus: TradeStatus.FOR_SALE,
         },
         {
@@ -77,8 +77,8 @@ export class ProductPostController {
           currencyType: CurrencyType.KRW,
           likeCount: 15,
           commentCount: 3,
-          cityId: 2,
-          cityName: 'Massachusetts',
+          regionId: 2,
+          regionName: 'Massachusetts',
           tradeStatus: TradeStatus.RESERVED,
         },
         {
@@ -91,8 +91,8 @@ export class ProductPostController {
           currencyType: CurrencyType.USD,
           likeCount: 32,
           commentCount: 8,
-          cityId: 3,
-          cityName: 'New York',
+          regionId: 3,
+          regionName: 'New York',
           tradeStatus: TradeStatus.FOR_SALE,
         },
         {
@@ -105,8 +105,8 @@ export class ProductPostController {
           currencyType: CurrencyType.KRW,
           likeCount: 41,
           commentCount: 12,
-          cityId: 4,
-          cityName: 'New York',
+          regionId: 4,
+          regionName: 'New York',
           tradeStatus: TradeStatus.COMPLETED,
         },
         {
@@ -119,8 +119,8 @@ export class ProductPostController {
           currencyType: CurrencyType.KRW,
           likeCount: 19,
           commentCount: 4,
-          cityId: 5,
-          cityName: 'New York',
+          regionId: 5,
+          regionName: 'New York',
           tradeStatus: TradeStatus.FOR_SALE,
         },
       ],
@@ -158,7 +158,7 @@ export class ProductPostController {
       sortDirection = SortDirection.DESC,
       pageNumber = 1,
       pageSize = 10,
-      cityId,
+      regionId,
     } = query;
 
     // 모의 데이터 대신 실제 서비스 호출
@@ -173,7 +173,7 @@ export class ProductPostController {
     //   sortDirection,
     //   pageNumber,
     //   pageSize,
-    //   cityId
+    //   regionId,
     // );
 
     // 검색 결과 샘플 데이터 (keyword가 '가이드북'일 경우의 응답)
@@ -189,8 +189,8 @@ export class ProductPostController {
           currencyType: CurrencyType.KRW,
           likeCount: 24,
           commentCount: 5,
-          cityId: 1,
-          cityName: 'Massachusetts',
+          regionId: 1,
+          regionName: 'Massachusetts',
           tradeStatus: TradeStatus.FOR_SALE,
         },
         {
@@ -203,8 +203,8 @@ export class ProductPostController {
           currencyType: CurrencyType.USD,
           likeCount: 32,
           commentCount: 8,
-          cityId: 3,
-          cityName: 'New York',
+          regionId: 3,
+          regionName: 'New York',
           tradeStatus: TradeStatus.FOR_SALE,
         },
       ],
