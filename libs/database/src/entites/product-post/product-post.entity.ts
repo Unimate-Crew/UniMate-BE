@@ -41,7 +41,7 @@ export class ProductPost extends BaseEntity {
   private tradeTypeDescription?: string;
 
   @Property()
-  private regionId!: number;
+  private regionId!: string;
 
   @Property({ nullable: true })
   private universityId?: number;
@@ -122,11 +122,11 @@ export class ProductPost extends BaseEntity {
     this.tradeTypeDescription = tradeTypeDescription;
   }
 
-  public getRegionId(): number {
+  public getRegionId(): string {
     return this.regionId;
   }
 
-  public setRegionId(regionId: number): void {
+  public setRegionId(regionId: string): void {
     this.regionId = regionId;
   }
 

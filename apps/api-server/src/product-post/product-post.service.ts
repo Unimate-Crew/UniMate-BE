@@ -1,10 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
+import { User } from '@app/database/entites/user/user.entity';
+import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
+import { ProductImageRepository } from '@app/database/entites/product-post/product-image.repository';
+import { ProductImage } from '@app/database/entites/product-post/product-image.entity';
+import { TradeStatus } from '@app/database/common/enums';
+import { Transactional } from '@mikro-orm/core';
+import { UserRepository } from '@app/database/entites/user/user.repository';
+import { CreateProductPostDto } from './dto/create-product-post.dto';
 import { ProductPostItemDto } from './dto/get-product-posts-response.dto';
+import { ErrorCode } from '../common/error-code';
 
 @Injectable()
 export class ProductPostService {
-  constructor(private readonly productPostRepository: ProductPostRepository) {}
+  constructor(
+    private readonly productPostRepository: ProductPostRepository,
+    private readonly productImageRepository: ProductImageRepository,
+    private readonly userRepository: UserRepository,
+  ) {}
 
   /**
    * 상품 게시글 목록을 페이지네이션하여 조회합니다.
@@ -51,5 +64,47 @@ export class ProductPostService {
    */
   private getMockProductPosts(): (ProductPostItemDto & { regionId: number })[] {
     return [];
+  }
+
+  @Transactional()
+  async createProductPost(
+    createProductPostDto: CreateProductPostDto,
+    userId: number,
+  ): Promise<number> {
+    const user: User = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: 'Requested user ID does not match the authenticated user',
+      });
+    }
+
+    const productPost: ProductPost = this.productPostRepository.create({
+      ...createProductPostDto,
+      userId,
+      tradeStatus: TradeStatus.FOR_SALE,
+      universityId: user.getUniversityId(),
+    });
+    await this.productPostRepository.persistAndFlush(productPost);
+
+    const productImages = createProductPostDto.imageUrls.map(
+      (imageUrl, index) => {
+        const productImage: ProductImage = this.productImageRepository.create({
+          productId: productPost.getId(),
+          imageUrl,
+          isThumbnail: index === 0,
+        });
+        return productImage;
+      },
+    );
+
+    // 3. 이미지들 저장
+    await Promise.all(
+      productImages.map((productImage) =>
+        this.productImageRepository.persistAndFlush(productImage),
+      ),
+    );
+
+    return productPost.getId();
   }
 }

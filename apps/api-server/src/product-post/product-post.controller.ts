@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Post, Body } from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -10,12 +10,16 @@ import {
   SortDirection,
   TradeStatus,
 } from '@app/database/common/enums';
+import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { ProductPostService } from './product-post.service';
 import { GetProductPostsRequestDto } from './dto/get-product-posts-request.dto';
 import { GetProductPostsResponseDto } from './dto/get-product-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SearchProductPostsRequestDto } from './dto/search-product-posts-request.dto';
+import { CreateProductPostDto } from './dto/create-product-post.dto';
+import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
+import { UserTokenInfo } from '../common/types/user-token-info';
 
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
@@ -210,5 +214,25 @@ export class ProductPostController {
       ],
       false,
     );
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '제품 게시글 생성' })
+  @ApiResponse({
+    status: 201,
+    description: '제품 게시글 생성 성공',
+    type: ProductPost,
+  })
+  async createProductPost(
+    @Body() createProductPostDto: CreateProductPostDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<{ productPostId: number }> {
+    const productPostId = await this.productPostService.createProductPost(
+      createProductPostDto,
+      userTokenInfo.userId,
+    );
+
+    return { productPostId };
   }
 }
