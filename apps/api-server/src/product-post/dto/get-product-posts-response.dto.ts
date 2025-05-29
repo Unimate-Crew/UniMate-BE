@@ -62,7 +62,7 @@ export class ProductPostItemDto {
     description: '지역 ID',
     example: 1,
   })
-  regionId: number;
+  regionId: string;
 
   @ApiProperty({
     description: '지역 이름',

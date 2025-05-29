@@ -127,8 +127,8 @@ export class SearchProductPostsRequestDto {
     example: 1,
     required: false,
   })
-  @IsInt()
-  @Type(() => Number)
+  @IsString()
+  @Type(() => String)
   @IsOptional()
-  regionId?: number;
+  regionId?: string;
 }

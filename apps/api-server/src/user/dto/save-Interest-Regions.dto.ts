@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsNumber } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsString } from 'class-validator';
 
 export class SaveInterestRegionsDto {
   @ApiProperty({
@@ -8,7 +8,7 @@ export class SaveInterestRegionsDto {
     type: [Number],
   })
   @IsArray()
-  @IsNumber({}, { each: true })
+  @IsString({ each: true })
   @ArrayMaxSize(3, { message: '관심지역은 최대 3개까지 선택 가능합니다.' })
-  regionIds: number[];
+  regionIds: string[];
 }

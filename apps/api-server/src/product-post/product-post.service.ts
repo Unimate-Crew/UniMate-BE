@@ -30,7 +30,7 @@ export class ProductPostService {
   async getProductPosts(
     pageNumber: number,
     pageSize: number,
-    regionId?: number,
+    regionId?: string,
   ): Promise<{ content: ProductPostItemDto[]; hasNext: boolean }> {
     // 실제 구현 시에는 데이터베이스에서 조회하는 로직으로 변경 필요
     // 현재는 임시 데이터 반환
@@ -62,7 +62,7 @@ export class ProductPostService {
    * 모의 상품 게시글 데이터를 생성합니다.
    * 실제 구현에서는 필요 없는 메서드입니다.
    */
-  private getMockProductPosts(): (ProductPostItemDto & { regionId: number })[] {
+  private getMockProductPosts(): (ProductPostItemDto & { regionId: string })[] {
     return [];
   }
 

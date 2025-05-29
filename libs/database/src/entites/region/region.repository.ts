@@ -1,7 +1,7 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
-import type { Region } from './region.entity';
 import { PagedResult } from '@app/common';
+import type { Region } from './region.entity';
 
 @Injectable()
 export class RegionRepository extends EntityRepository<Region> {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetProductPostsRequestDto {
@@ -32,8 +32,8 @@ export class GetProductPostsRequestDto {
     example: 1,
     required: false,
   })
-  @IsInt()
+  @IsString()
   @IsOptional()
-  @Type(() => Number)
-  regionId?: number;
+  @Type(() => String)
+  regionId?: string;
 }

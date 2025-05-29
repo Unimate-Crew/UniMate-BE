@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class SetPrimaryInterestRegionDto {
   @ApiProperty({
@@ -9,7 +9,7 @@ export class SetPrimaryInterestRegionDto {
     required: false,
     nullable: true,
   })
-  @IsInt({ message: '지역 ID는 정수여야 합니다.' })
+  @IsString({ message: '지역 ID는 문자열이어야 합니다.' })
   @IsOptional()
-  regionId: number | null;
+  regionId: string | null;
 }
