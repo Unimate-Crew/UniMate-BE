@@ -13,7 +13,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     return this.find({ userId, isDeleted: false });
   }
 
-  async findByRegionId(regionId: number): Promise<ProductPost[]> {
+  async findByRegionId(regionId: string): Promise<ProductPost[]> {
     return this.find({ regionId, isDeleted: false });
   }
 

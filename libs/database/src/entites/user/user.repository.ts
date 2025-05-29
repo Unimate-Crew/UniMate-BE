@@ -5,7 +5,7 @@ import type { User, OAuthProvider } from './user.entity';
 @Injectable()
 export class UserRepository extends EntityRepository<User> {
   async findById(id: number): Promise<User | null> {
-    return this.findOne({ id });
+    return this.findOne({ id, isDeleted: false });
   }
 
   async findByProviderId(

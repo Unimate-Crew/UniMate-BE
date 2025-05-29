@@ -16,13 +16,13 @@ export class InterestRegionRepository extends EntityRepository<InterestRegion> {
     return this.findOne({ userId, isPrimary: true, isDeleted: false });
   }
 
-  async findByRegionId(regionId: number): Promise<InterestRegion[]> {
+  async findByRegionId(regionId: string): Promise<InterestRegion[]> {
     return this.find({ regionId, isDeleted: false });
   }
 
   async findByUserIdAndRegionId(
     userId: number,
-    regionId: number,
+    regionId: string,
   ): Promise<InterestRegion | null> {
     return this.findOne({ userId, regionId, isDeleted: false });
   }

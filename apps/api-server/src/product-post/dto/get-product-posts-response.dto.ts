@@ -1,6 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
-import { CurrencyType, TradeStatus } from '../../common/enums';
+import { CurrencyType, TradeStatus } from '@app/database/common/enums';
 
 export class ProductPostItemDto {
   @ApiProperty({
@@ -59,16 +59,16 @@ export class ProductPostItemDto {
   commentCount: number;
 
   @ApiProperty({
-    description: '도시 ID',
+    description: '지역 ID',
     example: 1,
   })
-  cityId: number;
+  regionId: string;
 
   @ApiProperty({
-    description: '도시 이름',
-    example: '서울',
+    description: '지역 이름',
+    example: 'New York',
   })
-  cityName: string;
+  regionName: string;
 
   @ApiProperty({
     description: '거래 상태',

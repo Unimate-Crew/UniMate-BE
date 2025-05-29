@@ -8,3 +8,7 @@ export * from './entites/region/us-state.entity';
 export * from './entites/region/us-state.repository';
 export * from './entites/region/us-county.entity';
 export * from './entites/region/us-county.repository';
+export * from './entites/product-post/product-post.entity';
+export * from './entites/product-post/product-post.repository';
+export * from './entites/product-post/product-image.entity';
+export * from './entites/product-post/product-image.repository';

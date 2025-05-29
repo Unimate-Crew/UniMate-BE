@@ -13,7 +13,7 @@ import {
   ProductCategory,
   SortDirection,
   TradeStatus,
-} from '../../common/enums';
+} from '@app/database/common/enums';
 
 export class SearchProductPostsRequestDto {
   @ApiProperty({
@@ -123,12 +123,12 @@ export class SearchProductPostsRequestDto {
   pageSize?: number = 10;
 
   @ApiProperty({
-    description: '도시 ID',
+    description: '지역 ID',
     example: 1,
     required: false,
   })
-  @IsInt()
-  @Type(() => Number)
+  @IsString()
+  @Type(() => String)
   @IsOptional()
-  cityId?: number;
+  regionId?: string;
 }

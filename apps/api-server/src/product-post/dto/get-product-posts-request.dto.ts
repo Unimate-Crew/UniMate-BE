@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetProductPostsRequestDto {
@@ -28,12 +28,12 @@ export class GetProductPostsRequestDto {
   pageSize?: number = 10;
 
   @ApiProperty({
-    description: '필터링할 도시 ID',
+    description: '필터링할 지역 ID',
     example: 1,
     required: false,
   })
-  @IsInt()
+  @IsString()
   @IsOptional()
-  @Type(() => Number)
-  cityId?: number;
+  @Type(() => String)
+  regionId?: string;
 }
