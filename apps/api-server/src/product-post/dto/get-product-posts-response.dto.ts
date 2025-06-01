@@ -53,10 +53,10 @@ export class ProductPostItemDto {
   likeCount: number;
 
   @ApiProperty({
-    description: '댓글 수',
+    description: '채팅방 수',
     example: 5,
   })
-  commentCount: number;
+  chatRoomCount: number;
 
   @ApiProperty({
     description: '지역 ID',
