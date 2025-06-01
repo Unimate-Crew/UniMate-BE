@@ -1,5 +1,5 @@
 // eslint-disable-next-line max-classes-per-file
-import { InterestRegionWithRegion } from '@app/database/entites/interest-region/dto/interest-region-wiht-region';
+import { InterestRegion } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class InterestRegionInfoDto {
@@ -40,17 +40,16 @@ export class InterestRegionInfosDto {
     this.interestRegions = interestRegions;
   }
 
-  static of(
-    interestRegionWithRegions: InterestRegionWithRegion[],
-  ): InterestRegionInfosDto {
-    const interestRegionInfos: InterestRegionInfoDto[] =
-      interestRegionWithRegions.map((interestRegionWithRegion) => {
+  static of(interestRegions: InterestRegion[]): InterestRegionInfosDto {
+    const interestRegionInfos: InterestRegionInfoDto[] = interestRegions.map(
+      (interestRegion) => {
         return new InterestRegionInfoDto(
-          interestRegionWithRegion.getRegion().getId(),
-          interestRegionWithRegion.getRegion().getName(),
-          interestRegionWithRegion.getInterestRegion().getIsPrimary(),
+          interestRegion.getRegion().getId(),
+          interestRegion.getRegion().getName(),
+          interestRegion.getIsPrimary(),
         );
-      });
+      },
+    );
 
     return new InterestRegionInfosDto(interestRegionInfos);
   }

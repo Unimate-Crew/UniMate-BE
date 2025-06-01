@@ -7,7 +7,6 @@ import {
   RegionRepository,
   InterestRegion,
 } from '@app/database';
-import { InterestRegionWithRegion } from '@app/database/entites/interest-region/dto/interest-region-wiht-region';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
 import { SignInDto } from './dto/sign-in.dto';
@@ -133,9 +132,9 @@ export class UserService {
   }
 
   async getInterestRegions(userId: number): Promise<InterestRegionInfosDto> {
-    const interestRegionWithRegions: InterestRegionWithRegion[] =
+    const interestRegions: InterestRegion[] =
       await this.interestRegionRepository.findWithRegionByUserId(userId);
 
-    return InterestRegionInfosDto.of(interestRegionWithRegions);
+    return InterestRegionInfosDto.of(interestRegions);
   }
 }
