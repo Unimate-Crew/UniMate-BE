@@ -10,8 +10,8 @@ export enum ErrorCode {
   // 서버 오류
   INTERNAL_SERVER_ERROR = 'G001',
 
-  // 도시
-  CITY_NOT_FOUND = 'C001',
+  // 지역
+  REGION_NOT_FOUND = 'R001',
 
   // 관심도시
   INTEREST_CITY_NOT_FOUND = 'IC001',

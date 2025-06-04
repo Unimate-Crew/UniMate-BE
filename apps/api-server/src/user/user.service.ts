@@ -1,11 +1,17 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Transactional } from '@mikro-orm/core';
 import {
   User,
   UserRepository,
   OAuthProvider,
   InterestRegionRepository,
-  RegionRepository,
   InterestRegion,
+  Region,
+  RegionRepository,
 } from '@app/database';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
@@ -116,25 +122,53 @@ export class UserService {
     return !!user;
   }
 
-  async saveRegions(userId: number, regionIds: string[]): Promise<void> {
-    const user = await this.userRepository.findOne(userId);
-
-    if (!user) {
-      throw new UnauthorizedException({
-        code: ErrorCode.USER_NOT_FOUND,
-        message: '사용자를 찾을 수 없습니다',
-      });
-    }
-
-    // 관심도시 정보 저장 로직 구현
-    // TODO: 실제 사용자와 도시 간의 관계를 저장하는 로직 구현 필요
-    // 현재는 메서드만 정의하고 실제 구현은 추후 필요에 따라 작성
-  }
-
   async getInterestRegions(userId: number): Promise<InterestRegionInfosDto> {
     const interestRegions: InterestRegion[] =
       await this.interestRegionRepository.findWithRegionByUserId(userId);
 
     return InterestRegionInfosDto.of(interestRegions);
+  }
+
+  @Transactional()
+  async saveInterestRegions(
+    userId: number,
+    regionIds: string[],
+  ): Promise<void> {
+    // 유저 존재 여부 확인
+    const user: User | null = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '유저가 존재하지 않습니다.',
+      });
+    }
+
+    // 모든 지역 ID가 유효한지 확인
+    const regions = await this.regionRepository.findByIds(regionIds);
+    if (regions.length !== regionIds.length) {
+      throw new NotFoundException({
+        code: ErrorCode.REGION_NOT_FOUND,
+        message: '존재하지 않는 지역이 포함되어 있습니다.',
+      });
+    }
+
+    // 기존 관심 지역들을 조회
+    const existingInterestRegions: InterestRegion[] =
+      await this.interestRegionRepository.findByUserId(userId);
+
+    // 기존 관심 지역들을 논리적으로 삭제 처리
+    existingInterestRegions.forEach((interestRegion) => {
+      interestRegion.delete();
+      this.interestRegionRepository.persist(interestRegion);
+    });
+
+    // 새로운 관심 지역 생성
+    regions.forEach((region) => {
+      const interestRegion = this.interestRegionRepository.create({
+        user,
+        region,
+      });
+      this.interestRegionRepository.persist(interestRegion);
+    });
   }
 }

@@ -152,11 +152,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async saveInterestRegions(
-    @Req() req: Request,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
     @Body() saveInterestRegionsDto: SaveInterestRegionsDto,
-  ): Promise<any> {
-    const userId = (req.user as User).getId();
-    // await this.userService.saveRegions(userId, saveInterestRegionsDto.regionIds);
+  ): Promise<void> {
+    await this.userService.saveInterestRegions(
+      userTokenInfo.userId,
+      saveInterestRegionsDto.regionIds,
+    );
   }
 
   @Get('/regions')
