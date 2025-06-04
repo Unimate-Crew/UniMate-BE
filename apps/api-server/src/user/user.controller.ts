@@ -140,7 +140,8 @@ export class UserController {
   @ApiResponse({
     status: 404,
     type: ErrorResponse,
-    description: 'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음)',
+    description:
+      'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음), IR001(기본 관심지역이 관심지역 목록에 없음)',
   })
   @ApiResponse({
     status: 401,
@@ -156,6 +157,7 @@ export class UserController {
     await this.userService.saveInterestRegions(
       userTokenInfo.userId,
       saveInterestRegionsDto.regionIds,
+      saveInterestRegionsDto.primaryRegionId,
     );
   }
 

@@ -133,22 +133,22 @@ export class UserService {
   async saveInterestRegions(
     userId: number,
     regionIds: string[],
+    primaryRegionId?: string,
   ): Promise<void> {
-    // 유저 존재 여부 확인
-    const user: User | null = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new NotFoundException({
-        code: ErrorCode.USER_NOT_FOUND,
-        message: '유저가 존재하지 않습니다.',
-      });
-    }
-
     // 모든 지역 ID가 유효한지 확인
-    const regions = await this.regionRepository.findByIds(regionIds);
+    const regions: Region[] = await this.regionRepository.findByIds(regionIds);
     if (regions.length !== regionIds.length) {
       throw new NotFoundException({
         code: ErrorCode.REGION_NOT_FOUND,
         message: '존재하지 않는 지역이 포함되어 있습니다.',
+      });
+    }
+
+    // 기본 관심지역이 관심지역 목록에 포함되어 있는지 확인
+    if (primaryRegionId && !regionIds.includes(primaryRegionId)) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_NOT_FOUND,
+        message: '기본 관심지역은 관심지역 목록에 포함되어 있어야 합니다.',
       });
     }
 
@@ -163,10 +163,11 @@ export class UserService {
     });
 
     // 새로운 관심 지역 생성
-    regions.forEach((region) => {
+    regionIds.forEach((regionId) => {
       const interestRegion = this.interestRegionRepository.create({
-        user,
-        region,
+        user: userId,
+        region: regionId,
+        isPrimary: primaryRegionId ? regionId === primaryRegionId : false,
       });
       this.interestRegionRepository.persist(interestRegion);
     });
