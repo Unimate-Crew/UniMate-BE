@@ -194,7 +194,6 @@ export class UserService {
     // 기존 기본 관심 지역이 있다면 해제
     const currentPrimaryRegion: InterestRegion | null =
       await this.interestRegionRepository.findPrimaryByUserId(userId);
-
     if (currentPrimaryRegion) {
       currentPrimaryRegion.setPrimary(false);
       this.interestRegionRepository.persist(currentPrimaryRegion);

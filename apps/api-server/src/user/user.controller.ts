@@ -4,10 +4,11 @@ import {
   Body,
   HttpCode,
   UseGuards,
-  Req,
   Get,
   Put,
   Query,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -15,8 +16,6 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Request } from 'express';
-import { User } from '@app/database';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../auth/auth.service';
@@ -29,7 +28,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
-import { SetPrimaryInterestRegionDto } from './dto/set-primary-interest-region.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 import { UserTokenInfo } from '../common/types/user-token-info';
@@ -187,7 +185,7 @@ export class UserController {
     return this.userService.getInterestRegions(userTokenInfo.userId);
   }
 
-  @Put('/regions/primary')
+  @Patch('/regions/:regionId/primary')
   @ApiOperation({ summary: '기본 관심지역 설정 API' })
   @ApiResponse({
     status: 204,
@@ -197,7 +195,7 @@ export class UserController {
     status: 404,
     type: ErrorResponse,
     description:
-      'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음)',
+      'code: U001(유저가 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음)',
   })
   @ApiResponse({
     status: 401,
@@ -208,11 +206,11 @@ export class UserController {
   @HttpCode(204)
   async setPrimaryInterestRegion(
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
-    @Body() setPrimaryInterestRegionDto: SetPrimaryInterestRegionDto,
+    @Param('regionId') regionId: string,
   ): Promise<void> {
     await this.userService.setPrimaryInterestRegion(
       userTokenInfo.userId,
-      setPrimaryInterestRegionDto.regionId,
+      regionId,
     );
   }
 }
