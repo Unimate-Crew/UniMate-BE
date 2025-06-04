@@ -171,4 +171,37 @@ export class UserService {
       this.interestRegionRepository.persist(interestRegion);
     });
   }
+
+  @Transactional()
+  async setPrimaryInterestRegion(
+    userId: number,
+    regionId: string,
+  ): Promise<void> {
+    // 해당 지역이 유저의 관심 지역 목록에 있는지 확인
+    const targetInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findByUserIdAndRegionId(
+        userId,
+        regionId,
+      );
+
+    if (!targetInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_NOT_FOUND,
+        message: '해당 지역이 관심 지역 목록에 존재하지 않습니다.',
+      });
+    }
+
+    // 기존 기본 관심 지역이 있다면 해제
+    const currentPrimaryRegion: InterestRegion | null =
+      await this.interestRegionRepository.findPrimaryByUserId(userId);
+
+    if (currentPrimaryRegion) {
+      currentPrimaryRegion.setPrimary(false);
+      this.interestRegionRepository.persist(currentPrimaryRegion);
+    }
+
+    // 새로운 기본 관심 지역 설정
+    targetInterestRegion.setPrimary(true);
+    this.interestRegionRepository.persist(targetInterestRegion);
+  }
 }

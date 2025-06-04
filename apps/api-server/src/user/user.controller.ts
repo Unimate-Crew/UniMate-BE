@@ -207,11 +207,12 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async setPrimaryInterestRegion(
-    @Req() req: Request,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
     @Body() setPrimaryInterestRegionDto: SetPrimaryInterestRegionDto,
   ): Promise<void> {
-    const userId = (req.user as User).getId();
-    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
-    // await this.userService.setPrimaryInterestRegion(userId, setPrimaryInterestRegionDto.regionId);
+    await this.userService.setPrimaryInterestRegion(
+      userTokenInfo.userId,
+      setPrimaryInterestRegionDto.regionId,
+    );
   }
 }

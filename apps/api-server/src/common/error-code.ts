@@ -15,4 +15,7 @@ export enum ErrorCode {
 
   // 관심도시
   INTEREST_CITY_NOT_FOUND = 'IC001',
+
+  // 관심지역
+  INTEREST_REGION_NOT_FOUND = 'IR001',
 }
