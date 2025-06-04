@@ -12,3 +12,5 @@ export * from './entites/product-post/product-post.entity';
 export * from './entites/product-post/product-post.repository';
 export * from './entites/product-post/product-image.entity';
 export * from './entites/product-post/product-image.repository';
+export * from './entites/interest-region/interest-region.entity';
+export * from './entites/interest-region/interest-region.repository';

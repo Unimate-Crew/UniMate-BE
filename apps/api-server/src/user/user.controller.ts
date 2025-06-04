@@ -28,10 +28,12 @@ import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
-import { FindInterestRegionsResponseDto } from './dto/find-interest-regions-response.dto';
+import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { SetPrimaryInterestRegionDto } from './dto/set-primary-interest-region.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
+import { UserTokenInfo } from '../common/types/user-token-info';
+import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -164,7 +166,7 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '관심지역 리스트 조회 성공',
-    type: FindInterestRegionsResponseDto,
+    type: InterestRegionInfosDto,
   })
   @ApiResponse({
     status: 404,
@@ -178,18 +180,9 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   async findInterestRegions(
-    @Req() req: Request,
-  ): Promise<FindInterestRegionsResponseDto> {
-    const userId = (req.user as User).getId();
-    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
-    // const regions = await this.userService.getInterestRegions(userId);
-
-    // 임시 응답 데이터
-    return FindInterestRegionsResponseDto.of([
-      { id: 1, name: 'New York', isPrimary: true },
-      { id: 2, name: 'Los Angeles', isPrimary: false },
-      { id: 3, name: 'Chicago', isPrimary: false },
-    ]);
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<InterestRegionInfosDto> {
+    return this.userService.getInterestRegions(userTokenInfo.userId);
   }
 
   @Put('/regions/primary')
