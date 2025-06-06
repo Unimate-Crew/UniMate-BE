@@ -7,9 +7,13 @@ import { ProductImage } from '@app/database/entites/product-post/product-image.e
 import { TradeStatus } from '@app/database/common/enums';
 import { Transactional } from '@mikro-orm/core';
 import { UserRepository } from '@app/database/entites/user/user.repository';
+import { ConfigService } from '@nestjs/config';
+import { S3Service } from '@app/common/s3/s3.service';
+import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
 import { CreateProductPostDto } from './dto/create-product-post.dto';
 import { ProductPostItemDto } from './dto/get-product-posts-response.dto';
 import { ErrorCode } from '../common/error-code';
+import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
 
 @Injectable()
 export class ProductPostService {
@@ -17,6 +21,8 @@ export class ProductPostService {
     private readonly productPostRepository: ProductPostRepository,
     private readonly productImageRepository: ProductImageRepository,
     private readonly userRepository: UserRepository,
+    private readonly s3Service: S3Service,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -106,5 +112,18 @@ export class ProductPostService {
     );
 
     return productPost.getId();
+  }
+
+  async generatePresignedUrlList(
+    generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
+  ): Promise<PresignedUrlDto[]> {
+    return Promise.all(
+      generatePresignedUrlListRequestDto.fileNames.map(async (fileName) => {
+        const key = `${this.configService.get<string>('NODE_ENV', 'development')}/product/${Date.now()}-${fileName}`;
+        const presignedUrl = await this.s3Service.generatePresignedUrl(key);
+
+        return PresignedUrlDto.of(presignedUrl, key);
+      }),
+    );
   }
 }
