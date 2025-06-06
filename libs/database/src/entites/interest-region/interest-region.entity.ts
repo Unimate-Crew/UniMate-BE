@@ -45,4 +45,9 @@ export class InterestRegion extends BaseEntity {
   public setPrimary(isPrimary: boolean): void {
     this.isPrimary = isPrimary;
   }
+
+  public delete(): void {
+    this.isDeleted = true;
+    this.deletedAt = new Date();
+  }
 }

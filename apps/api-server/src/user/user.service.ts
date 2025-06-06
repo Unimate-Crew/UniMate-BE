@@ -1,11 +1,17 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Transactional } from '@mikro-orm/core';
 import {
   User,
   UserRepository,
   OAuthProvider,
   InterestRegionRepository,
-  RegionRepository,
   InterestRegion,
+  Region,
+  RegionRepository,
 } from '@app/database';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
@@ -116,25 +122,86 @@ export class UserService {
     return !!user;
   }
 
-  async saveRegions(userId: number, regionIds: string[]): Promise<void> {
-    const user = await this.userRepository.findOne(userId);
-
-    if (!user) {
-      throw new UnauthorizedException({
-        code: ErrorCode.USER_NOT_FOUND,
-        message: '사용자를 찾을 수 없습니다',
-      });
-    }
-
-    // 관심도시 정보 저장 로직 구현
-    // TODO: 실제 사용자와 도시 간의 관계를 저장하는 로직 구현 필요
-    // 현재는 메서드만 정의하고 실제 구현은 추후 필요에 따라 작성
-  }
-
   async getInterestRegions(userId: number): Promise<InterestRegionInfosDto> {
     const interestRegions: InterestRegion[] =
       await this.interestRegionRepository.findWithRegionByUserId(userId);
 
     return InterestRegionInfosDto.of(interestRegions);
+  }
+
+  @Transactional()
+  async saveInterestRegions(
+    userId: number,
+    regionIds: string[],
+    primaryRegionId?: string,
+  ): Promise<void> {
+    // 모든 지역 ID가 유효한지 확인
+    const regions: Region[] = await this.regionRepository.findByIds(regionIds);
+    if (regions.length !== regionIds.length) {
+      throw new NotFoundException({
+        code: ErrorCode.REGION_NOT_FOUND,
+        message: '존재하지 않는 지역이 포함되어 있습니다.',
+      });
+    }
+
+    // 기본 관심지역이 관심지역 목록에 포함되어 있는지 확인
+    if (primaryRegionId && !regionIds.includes(primaryRegionId)) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_NOT_FOUND,
+        message: '기본 관심지역은 관심지역 목록에 포함되어 있어야 합니다.',
+      });
+    }
+
+    // 기존 관심 지역들을 조회
+    const existingInterestRegions: InterestRegion[] =
+      await this.interestRegionRepository.findByUserId(userId);
+
+    // 기존 관심 지역들을 논리적으로 삭제 처리
+    existingInterestRegions.forEach((interestRegion) => {
+      interestRegion.delete();
+      this.interestRegionRepository.persist(interestRegion);
+    });
+
+    // 새로운 관심 지역 생성
+    regionIds.forEach((regionId) => {
+      const interestRegion = this.interestRegionRepository.create({
+        user: userId,
+        region: regionId,
+        isPrimary: primaryRegionId ? regionId === primaryRegionId : false,
+      });
+      this.interestRegionRepository.persist(interestRegion);
+    });
+  }
+
+  @Transactional()
+  async setPrimaryInterestRegion(
+    userId: number,
+    regionId: string,
+  ): Promise<void> {
+    // 해당 지역이 유저의 관심 지역 목록에 있는지 확인
+    const targetInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findByUserIdAndRegionId(
+        userId,
+        regionId,
+      );
+
+    if (!targetInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_NOT_FOUND,
+        message: '해당 지역이 관심 지역 목록에 존재하지 않습니다.',
+      });
+    }
+
+    // 기존 기본 관심 지역이 있다면 해제
+    const currentPrimaryRegion: InterestRegion | null =
+      await this.interestRegionRepository.findPrimaryByUserId(userId);
+    if (currentPrimaryRegion) {
+      currentPrimaryRegion.setPrimary(false);
+      this.interestRegionRepository.persist(currentPrimaryRegion);
+    }
+
+    // 새로운 기본 관심 지역 설정
+    targetInterestRegion.setPrimary(true);
+    this.interestRegionRepository.persist(targetInterestRegion);
   }
 }
