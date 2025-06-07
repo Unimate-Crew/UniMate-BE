@@ -1,17 +1,19 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, ManyToOne } from '@mikro-orm/core';
 import { InterestRegionRepository } from './interest-region.repository';
 import { BaseEntity } from '../../common/base.entity';
+import { User } from '../user/user.entity';
+import { Region } from '../region/region.entity';
 
 @Entity({ repository: () => InterestRegionRepository })
 export class InterestRegion extends BaseEntity {
   @PrimaryKey()
   private readonly id!: number;
 
-  @Property()
-  private regionId!: string;
+  @ManyToOne(() => Region)
+  private region!: Region;
 
-  @Property()
-  private userId!: number;
+  @ManyToOne(() => User)
+  private user!: User;
 
   @Property()
   private isPrimary: boolean = false;
@@ -20,20 +22,20 @@ export class InterestRegion extends BaseEntity {
     return this.id;
   }
 
-  public getRegionId(): string {
-    return this.regionId;
+  public getRegion(): Region {
+    return this.region;
   }
 
-  public setRegionId(regionId: string): void {
-    this.regionId = regionId;
+  public setRegion(region: Region): void {
+    this.region = region;
   }
 
-  public getUserId(): number {
-    return this.userId;
+  public getUser(): User {
+    return this.user;
   }
 
-  public setUserId(userId: number): void {
-    this.userId = userId;
+  public setUser(user: User): void {
+    this.user = user;
   }
 
   public getIsPrimary(): boolean {
@@ -42,5 +44,10 @@ export class InterestRegion extends BaseEntity {
 
   public setPrimary(isPrimary: boolean): void {
     this.isPrimary = isPrimary;
+  }
+
+  public delete(): void {
+    this.isDeleted = true;
+    this.deletedAt = new Date();
   }
 }

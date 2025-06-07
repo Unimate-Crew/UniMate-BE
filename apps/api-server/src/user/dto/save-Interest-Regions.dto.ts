@@ -1,14 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsString } from 'class-validator';
+import { IsArray, IsString, IsOptional } from 'class-validator';
 
 export class SaveInterestRegionsDto {
   @ApiProperty({
-    description: '사용자가 선택한 관심지역 ID 목록 (최대 3개)',
-    example: [1, 2, 3],
-    type: [Number],
+    description: '관심지역으로 설정할 지역 ID 목록',
+    example: ['11110', '11140'],
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(3, { message: '관심지역은 최대 3개까지 선택 가능합니다.' })
   regionIds: string[];
+
+  @ApiProperty({
+    description: '기본 관심지역으로 설정할 지역 ID (옵셔널 값)',
+    example: '11110',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  primaryRegionId?: string;
 }

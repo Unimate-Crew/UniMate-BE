@@ -4,10 +4,11 @@ import {
   Body,
   HttpCode,
   UseGuards,
-  Req,
   Get,
   Put,
   Query,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -16,8 +17,6 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Request } from 'express';
-import { User } from '@app/database';
 import { S3Service } from '@app/common/s3/s3.service';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -30,12 +29,13 @@ import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
-import { FindInterestRegionsResponseDto } from './dto/find-interest-regions-response.dto';
-import { SetPrimaryInterestRegionDto } from './dto/set-primary-interest-region.dto';
+import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-request.dto';
 import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
+import { UserTokenInfo } from '../common/types/user-token-info';
+import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -146,7 +146,8 @@ export class UserController {
   @ApiResponse({
     status: 404,
     type: ErrorResponse,
-    description: 'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음)',
+    description:
+      'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음), IR001(기본 관심지역이 관심지역 목록에 없음)',
   })
   @ApiResponse({
     status: 401,
@@ -156,11 +157,14 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async saveInterestRegions(
-    @Req() req: Request,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
     @Body() saveInterestRegionsDto: SaveInterestRegionsDto,
-  ): Promise<any> {
-    const userId = (req.user as User).getId();
-    // await this.userService.saveRegions(userId, saveInterestRegionsDto.regionIds);
+  ): Promise<void> {
+    await this.userService.saveInterestRegions(
+      userTokenInfo.userId,
+      saveInterestRegionsDto.regionIds,
+      saveInterestRegionsDto.primaryRegionId,
+    );
   }
 
   @Get('/regions')
@@ -170,7 +174,7 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '관심지역 리스트 조회 성공',
-    type: FindInterestRegionsResponseDto,
+    type: InterestRegionInfosDto,
   })
   @ApiResponse({
     status: 404,
@@ -184,21 +188,12 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   async findInterestRegions(
-    @Req() req: Request,
-  ): Promise<FindInterestRegionsResponseDto> {
-    const userId = (req.user as User).getId();
-    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
-    // const regions = await this.userService.getInterestRegions(userId);
-
-    // 임시 응답 데이터
-    return FindInterestRegionsResponseDto.of([
-      { id: 1, name: 'New York', isPrimary: true },
-      { id: 2, name: 'Los Angeles', isPrimary: false },
-      { id: 3, name: 'Chicago', isPrimary: false },
-    ]);
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<InterestRegionInfosDto> {
+    return this.userService.getInterestRegions(userTokenInfo.userId);
   }
 
-  @Put('/regions/primary')
+  @Patch('/regions/:regionId/primary')
   @ApiOperation({ summary: '기본 관심지역 설정 API' })
   @ApiResponse({
     status: 204,
@@ -208,7 +203,7 @@ export class UserController {
     status: 404,
     type: ErrorResponse,
     description:
-      'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음)',
+      'code: U001(유저가 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음)',
   })
   @ApiResponse({
     status: 401,
@@ -218,12 +213,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async setPrimaryInterestRegion(
-    @Req() req: Request,
-    @Body() setPrimaryInterestRegionDto: SetPrimaryInterestRegionDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Param('regionId') regionId: string,
   ): Promise<void> {
-    const userId = (req.user as User).getId();
-    // 실제 구현 시에는 이 주석을 제거하고 서비스 메서드를 호출합니다.
-    // await this.userService.setPrimaryInterestRegion(userId, setPrimaryInterestRegionDto.regionId);
+    await this.userService.setPrimaryInterestRegion(
+      userTokenInfo.userId,
+      regionId,
+    );
   }
 
   @Post('/presigned-url')

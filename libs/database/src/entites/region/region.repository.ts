@@ -9,6 +9,13 @@ export class RegionRepository extends EntityRepository<Region> {
     return this.findOne({ id, isDeleted: false });
   }
 
+  async findByIds(ids: string[]): Promise<Region[]> {
+    return this.find({
+      id: { $in: ids },
+      isDeleted: false,
+    } as any);
+  }
+
   async findByName(name: string): Promise<Region | null> {
     return this.findOne({ name, isDeleted: false });
   }
