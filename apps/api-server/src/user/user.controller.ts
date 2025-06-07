@@ -10,12 +10,14 @@ import {
   Patch,
   Param,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { S3Service } from '@app/common/s3/s3.service';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../auth/auth.service';
@@ -30,6 +32,8 @@ import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
+import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-request.dto';
+import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
 import { UserTokenInfo } from '../common/types/user-token-info';
 import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
 
@@ -39,6 +43,8 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly authService: AuthService,
+    private readonly s3Service: S3Service,
+    private readonly configService: ConfigService,
   ) {}
 
   @ApiOperation({
@@ -214,5 +220,21 @@ export class UserController {
       userTokenInfo.userId,
       regionId,
     );
+  }
+
+  @Post('/presigned-url')
+  @ApiOperation({ summary: '프로필 이미지 업로드를 위한 Presigned URL 발급' })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned URL 발급 성공',
+    type: GeneratePresignedUrlResponseDto,
+  })
+  async generatePresignedUrl(
+    @Body() generatePresignedUrlRequestDto: GeneratePresignedUrlRequestDto,
+  ): Promise<GeneratePresignedUrlResponseDto> {
+    const key = `${this.configService.get<string>('NODE_ENV', 'development')}/user/${Date.now()}-${generatePresignedUrlRequestDto.fileName}`;
+    const presignedUrl = await this.s3Service.generatePresignedUrl(key);
+
+    return GeneratePresignedUrlResponseDto.of(presignedUrl, key);
   }
 }

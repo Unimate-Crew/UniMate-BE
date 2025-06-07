@@ -20,6 +20,8 @@ import { SearchProductPostsRequestDto } from './dto/search-product-posts-request
 import { CreateProductPostDto } from './dto/create-product-post.dto';
 import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
 import { UserTokenInfo } from '../common/types/user-token-info';
+import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
+import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list-response.dto';
 
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
@@ -231,5 +233,23 @@ export class ProductPostController {
     );
 
     return { productPostId };
+  }
+
+  @Post('/presigned-url')
+  @ApiOperation({ summary: '상품 이미지 업로드를 위한 Presigned URL 발급' })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned URL 발급 성공',
+    type: GeneratePresignedUrlListResponseDto,
+  })
+  async generatePresignedUrlList(
+    @Body()
+    generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
+  ): Promise<GeneratePresignedUrlListResponseDto> {
+    const urlList = await this.productPostService.generatePresignedUrlList(
+      generatePresignedUrlListRequestDto,
+    );
+
+    return GeneratePresignedUrlListResponseDto.of(urlList);
   }
 }
