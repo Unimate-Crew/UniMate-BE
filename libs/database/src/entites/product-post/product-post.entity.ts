@@ -11,40 +11,40 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => ProductPostRepository })
 export class ProductPost extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private title!: string;
+  title!: string;
 
   @Property({ nullable: true })
-  private description?: string;
+  description?: string;
 
   @Property()
-  private userId!: number;
+  userId!: number;
 
   @Property()
-  private price!: number;
+  price!: number;
 
   @Enum(() => CurrencyType)
-  private currencyType!: CurrencyType;
+  currencyType!: CurrencyType;
 
   @Enum(() => ProductCategory)
-  private category!: ProductCategory;
+  category!: ProductCategory;
 
   @Enum(() => TradeStatus)
-  private tradeStatus!: TradeStatus;
+  tradeStatus!: TradeStatus;
 
   @Enum(() => TradeType)
-  private tradeType?: TradeType;
+  tradeType?: TradeType;
 
   @Property({ nullable: true })
-  private tradeTypeDescription?: string;
+  tradeTypeDescription?: string;
 
   @Property()
-  private regionId!: string;
+  regionId!: string;
 
   @Property({ nullable: true })
-  private universityId?: number;
+  universityId?: number;
 
   public getId(): number {
     return this.id;

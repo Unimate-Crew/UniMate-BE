@@ -5,19 +5,19 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => ReportRepository })
 export class Report extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private targetUserId!: number;
+  targetUserId!: number;
 
   @Property()
-  private userId!: number;
+  userId!: number;
 
   @Property()
-  private reason!: string;
+  reason!: string;
 
   @Property({ nullable: true })
-  private detail?: string;
+  detail?: string;
 
   public getId(): number {
     return this.id;
