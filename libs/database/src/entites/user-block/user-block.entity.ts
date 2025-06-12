@@ -5,13 +5,13 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => UserBlockRepository })
 export class UserBlock extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private blockerId!: number;
+  blockerId!: number;
 
   @Property()
-  private blockedId!: number;
+  blockedId!: number;
 
   public getId(): number {
     return this.id;

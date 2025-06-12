@@ -5,16 +5,16 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => UniversityRepository })
 export class University extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private name!: string;
+  name!: string;
 
   @Property()
-  private domain!: string;
+  domain!: string;
 
   @Property()
-  private country!: string;
+  country!: string;
 
   public getId(): number {
     return this.id;

@@ -5,25 +5,25 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => RegionRepository })
 export class Region extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: string;
+  id!: string;
 
   @Property()
-  private name!: string;
+  name!: string;
 
   @Property()
-  private stateId!: string;
+  stateId!: string;
 
   @Property()
-  private countyId?: string;
+  countyId?: string;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
   private latitude?: number;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
-  private longitude?: number;
+  longitude?: number;
 
   @Property({ columnType: 'bigint', nullable: true })
-  private population?: number;
+  population?: number;
 
   public getId(): string {
     return this.id;

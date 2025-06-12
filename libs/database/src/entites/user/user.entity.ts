@@ -11,28 +11,31 @@ export enum OAuthProvider {
 @Entity({ repository: () => UserRepository })
 export class User extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private name!: string;
+  name!: string;
 
   @Property({ unique: true })
-  private nickname!: string;
+  nickname!: string;
 
   @Property({ nullable: true })
-  private profileImageUrl?: string;
+  profileImageUrl?: string;
 
   @Property({ nullable: true })
-  private phoneNumber?: string;
+  phoneNumber?: string;
 
   @Enum(() => OAuthProvider)
-  private provider!: OAuthProvider;
+  provider!: OAuthProvider;
 
   @Property({ nullable: true })
-  private refreshToken?: string;
+  providerId?: string;
 
   @Property({ nullable: true })
-  private universityId?: number;
+  refreshToken?: string;
+
+  @Property({ nullable: true })
+  universityId?: number;
 
   public getId(): number {
     return this.id;
