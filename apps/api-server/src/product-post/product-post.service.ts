@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
 import { CreateProductPostDto } from './dto/create-product-post.dto';
-import { ProductPostItemDto } from './dto/get-product-posts-response.dto';
+import { ProductPostItemDto } from './dto/find-paged-product-posts-response.dto';
 import { ErrorCode } from '../common/error-code';
 import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
 

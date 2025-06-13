@@ -78,7 +78,7 @@ export class ProductPostItemDto {
   tradeStatus: TradeStatus;
 }
 
-export class GetProductPostsResponseDto {
+export class FindPagedProductPostsResponseDto {
   @ApiProperty({
     description: '상품 게시글 목록',
     type: [ProductPostItemDto],
@@ -94,8 +94,8 @@ export class GetProductPostsResponseDto {
   static of(
     content: ProductPostItemDto[],
     hasNext: boolean,
-  ): GetProductPostsResponseDto {
-    const response = new GetProductPostsResponseDto();
+  ): FindPagedProductPostsResponseDto {
+    const response = new FindPagedProductPostsResponseDto();
     response.content = content;
     response.hasNext = hasNext;
     return response;

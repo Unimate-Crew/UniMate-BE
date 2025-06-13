@@ -12,8 +12,8 @@ import {
 } from '@app/database/common/enums';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { ProductPostService } from './product-post.service';
-import { GetProductPostsRequestDto } from './dto/get-product-posts-request.dto';
-import { GetProductPostsResponseDto } from './dto/get-product-posts-response.dto';
+import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts-request.dto';
+import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SearchProductPostsRequestDto } from './dto/search-product-posts-request.dto';
@@ -35,16 +35,16 @@ export class ProductPostController {
   @ApiResponse({
     status: 200,
     description: '상품 게시글 목록 조회 성공',
-    type: GetProductPostsResponseDto,
+    type: FindPagedProductPostsResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: '잘못된 요청',
     type: ErrorResponse,
   })
-  async getProductPosts(
-    @Query() query: GetProductPostsRequestDto,
-  ): Promise<GetProductPostsResponseDto> {
+  async findPagedProductPosts(
+    @Query() query: FindPagedProductPostsRequestDto,
+  ): Promise<FindPagedProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
     // 모의 데이터 대신 실제 서비스 호출
@@ -54,7 +54,7 @@ export class ProductPostController {
     //   regionId,
     // );
 
-    return GetProductPostsResponseDto.of(
+    return FindPagedProductPostsResponseDto.of(
       [
         {
           id: 1,
@@ -140,7 +140,7 @@ export class ProductPostController {
   @ApiResponse({
     status: 200,
     description: '상품 게시글 검색 성공',
-    type: GetProductPostsResponseDto,
+    type: FindPagedProductPostsResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -149,7 +149,7 @@ export class ProductPostController {
   })
   async searchProductPosts(
     @Query() query: SearchProductPostsRequestDto,
-  ): Promise<GetProductPostsResponseDto> {
+  ): Promise<FindPagedProductPostsResponseDto> {
     const {
       searchKeyword,
       universityId,
@@ -180,7 +180,7 @@ export class ProductPostController {
     // );
 
     // 검색 결과 샘플 데이터 (keyword가 '가이드북'일 경우의 응답)
-    return GetProductPostsResponseDto.of(
+    return FindPagedProductPostsResponseDto.of(
       [
         {
           id: 1,
