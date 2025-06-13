@@ -5,16 +5,16 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => ProductImageRepository })
 export class ProductImage extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private productId!: number;
+  productId!: number;
 
   @Property()
-  private imageUrl!: string;
+  imageUrl!: string;
 
   @Property({ default: false })
-  private isThumbnail: boolean = false;
+  isThumbnail: boolean = false;
 
   public getId(): number {
     return this.id;

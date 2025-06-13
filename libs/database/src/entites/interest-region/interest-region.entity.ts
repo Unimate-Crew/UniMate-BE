@@ -7,16 +7,16 @@ import { Region } from '../region/region.entity';
 @Entity({ repository: () => InterestRegionRepository })
 export class InterestRegion extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @ManyToOne(() => Region)
-  private region!: Region;
+  region!: Region;
 
   @ManyToOne(() => User)
-  private user!: User;
+  user!: User;
 
   @Property()
-  private isPrimary: boolean = false;
+  isPrimary: boolean = false;
 
   public getId(): number {
     return this.id;

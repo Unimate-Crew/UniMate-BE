@@ -4,16 +4,16 @@ import { LikeRepository } from './like.repository';
 @Entity({ repository: () => LikeRepository })
 export class Like {
   @PrimaryKey()
-  private readonly id!: number;
+  id!: number;
 
   @Property()
-  private productId!: number;
+  productId!: number;
 
   @Property()
-  private userId!: number;
+  userId!: number;
 
   @Property()
-  private createdAt: Date = new Date();
+  createdAt: Date = new Date();
 
   public getId(): number {
     return this.id;

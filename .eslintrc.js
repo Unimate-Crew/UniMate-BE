@@ -27,7 +27,7 @@ module.exports = {
     'no-var': 'error',
     'import/prefer-default-export': 'off',
     'class-methods-use-this': 'off',
-    "import/no-extraneous-dependencies": 'off',
-    "no-await-in-loop": 'off'
+    'import/no-extraneous-dependencies': 'off',
+    'no-await-in-loop': 'off',
   },
 };

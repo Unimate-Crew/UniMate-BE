@@ -4,39 +4,39 @@ import { UsCountyRepository } from './us-county.repository';
 @Entity({ repository: () => UsCountyRepository, tableName: 'us_county' })
 export class UsCounty {
   @PrimaryKey()
-  private readonly id!: string;
+  id!: string;
 
   @Property()
-  private name!: string;
+  name!: string;
 
   @Property({ fieldName: 'state_id' })
-  private stateId!: string;
+  stateId!: string;
 
   @Property({ fieldName: 'land_area', columnType: 'bigint', nullable: true })
-  private landArea?: number;
+  landArea?: number;
 
   @Property({ fieldName: 'water_area', columnType: 'bigint', nullable: true })
-  private waterArea?: number;
+  waterArea?: number;
 
   @Property({
     fieldName: 'land_sqmi',
     columnType: 'decimal(10, 2)',
     nullable: true,
   })
-  private landSqmi?: number;
+  landSqmi?: number;
 
   @Property({
     fieldName: 'water_sqmi',
     columnType: 'decimal(10, 2)',
     nullable: true,
   })
-  private waterSqmi?: number;
+  waterSqmi?: number;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
-  private latitude?: number;
+  latitude?: number;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
-  private longitude?: number;
+  longitude?: number;
 
   public getId(): string {
     return this.id;
