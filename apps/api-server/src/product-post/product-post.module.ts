@@ -4,8 +4,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ProductImage } from '@app/database/entites/product-post/product-image.entity';
 import { User } from '@app/database';
 import { S3Module } from '@app/common/s3/s3.module';
-import { ProductPostController } from './product-post.controller';
-import { ProductPostService } from './product-post.service';
+import { ProductPostController } from './api/product-post.controller';
+import { ProductPostService } from './application/product-post.service';
 
 @Module({
   imports: [

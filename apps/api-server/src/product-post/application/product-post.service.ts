@@ -10,10 +10,10 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
-import { CreateProductPostDto } from './dto/create-product-post.dto';
-import { ProductPostItemDto } from './dto/find-paged-product-posts-response.dto';
-import { ErrorCode } from '../common/error-code';
-import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
+import { CreateProductPostDto } from '../api/dto/create-product-post.dto';
+import { ProductPostItemDto } from '../api/dto/find-paged-product-posts-response.dto';
+import { ErrorCode } from '../../common/error-code';
+import { GeneratePresignedUrlListRequestDto } from '../api/dto/generate-presigned-url-list-request.dto';
 
 @Injectable()
 export class ProductPostService {
@@ -33,7 +33,7 @@ export class ProductPostService {
    * @param regionId 필터링할 지역 ID (optional)
    * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
    */
-  async getProductPosts(
+  async findPagedProductPosts(
     pageNumber: number,
     pageSize: number,
     regionId?: string,

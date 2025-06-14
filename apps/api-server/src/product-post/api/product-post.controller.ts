@@ -11,15 +11,15 @@ import {
   TradeStatus,
 } from '@app/database/common/enums';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
-import { ProductPostService } from './product-post.service';
+import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts-request.dto';
 import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts-response.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ErrorResponse } from '../common/error-response';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ErrorResponse } from '../../common/error-response';
 import { SearchProductPostsRequestDto } from './dto/search-product-posts-request.dto';
 import { CreateProductPostDto } from './dto/create-product-post.dto';
-import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
-import { UserTokenInfo } from '../common/types/user-token-info';
+import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
+import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
 import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list-response.dto';
 
@@ -48,7 +48,7 @@ export class ProductPostController {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
     // 모의 데이터 대신 실제 서비스 호출
-    // const { content, hasNext } = await this.productPostService.getProductPosts(
+    // const { content, hasNext } = await this.productPostService.findPagedProductPosts(
     //   pageNumber,
     //   pageSize,
     //   regionId,
