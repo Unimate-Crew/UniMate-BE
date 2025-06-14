@@ -55,12 +55,14 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @param page 페이지 번호 (1부터 시작)
    * @param limit 페이지 크기
    * @param regionId 지역 ID
+   * @param blockedUserIds 차단된 유저 ID 목록
    * @returns Slice<ProductPostWithRelations>
    */
   async findPagedProductPosts(
     page: number,
     limit: number,
     regionId?: string,
+    blockedUserIds?: number[],
   ): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
     const offset = (page - 1) * limit;
@@ -82,6 +84,11 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
     if (regionId) {
       query.where('product_post.region_id', regionId);
+    }
+
+    // 차단된 유저의 게시글 제외
+    if (blockedUserIds && blockedUserIds.length > 0) {
+      query.whereNotIn('product_post.user_id', blockedUserIds);
     }
 
     const results = await query

@@ -5,11 +5,7 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import {
-  CurrencyType,
-  SortDirection,
-  TradeStatus,
-} from '@app/database/common/enums';
+import { SortDirection } from '@app/database/common/enums';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts-request.dto';
@@ -25,7 +21,7 @@ import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-ur
 
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller({ path: 'product-posts' })
 export class ProductPostController {
   constructor(private readonly productPostService: ProductPostService) {}
@@ -44,6 +40,7 @@ export class ProductPostController {
   })
   async findPagedProductPosts(
     @Query() query: FindPagedProductPostsRequestDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindPagedProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
@@ -52,6 +49,7 @@ export class ProductPostController {
         pageNumber,
         pageSize,
         regionId,
+        userTokenInfo.userId,
       );
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);

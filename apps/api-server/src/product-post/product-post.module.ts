@@ -5,12 +5,19 @@ import { ProductImage } from '@app/database/entites/product-post/product-image.e
 import { User } from '@app/database';
 import { S3Module } from '@app/common/s3/s3.module';
 import { Like } from '@app/database/entites/like/like.entity';
+import { UserBlock } from '@app/database/entites/user-block/user-block.entity';
 import { ProductPostController } from './api/product-post.controller';
 import { ProductPostService } from './application/product-post.service';
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([ProductPost, ProductImage, User, Like]),
+    MikroOrmModule.forFeature([
+      ProductPost,
+      ProductImage,
+      User,
+      Like,
+      UserBlock,
+    ]),
     S3Module,
   ],
   controllers: [ProductPostController],

@@ -13,6 +13,7 @@ import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
 import { LikeRepository } from '@app/database/entites/like/like.repository';
 import { Slice } from '@app/common/utils/pagination';
 import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
+import { UserBlockRepository } from '@app/database/entites/user-block/user-block.repository';
 import { ErrorCode } from '../../common/error-code';
 import { CreateProductPostParam } from './dto/create-product-post.param';
 import { ProductPostInfo } from './dto/product-post.info';
@@ -25,6 +26,7 @@ export class ProductPostService {
     private readonly productImageRepository: ProductImageRepository,
     private readonly userRepository: UserRepository,
     private readonly likeRepository: LikeRepository,
+    private readonly userBlockRepository: UserBlockRepository,
     private readonly s3Service: S3Service,
     private readonly configService: ConfigService,
   ) {}
@@ -35,31 +37,49 @@ export class ProductPostService {
    * @param page 페이지 번호 (1부터 시작)
    * @param limit 페이지 크기
    * @param regionId 지역 ID
+   * @param userId 현재 로그인한 유저 ID
    * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
    */
   async findPagedProductPosts(
     page: number,
     limit: number,
     regionId?: string,
+    userId?: number,
   ): Promise<Slice<ProductPostInfo>> {
-    // 1. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
+    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    let blockedUserIds: number[] = [];
+    if (userId) {
+      // 내가 차단한 유저
+      const blockedByMe =
+        await this.userBlockRepository.findByBlockerId(userId);
+      // 나를 차단한 유저
+      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
+
+      blockedUserIds = [
+        ...blockedByMe.map((block) => block.blockedId),
+        ...blockedMe.map((block) => block.blockerId),
+      ];
+    }
+
+    // 2. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
       await this.productPostRepository.findPagedProductPosts(
         page,
         limit,
         regionId,
+        blockedUserIds,
       );
 
-    // 2. 상품 ID 목록 추출
+    // 3. 상품 ID 목록 추출
     const productIds = productPostSlice.contents.map((post) =>
       post.productPost.getId(),
     );
 
-    // 3. 좋아요 수 조회
+    // 4. 좋아요 수 조회
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 4. ProductPostInfo로 변환
+    // 5. ProductPostInfo로 변환
     return productPostSlice.map((post) => {
       return new ProductPostInfo({
         productPost: post.productPost,
