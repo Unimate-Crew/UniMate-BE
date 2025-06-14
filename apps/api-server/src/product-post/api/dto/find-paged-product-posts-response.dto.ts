@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyType, TradeStatus } from '@app/database/common/enums';
+import { Slice } from '@app/common/utils/pagination';
 import { ProductPostInfo } from '../../application/dto/product-post.info';
 
 export class ProductPostItemDto {
@@ -84,7 +85,7 @@ export class FindPagedProductPostsResponseDto {
     description: '상품 게시글 목록',
     type: [ProductPostItemDto],
   })
-  content: ProductPostItemDto[];
+  contents: ProductPostItemDto[];
 
   @ApiProperty({
     description: '다음 페이지 존재 여부',
@@ -93,25 +94,24 @@ export class FindPagedProductPostsResponseDto {
   hasNext: boolean;
 
   static of(
-    content: ProductPostInfo[],
-    hasNext: boolean,
+    productPostInfoSlice: Slice<ProductPostInfo>,
   ): FindPagedProductPostsResponseDto {
     const response = new FindPagedProductPostsResponseDto();
-    response.content = content.map((info) => ({
-      id: info.id,
-      title: info.title,
-      createdAt: info.createdAt,
-      universityName: info.universityName,
+    response.contents = productPostInfoSlice.contents.map((info) => ({
+      id: info.productPost.getId(),
+      title: info.productPost.getTitle(),
+      createdAt: info.productPost.getCreatedAt().toISOString(),
+      universityName: info.productPost.getUniversityId()?.toString() ?? '',
       thumbnailUrl: info.thumbnailUrl,
-      price: info.price,
-      currencyType: info.currencyType,
+      price: info.productPost.getPrice(),
+      currencyType: info.productPost.getCurrencyType(),
       likeCount: info.likeCount,
       chatRoomCount: info.chatRoomCount,
-      regionId: info.regionId,
-      regionName: info.regionName,
-      tradeStatus: info.tradeStatus,
+      regionId: info.productPost.getRegionId(),
+      regionName: '', // TODO: 지역 이름 구현
+      tradeStatus: info.productPost.getTradeStatus(),
     }));
-    response.hasNext = hasNext;
+    response.hasNext = productPostInfoSlice.hasNext;
     return response;
   }
 }

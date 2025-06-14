@@ -25,7 +25,7 @@ import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-ur
 
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller({ path: 'product-posts' })
 export class ProductPostController {
   constructor(private readonly productPostService: ProductPostService) {}
@@ -47,14 +47,14 @@ export class ProductPostController {
   ): Promise<FindPagedProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
-    const { content, hasNext } =
+    const productPostInfoSlice =
       await this.productPostService.findPagedProductPosts(
         pageNumber,
         pageSize,
         regionId,
       );
 
-    return FindPagedProductPostsResponseDto.of(content, hasNext);
+    return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
   }
 
   @Get('/search')
@@ -91,14 +91,14 @@ export class ProductPostController {
     } = query;
 
     // TODO: 실제 서비스 메서드 구현 필요
-    const { content, hasNext } =
+    const productPostInfoSlice =
       await this.productPostService.findPagedProductPosts(
         pageNumber,
         pageSize,
         regionId,
       );
 
-    return FindPagedProductPostsResponseDto.of(content, hasNext);
+    return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
   }
 
   @Post()

@@ -10,6 +10,9 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
+import { LikeRepository } from '@app/database/entites/like/like.repository';
+import { Slice } from '@app/common/utils/pagination';
+import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
 import { ErrorCode } from '../../common/error-code';
 import { CreateProductPostParam } from './dto/create-product-post.param';
 import { ProductPostInfo } from './dto/product-post.info';
@@ -21,6 +24,7 @@ export class ProductPostService {
     private readonly productPostRepository: ProductPostRepository,
     private readonly productImageRepository: ProductImageRepository,
     private readonly userRepository: UserRepository,
+    private readonly likeRepository: LikeRepository,
     private readonly s3Service: S3Service,
     private readonly configService: ConfigService,
   ) {}
@@ -28,48 +32,42 @@ export class ProductPostService {
   /**
    * 상품 게시글 목록을 페이지네이션하여 조회합니다.
    *
-   * @param pageNumber 페이지 번호 (0부터 시작)
-   * @param pageSize 페이지 크기
-   * @param regionId 필터링할 지역 ID (optional)
+   * @param page 페이지 번호 (1부터 시작)
+   * @param limit 페이지 크기
+   * @param regionId 지역 ID
    * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
    */
   async findPagedProductPosts(
-    pageNumber: number,
-    pageSize: number,
-    regionId: string,
-  ): Promise<{ content: ProductPostInfo[]; hasNext: boolean }> {
-    // 실제 구현 시에는 데이터베이스에서 조회하는 로직으로 변경 필요
-    // 현재는 임시 데이터 반환
-
-    // 필터링 로직 예시
-    let mockProductPosts = this.getMockProductPosts();
-    if (regionId) {
-      // 실제로는 데이터베이스 쿼리에서 필터링하겠지만, 여기서는 모의 데이터를 필터링
-      mockProductPosts = mockProductPosts.filter(
-        (productPost) => productPost.regionId === regionId,
+    page: number,
+    limit: number,
+    regionId?: string,
+  ): Promise<Slice<ProductPostInfo>> {
+    // 1. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
+    const productPostSlice: Slice<ProductPostWithRelations> =
+      await this.productPostRepository.findPagedProductPosts(
+        page,
+        limit,
+        regionId,
       );
-    }
 
-    const totalElements = mockProductPosts.length;
-    const startIndex = pageNumber * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, totalElements);
-    const paginatedProductPosts = mockProductPosts.slice(startIndex, endIndex);
+    // 2. 상품 ID 목록 추출
+    const productIds = productPostSlice.contents.map((post) =>
+      post.productPost.getId(),
+    );
 
-    // 다음 페이지 존재 여부 확인
-    const hasNext = endIndex < totalElements;
+    // 3. 좋아요 수 조회
+    const likeCountMap: Map<number, number> =
+      await this.likeRepository.countByProductIds(productIds);
 
-    return {
-      content: paginatedProductPosts,
-      hasNext,
-    };
-  }
-
-  /**
-   * 모의 상품 게시글 데이터를 생성합니다.
-   * 실제 구현에서는 필요 없는 메서드입니다.
-   */
-  private getMockProductPosts(): ProductPostInfo[] {
-    return [];
+    // 4. ProductPostInfo로 변환
+    return productPostSlice.map((post) => {
+      return new ProductPostInfo({
+        productPost: post.productPost,
+        thumbnailUrl: post.thumbnailUrl,
+        likeCount: likeCountMap.get(post.productPost.getId()) ?? 0,
+        chatRoomCount: 0, // TODO: 채팅방 수 구현
+      });
+    });
   }
 
   @Transactional()

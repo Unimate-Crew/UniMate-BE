@@ -1,16 +1,23 @@
-import { CurrencyType, TradeStatus } from '@app/database/common/enums';
+import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 
 export class ProductPostInfo {
-  id: number;
-  title: string;
-  createdAt: string;
-  universityName: string;
+  productPost: ProductPost;
+
   thumbnailUrl: string;
-  price: number;
-  currencyType: CurrencyType;
+
   likeCount: number;
+
   chatRoomCount: number;
-  regionId: string;
-  regionName: string;
-  tradeStatus: TradeStatus;
+
+  constructor(params: {
+    productPost: ProductPost;
+    thumbnailUrl: string;
+    likeCount: number;
+    chatRoomCount: number;
+  }) {
+    this.productPost = params.productPost;
+    this.thumbnailUrl = params.thumbnailUrl;
+    this.likeCount = params.likeCount;
+    this.chatRoomCount = params.chatRoomCount;
+  }
 }
