@@ -7,6 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { SortDirection } from '@app/database/common/enums';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
+import { Slice } from '@app/common/utils/pagination';
 import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts-request.dto';
 import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts-response.dto';
@@ -18,6 +19,7 @@ import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.de
 import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
 import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list-response.dto';
+import { ProductPostInfo } from '../application/dto/product-post.info';
 
 @ApiTags('상품 게시글')
 @ApiBearerAuth('accessToken')
@@ -44,7 +46,7 @@ export class ProductPostController {
   ): Promise<FindPagedProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
-    const productPostInfoSlice =
+    const productPostInfoSlice: Slice<ProductPostInfo> =
       await this.productPostService.findPagedProductPosts(
         pageNumber,
         pageSize,

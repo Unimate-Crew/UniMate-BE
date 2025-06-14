@@ -67,17 +67,37 @@ export class ProductPostItemDto {
   regionId: string;
 
   @ApiProperty({
-    description: '지역 이름',
-    example: 'New York',
-  })
-  regionName: string;
-
-  @ApiProperty({
     description: '거래 상태',
     example: TradeStatus.FOR_SALE,
     enum: TradeStatus,
   })
   tradeStatus: TradeStatus;
+
+  constructor(
+    id: number,
+    title: string,
+    createdAt: string,
+    universityName: string,
+    thumbnailUrl: string,
+    price: number,
+    currencyType: CurrencyType,
+    likeCount: number,
+    chatRoomCount: number,
+    regionId: string,
+    tradeStatus: TradeStatus,
+  ) {
+    this.id = id;
+    this.title = title;
+    this.createdAt = createdAt;
+    this.universityName = universityName;
+    this.thumbnailUrl = thumbnailUrl;
+    this.price = price;
+    this.currencyType = currencyType;
+    this.likeCount = likeCount;
+    this.chatRoomCount = chatRoomCount;
+    this.regionId = regionId;
+    this.tradeStatus = tradeStatus;
+  }
 }
 
 export class FindPagedProductPostsResponseDto {
@@ -93,25 +113,33 @@ export class FindPagedProductPostsResponseDto {
   })
   hasNext: boolean;
 
+  constructor(contents: ProductPostItemDto[], hasNext: boolean) {
+    this.contents = contents;
+    this.hasNext = hasNext;
+  }
+
   static of(
     productPostInfoSlice: Slice<ProductPostInfo>,
   ): FindPagedProductPostsResponseDto {
-    const response = new FindPagedProductPostsResponseDto();
-    response.contents = productPostInfoSlice.contents.map((info) => ({
-      id: info.productPost.getId(),
-      title: info.productPost.getTitle(),
-      createdAt: info.productPost.getCreatedAt().toISOString(),
-      universityName: info.productPost.getUniversityId()?.toString() ?? '',
-      thumbnailUrl: info.thumbnailUrl,
-      price: info.productPost.getPrice(),
-      currencyType: info.productPost.getCurrencyType(),
-      likeCount: info.likeCount,
-      chatRoomCount: info.chatRoomCount,
-      regionId: info.productPost.getRegionId(),
-      regionName: '', // TODO: 지역 이름 구현
-      tradeStatus: info.productPost.getTradeStatus(),
-    }));
-    response.hasNext = productPostInfoSlice.hasNext;
+    const response = new FindPagedProductPostsResponseDto(
+      productPostInfoSlice.contents.map(
+        (info) =>
+          new ProductPostItemDto(
+            info.productPost.getId(),
+            info.productPost.getTitle(),
+            info.productPost.getCreatedAt().toISOString(),
+            info.universityName,
+            info.thumbnailUrl,
+            info.productPost.getPrice(),
+            info.productPost.getCurrencyType(),
+            info.likeCount,
+            info.chatRoomCount,
+            info.productPost.getRegionId(),
+            info.productPost.getTradeStatus(),
+          ),
+      ),
+      productPostInfoSlice.hasNext,
+    );
     return response;
   }
 }

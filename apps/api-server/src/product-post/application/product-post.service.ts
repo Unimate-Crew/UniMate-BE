@@ -81,12 +81,13 @@ export class ProductPostService {
 
     // 5. ProductPostInfo로 변환
     return productPostSlice.map((post) => {
-      return new ProductPostInfo({
-        productPost: post.productPost,
-        thumbnailUrl: post.thumbnailUrl,
-        likeCount: likeCountMap.get(post.productPost.getId()) ?? 0,
-        chatRoomCount: 0, // TODO: 채팅방 수 구현
-      });
+      return new ProductPostInfo(
+        post.productPost,
+        post.universityName,
+        post.thumbnailUrl,
+        likeCountMap.get(post.productPost.getId()) ?? 0,
+        0, // TODO: 채팅방 수 구현
+      );
     });
   }
 
