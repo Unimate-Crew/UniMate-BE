@@ -47,88 +47,14 @@ export class ProductPostController {
   ): Promise<FindPagedProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
-    // 모의 데이터 대신 실제 서비스 호출
-    // const { content, hasNext } = await this.productPostService.findPagedProductPosts(
-    //   pageNumber,
-    //   pageSize,
-    //   regionId,
-    // );
+    const { content, hasNext } =
+      await this.productPostService.findPagedProductPosts(
+        pageNumber,
+        pageSize,
+        regionId,
+      );
 
-    return FindPagedProductPostsResponseDto.of(
-      [
-        {
-          id: 1,
-          title: '메사추세츠 여행 가이드북 팝니다',
-          createdAt: '2023-06-15T09:30:00.000Z',
-          universityName: 'Harvard University',
-          thumbnailUrl: 'https://example.com/images/product-post1.jpg',
-          price: 15000,
-          currencyType: CurrencyType.KRW,
-          likeCount: 24,
-          chatRoomCount: 5,
-          regionId: '1',
-          regionName: 'Massachusetts',
-          tradeStatus: TradeStatus.FOR_SALE,
-        },
-        {
-          id: 2,
-          title: '전자레인지 팝니다',
-          createdAt: '2023-06-14T10:45:00.000Z',
-          universityName: 'Massachusetts Institute of Technology',
-          thumbnailUrl: 'https://example.com/images/product-post2.jpg',
-          price: 30000,
-          currencyType: CurrencyType.KRW,
-          likeCount: 15,
-          chatRoomCount: 3,
-          regionId: '2',
-          regionName: 'Massachusetts',
-          tradeStatus: TradeStatus.RESERVED,
-        },
-        {
-          id: 3,
-          title: '뉴욕 여행 가이드북 팝니다',
-          createdAt: '2023-06-13T11:20:00.000Z',
-          universityName: 'Cornell University',
-          thumbnailUrl: 'https://example.com/images/product-post3.jpg',
-          price: 50,
-          currencyType: CurrencyType.USD,
-          likeCount: 32,
-          chatRoomCount: 8,
-          regionId: '3',
-          regionName: 'New York',
-          tradeStatus: TradeStatus.FOR_SALE,
-        },
-        {
-          id: 4,
-          title: '냉장고 삽니다',
-          createdAt: '2023-06-12T13:15:00.000Z',
-          universityName: 'Yale University',
-          thumbnailUrl: 'https://example.com/images/product-post4.jpg',
-          price: 10000,
-          currencyType: CurrencyType.KRW,
-          likeCount: 41,
-          chatRoomCount: 12,
-          regionId: '4',
-          regionName: 'New York',
-          tradeStatus: TradeStatus.COMPLETED,
-        },
-        {
-          id: 5,
-          title: '소파 팝니다',
-          createdAt: '2023-06-11T14:30:00.000Z',
-          universityName: 'Princeton University',
-          thumbnailUrl: 'https://example.com/images/product-post5.jpg',
-          price: 200000,
-          currencyType: CurrencyType.KRW,
-          likeCount: 19,
-          chatRoomCount: 4,
-          regionId: '5',
-          regionName: 'New York',
-          tradeStatus: TradeStatus.FOR_SALE,
-        },
-      ],
-      false,
-    );
+    return FindPagedProductPostsResponseDto.of(content, hasNext);
   }
 
   @Get('/search')
@@ -164,55 +90,15 @@ export class ProductPostController {
       regionId,
     } = query;
 
-    // 모의 데이터 대신 실제 서비스 호출
-    // const { content, hasNext } = await this.productPostService.searchProductPosts(
-    //   searchKeyword,
-    //   universityId,
-    //   currencyType,
-    //   minPrice,
-    //   maxPrice,
-    //   category,
-    //   tradeStatus,
-    //   sortDirection,
-    //   pageNumber,
-    //   pageSize,
-    //   regionId,
-    // );
+    // TODO: 실제 서비스 메서드 구현 필요
+    const { content, hasNext } =
+      await this.productPostService.findPagedProductPosts(
+        pageNumber,
+        pageSize,
+        regionId,
+      );
 
-    // 검색 결과 샘플 데이터 (keyword가 '가이드북'일 경우의 응답)
-    return FindPagedProductPostsResponseDto.of(
-      [
-        {
-          id: 1,
-          title: '메사추세츠 여행 가이드북 팝니다',
-          createdAt: '2023-06-15T09:30:00.000Z',
-          universityName: 'Harvard University',
-          thumbnailUrl: 'https://example.com/images/product-post1.jpg',
-          price: 15000,
-          currencyType: CurrencyType.KRW,
-          likeCount: 24,
-          chatRoomCount: 5,
-          regionId: '1',
-          regionName: 'Massachusetts',
-          tradeStatus: TradeStatus.FOR_SALE,
-        },
-        {
-          id: 3,
-          title: '뉴욕 여행 가이드북 팝니다',
-          createdAt: '2023-06-13T11:20:00.000Z',
-          universityName: 'Cornell University',
-          thumbnailUrl: 'https://example.com/images/product-post3.jpg',
-          price: 50,
-          currencyType: CurrencyType.USD,
-          likeCount: 32,
-          chatRoomCount: 8,
-          regionId: '3',
-          regionName: 'New York',
-          tradeStatus: TradeStatus.FOR_SALE,
-        },
-      ],
-      false,
-    );
+    return FindPagedProductPostsResponseDto.of(content, hasNext);
   }
 
   @Post()
@@ -228,7 +114,7 @@ export class ProductPostController {
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<{ productPostId: number }> {
     const productPostId = await this.productPostService.createProductPost(
-      createProductPostDto,
+      createProductPostDto.toParam(),
       userTokenInfo.userId,
     );
 
@@ -247,7 +133,7 @@ export class ProductPostController {
     generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
   ): Promise<GeneratePresignedUrlListResponseDto> {
     const urlList = await this.productPostService.generatePresignedUrlList(
-      generatePresignedUrlListRequestDto,
+      generatePresignedUrlListRequestDto.toParam(),
     );
 
     return GeneratePresignedUrlListResponseDto.of(urlList);

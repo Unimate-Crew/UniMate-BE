@@ -10,10 +10,10 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
-import { CreateProductPostDto } from '../api/dto/create-product-post.dto';
-import { ProductPostItemDto } from '../api/dto/find-paged-product-posts-response.dto';
 import { ErrorCode } from '../../common/error-code';
-import { GeneratePresignedUrlListRequestDto } from '../api/dto/generate-presigned-url-list-request.dto';
+import { CreateProductPostParam } from './dto/create-product-post.param';
+import { ProductPostInfo } from './dto/product-post.info';
+import { GeneratePresignedUrlParam } from './dto/generate-presigned-url.param';
 
 @Injectable()
 export class ProductPostService {
@@ -36,8 +36,8 @@ export class ProductPostService {
   async findPagedProductPosts(
     pageNumber: number,
     pageSize: number,
-    regionId?: string,
-  ): Promise<{ content: ProductPostItemDto[]; hasNext: boolean }> {
+    regionId: string,
+  ): Promise<{ content: ProductPostInfo[]; hasNext: boolean }> {
     // 실제 구현 시에는 데이터베이스에서 조회하는 로직으로 변경 필요
     // 현재는 임시 데이터 반환
 
@@ -68,13 +68,13 @@ export class ProductPostService {
    * 모의 상품 게시글 데이터를 생성합니다.
    * 실제 구현에서는 필요 없는 메서드입니다.
    */
-  private getMockProductPosts(): (ProductPostItemDto & { regionId: string })[] {
+  private getMockProductPosts(): ProductPostInfo[] {
     return [];
   }
 
   @Transactional()
   async createProductPost(
-    createProductPostDto: CreateProductPostDto,
+    createProductPostParam: CreateProductPostParam,
     userId: number,
   ): Promise<number> {
     const user: User = await this.userRepository.findById(userId);
@@ -86,14 +86,14 @@ export class ProductPostService {
     }
 
     const productPost: ProductPost = this.productPostRepository.create({
-      ...createProductPostDto,
+      ...createProductPostParam,
       userId,
       tradeStatus: TradeStatus.FOR_SALE,
       universityId: user.getUniversityId(),
     });
     await this.productPostRepository.persistAndFlush(productPost);
 
-    const productImages = createProductPostDto.imageUrls.map(
+    const productImages = createProductPostParam.imageUrls.map(
       (imageUrl, index) => {
         const productImage: ProductImage = this.productImageRepository.create({
           productId: productPost.getId(),
@@ -115,10 +115,10 @@ export class ProductPostService {
   }
 
   async generatePresignedUrlList(
-    generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
+    generatePresignedUrlParam: GeneratePresignedUrlParam,
   ): Promise<PresignedUrlDto[]> {
     return Promise.all(
-      generatePresignedUrlListRequestDto.fileNames.map(async (fileName) => {
+      generatePresignedUrlParam.fileNames.map(async (fileName) => {
         const key = `${this.configService.get<string>('NODE_ENV', 'development')}/product/${Date.now()}-${fileName}`;
         const presignedUrl = await this.s3Service.generatePresignedUrl(key);
 

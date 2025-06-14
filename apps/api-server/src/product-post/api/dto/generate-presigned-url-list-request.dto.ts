@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsString, ArrayMaxSize } from 'class-validator';
+import { GeneratePresignedUrlParam } from '../../application/dto/generate-presigned-url.param';
 
 export class GeneratePresignedUrlListRequestDto {
   @ApiProperty({
@@ -11,4 +12,10 @@ export class GeneratePresignedUrlListRequestDto {
   @IsString({ each: true })
   @ArrayMaxSize(10)
   fileNames: string[];
+
+  toParam(): GeneratePresignedUrlParam {
+    const param = new GeneratePresignedUrlParam();
+    param.fileNames = this.fileNames;
+    return param;
+  }
 }
