@@ -1,6 +1,6 @@
-import { EntityRepository } from '@mikro-orm/mysql';
+import { EntityRepository, QueryOrder } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
-import { PagedResult } from '@app/common/utils/pagination';
+import { createPagedResult, PagedResult } from '@app/common/utils/pagination';
 import { Notification } from './notification.entity';
 
 @Injectable()
@@ -10,25 +10,18 @@ export class NotificationRepository extends EntityRepository<Notification> {
     page: number,
     limit: number,
   ): Promise<PagedResult<Notification>> {
-    const [notifications, totalCount] = await this.findAndCount(
+    const notifications = await this.find(
       {
         userId,
         isDeleted: false,
       },
       {
-        orderBy: { createdAt: 'DESC' } as any,
-        limit,
+        limit: limit + 1,
         offset: (page - 1) * limit,
+        orderBy: { createdAt: QueryOrder.DESC },
       },
     );
 
-    return {
-      content: notifications,
-      page,
-      limit,
-      totalItems: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      hasNext: page * limit < totalCount,
-    };
+    return createPagedResult(notifications, limit);
   }
 }

@@ -11,43 +11,23 @@ export interface PaginationParams {
  * 페이지네이션 결과 인터페이스
  */
 export interface PagedResult<T> {
-  // 결과 데이터
-  content: T[];
-
-  // 페이지 정보
-  page: number;
-  limit: number;
-
-  // 메타데이터
-  totalItems?: number;
-  totalPages?: number;
-  hasNext?: boolean;
+  items: T[];
+  hasNext: boolean;
 }
 
 /**
  * 오프셋 기반 페이지네이션을 위한 결과 생성 함수
  */
-export function createPagedResult<T>(
-  data: T[],
-  page: number,
-  limit: number,
-  options?: {
-    totalItems?: number;
-    hasNext?: boolean;
-  },
-): PagedResult<T> {
-  const totalItems = options?.totalItems;
-  const totalPages = totalItems ? Math.ceil(totalItems / limit) : undefined;
-  const hasNext =
-    options?.hasNext ??
-    (totalPages ? page < totalPages : data.length === limit);
+export function createPagedResult<T>(data: T[], limit: number): PagedResult<T> {
+  if (data.length <= limit) {
+    return {
+      items: data,
+      hasNext: false,
+    };
+  }
 
   return {
-    content: data,
-    page,
-    limit,
-    totalItems,
-    totalPages,
-    hasNext,
+    items: data.slice(0, limit),
+    hasNext: true,
   };
 }
