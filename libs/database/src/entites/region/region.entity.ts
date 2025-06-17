@@ -11,13 +11,19 @@ export class Region extends BaseEntity {
   name!: string;
 
   @Property()
+  countryCode?: string; // ISO 3166-1 alpha-2 코드 (국가 코드 ex. KR, US)
+
+  @Property({ fieldName: 'admin1_code' })
+  admin1Code?: string; // 1차 행정구역 코드
+
+  @Property()
   stateId!: string;
 
   @Property()
   countyId?: string;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
-  private latitude?: number;
+  latitude?: number;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
   longitude?: number;
