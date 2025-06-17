@@ -4,8 +4,9 @@ import {
   NotificationProductStatus,
 } from '@app/database/common/enums';
 import { BaseEntity } from '../../common/base.entity';
+import { NotificationRepository } from './notification.repository';
 
-@Entity()
+@Entity({ repository: () => NotificationRepository })
 export class Notification extends BaseEntity {
   @PrimaryKey()
   private readonly id!: number;
