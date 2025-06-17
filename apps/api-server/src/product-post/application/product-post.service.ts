@@ -10,10 +10,14 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
-import { CreateProductPostDto } from './dto/create-product-post.dto';
-import { ProductPostItemDto } from './dto/get-product-posts-response.dto';
-import { ErrorCode } from '../common/error-code';
-import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
+import { LikeRepository } from '@app/database/entites/like/like.repository';
+import { Slice } from '@app/common/utils/pagination';
+import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
+import { UserBlockRepository } from '@app/database/entites/user-block/user-block.repository';
+import { ErrorCode } from '../../common/error-code';
+import { CreateProductPostParam } from './dto/create-product-post.param';
+import { ProductPostInfo } from './dto/product-post.info';
+import { GeneratePresignedUrlParam } from './dto/generate-presigned-url.param';
 
 @Injectable()
 export class ProductPostService {
@@ -21,6 +25,8 @@ export class ProductPostService {
     private readonly productPostRepository: ProductPostRepository,
     private readonly productImageRepository: ProductImageRepository,
     private readonly userRepository: UserRepository,
+    private readonly likeRepository: LikeRepository,
+    private readonly userBlockRepository: UserBlockRepository,
     private readonly s3Service: S3Service,
     private readonly configService: ConfigService,
   ) {}
@@ -28,53 +34,66 @@ export class ProductPostService {
   /**
    * 상품 게시글 목록을 페이지네이션하여 조회합니다.
    *
-   * @param pageNumber 페이지 번호 (0부터 시작)
-   * @param pageSize 페이지 크기
-   * @param regionId 필터링할 지역 ID (optional)
+   * @param page 페이지 번호 (1부터 시작)
+   * @param limit 페이지 크기
+   * @param regionId 지역 ID
+   * @param userId 현재 로그인한 유저 ID
    * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
    */
-  async getProductPosts(
-    pageNumber: number,
-    pageSize: number,
+  async findPagedProductPosts(
+    page: number,
+    limit: number,
     regionId?: string,
-  ): Promise<{ content: ProductPostItemDto[]; hasNext: boolean }> {
-    // 실제 구현 시에는 데이터베이스에서 조회하는 로직으로 변경 필요
-    // 현재는 임시 데이터 반환
+    userId?: number,
+  ): Promise<Slice<ProductPostInfo>> {
+    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    let blockedUserIds: number[] = [];
+    if (userId) {
+      // 내가 차단한 유저
+      const blockedByMe =
+        await this.userBlockRepository.findByBlockerId(userId);
+      // 나를 차단한 유저
+      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
 
-    // 필터링 로직 예시
-    let mockProductPosts = this.getMockProductPosts();
-    if (regionId) {
-      // 실제로는 데이터베이스 쿼리에서 필터링하겠지만, 여기서는 모의 데이터를 필터링
-      mockProductPosts = mockProductPosts.filter(
-        (productPost) => productPost.regionId === regionId,
-      );
+      blockedUserIds = [
+        ...blockedByMe.map((block) => block.blockedId),
+        ...blockedMe.map((block) => block.blockerId),
+      ];
     }
 
-    const totalElements = mockProductPosts.length;
-    const startIndex = pageNumber * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, totalElements);
-    const paginatedProductPosts = mockProductPosts.slice(startIndex, endIndex);
+    // 2. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
+    const productPostSlice: Slice<ProductPostWithRelations> =
+      await this.productPostRepository.findPagedProductPosts(
+        page,
+        limit,
+        regionId,
+        blockedUserIds,
+      );
 
-    // 다음 페이지 존재 여부 확인
-    const hasNext = endIndex < totalElements;
+    // 3. 상품 ID 목록 추출
+    const productIds = productPostSlice.contents.map((post) =>
+      post.productPost.getId(),
+    );
 
-    return {
-      content: paginatedProductPosts,
-      hasNext,
-    };
-  }
+    // 4. 좋아요 수 조회
+    const likeCountMap: Map<number, number> =
+      await this.likeRepository.countByProductIds(productIds);
 
-  /**
-   * 모의 상품 게시글 데이터를 생성합니다.
-   * 실제 구현에서는 필요 없는 메서드입니다.
-   */
-  private getMockProductPosts(): (ProductPostItemDto & { regionId: string })[] {
-    return [];
+    // 5. ProductPostInfo로 변환
+    return productPostSlice.map((post) => {
+      return new ProductPostInfo(
+        post.productPost,
+        post.universityName,
+        post.thumbnailUrl,
+        likeCountMap.get(post.productPost.getId()) ?? 0,
+        0, // TODO: 채팅방 수 구현
+      );
+    });
   }
 
   @Transactional()
   async createProductPost(
-    createProductPostDto: CreateProductPostDto,
+    createProductPostParam: CreateProductPostParam,
     userId: number,
   ): Promise<number> {
     const user: User = await this.userRepository.findById(userId);
@@ -86,14 +105,14 @@ export class ProductPostService {
     }
 
     const productPost: ProductPost = this.productPostRepository.create({
-      ...createProductPostDto,
+      ...createProductPostParam,
       userId,
       tradeStatus: TradeStatus.FOR_SALE,
       universityId: user.getUniversityId(),
     });
     await this.productPostRepository.persistAndFlush(productPost);
 
-    const productImages = createProductPostDto.imageUrls.map(
+    const productImages = createProductPostParam.imageUrls.map(
       (imageUrl, index) => {
         const productImage: ProductImage = this.productImageRepository.create({
           productId: productPost.getId(),
@@ -115,10 +134,10 @@ export class ProductPostService {
   }
 
   async generatePresignedUrlList(
-    generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
+    generatePresignedUrlParam: GeneratePresignedUrlParam,
   ): Promise<PresignedUrlDto[]> {
     return Promise.all(
-      generatePresignedUrlListRequestDto.fileNames.map(async (fileName) => {
+      generatePresignedUrlParam.fileNames.map(async (fileName) => {
         const key = `${this.configService.get<string>('NODE_ENV', 'development')}/product/${Date.now()}-${fileName}`;
         const presignedUrl = await this.s3Service.generatePresignedUrl(key);
 

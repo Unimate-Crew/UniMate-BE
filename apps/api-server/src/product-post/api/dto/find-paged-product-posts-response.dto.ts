@@ -1,6 +1,8 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyType, TradeStatus } from '@app/database/common/enums';
+import { Slice } from '@app/common/utils/pagination';
+import { ProductPostInfo } from '../../application/dto/product-post.info';
 
 export class ProductPostItemDto {
   @ApiProperty({
@@ -65,25 +67,45 @@ export class ProductPostItemDto {
   regionId: string;
 
   @ApiProperty({
-    description: '지역 이름',
-    example: 'New York',
-  })
-  regionName: string;
-
-  @ApiProperty({
     description: '거래 상태',
     example: TradeStatus.FOR_SALE,
     enum: TradeStatus,
   })
   tradeStatus: TradeStatus;
+
+  constructor(
+    id: number,
+    title: string,
+    createdAt: string,
+    universityName: string,
+    thumbnailUrl: string,
+    price: number,
+    currencyType: CurrencyType,
+    likeCount: number,
+    chatRoomCount: number,
+    regionId: string,
+    tradeStatus: TradeStatus,
+  ) {
+    this.id = id;
+    this.title = title;
+    this.createdAt = createdAt;
+    this.universityName = universityName;
+    this.thumbnailUrl = thumbnailUrl;
+    this.price = price;
+    this.currencyType = currencyType;
+    this.likeCount = likeCount;
+    this.chatRoomCount = chatRoomCount;
+    this.regionId = regionId;
+    this.tradeStatus = tradeStatus;
+  }
 }
 
-export class GetProductPostsResponseDto {
+export class FindPagedProductPostsResponseDto {
   @ApiProperty({
     description: '상품 게시글 목록',
     type: [ProductPostItemDto],
   })
-  content: ProductPostItemDto[];
+  contents: ProductPostItemDto[];
 
   @ApiProperty({
     description: '다음 페이지 존재 여부',
@@ -91,13 +113,33 @@ export class GetProductPostsResponseDto {
   })
   hasNext: boolean;
 
+  constructor(contents: ProductPostItemDto[], hasNext: boolean) {
+    this.contents = contents;
+    this.hasNext = hasNext;
+  }
+
   static of(
-    content: ProductPostItemDto[],
-    hasNext: boolean,
-  ): GetProductPostsResponseDto {
-    const response = new GetProductPostsResponseDto();
-    response.content = content;
-    response.hasNext = hasNext;
+    productPostInfoSlice: Slice<ProductPostInfo>,
+  ): FindPagedProductPostsResponseDto {
+    const response = new FindPagedProductPostsResponseDto(
+      productPostInfoSlice.contents.map(
+        (info) =>
+          new ProductPostItemDto(
+            info.productPost.getId(),
+            info.productPost.getTitle(),
+            info.productPost.getCreatedAt().toISOString(),
+            info.universityName,
+            info.thumbnailUrl,
+            info.productPost.getPrice(),
+            info.productPost.getCurrencyType(),
+            info.likeCount,
+            info.chatRoomCount,
+            info.productPost.getRegionId(),
+            info.productPost.getTradeStatus(),
+          ),
+      ),
+      productPostInfoSlice.hasNext,
+    );
     return response;
   }
 }

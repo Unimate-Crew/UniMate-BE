@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class GetProductPostsRequestDto {
+export class FindPagedProductPostsRequestDto {
   @ApiProperty({
     description: '페이지 번호',
     example: 1,

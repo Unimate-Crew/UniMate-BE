@@ -46,4 +46,25 @@ export class LikeRepository extends EntityRepository<Like> {
   async removeAndFlush(like: Like): Promise<void> {
     await this.em.removeAndFlush(like);
   }
+
+  /**
+   * 상품 ID 목록에 대한 좋아요 수를 그룹화하여 가져옵니다.
+   * @param productIds 상품 ID 목록
+   * @returns Map<상품ID, 좋아요수>
+   */
+  async countByProductIds(productIds: number[]): Promise<Map<number, number>> {
+    if (productIds.length === 0) {
+      return new Map();
+    }
+
+    const knex = this.em.getKnex();
+    const result = await knex
+      .select('product_id')
+      .count('* as count')
+      .from('like')
+      .whereIn('product_id', productIds)
+      .groupBy('product_id');
+
+    return new Map(result.map((row) => [row.product_id, Number(row.count)]));
+  }
 }
