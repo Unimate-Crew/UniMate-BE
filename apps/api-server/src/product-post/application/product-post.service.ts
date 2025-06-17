@@ -145,4 +145,88 @@ export class ProductPostService {
       }),
     );
   }
+
+  /**
+   * 상품 게시글을 검색 조건에 따라 페이지네이션하여 조회합니다.
+   *
+   * @param page 페이지 번호 (1부터 시작)
+   * @param limit 페이지 크기
+   * @param searchKeyword 검색 키워드
+   * @param universityId 대학교 ID
+   * @param currencyType 통화 타입
+   * @param minPrice 최소 가격
+   * @param maxPrice 최대 가격
+   * @param category 상품 카테고리
+   * @param tradeStatus 거래 상태
+   * @param sortDirection 정렬 방향
+   * @param regionId 지역 ID
+   * @param userId 현재 로그인한 유저 ID
+   * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
+   */
+  async searchProductPosts(
+    page: number,
+    limit: number,
+    searchKeyword?: string,
+    universityId?: number,
+    currencyType?: string,
+    minPrice?: number,
+    maxPrice?: number,
+    category?: string,
+    tradeStatus?: string,
+    sortDirection?: string,
+    regionId?: string,
+    userId?: number,
+  ): Promise<Slice<ProductPostInfo>> {
+    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    let blockedUserIds: number[] = [];
+    if (userId) {
+      // 내가 차단한 유저
+      const blockedByMe =
+        await this.userBlockRepository.findByBlockerId(userId);
+      // 나를 차단한 유저
+      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
+
+      blockedUserIds = [
+        ...blockedByMe.map((block) => block.blockedId),
+        ...blockedMe.map((block) => block.blockerId),
+      ];
+    }
+
+    // 2. 상품 목록 검색 (대학교 정보와 썸네일 URL 포함)
+    const productPostSlice: Slice<ProductPostWithRelations> =
+      await this.productPostRepository.searchProductPosts(
+        searchKeyword,
+        universityId,
+        currencyType,
+        minPrice,
+        maxPrice,
+        category,
+        tradeStatus,
+        sortDirection,
+        page,
+        limit,
+        regionId,
+        blockedUserIds,
+      );
+
+    // 3. 상품 ID 목록 추출
+    const productIds = productPostSlice.contents.map((post) =>
+      post.productPost.getId(),
+    );
+
+    // 4. 좋아요 수 조회
+    const likeCountMap: Map<number, number> =
+      await this.likeRepository.countByProductIds(productIds);
+
+    // 5. ProductPostInfo로 변환
+    return productPostSlice.map((post) => {
+      return new ProductPostInfo(
+        post.productPost,
+        post.universityName,
+        post.thumbnailUrl,
+        likeCountMap.get(post.productPost.getId()) ?? 0,
+        0, // TODO: 채팅방 수 구현
+      );
+    });
+  }
 }

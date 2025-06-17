@@ -75,6 +75,7 @@ export class ProductPostController {
   })
   async searchProductPosts(
     @Query() query: SearchProductPostsRequestDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindPagedProductPostsResponseDto> {
     const {
       searchKeyword,
@@ -90,12 +91,20 @@ export class ProductPostController {
       regionId,
     } = query;
 
-    // TODO: 실제 서비스 메서드 구현 필요
-    const productPostInfoSlice =
-      await this.productPostService.findPagedProductPosts(
+    const productPostInfoSlice: Slice<ProductPostInfo> =
+      await this.productPostService.searchProductPosts(
         pageNumber,
         pageSize,
+        searchKeyword,
+        universityId,
+        currencyType,
+        minPrice,
+        maxPrice,
+        category,
+        tradeStatus,
+        sortDirection,
         regionId,
+        userTokenInfo.userId,
       );
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
