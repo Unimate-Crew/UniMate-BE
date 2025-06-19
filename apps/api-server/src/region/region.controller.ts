@@ -20,7 +20,7 @@ export class RegionController {
   @ApiOperation({
     summary: '지역 검색',
     description:
-      '지역 이름으로 지역을 검색합니다. 간단한 페이지네이션을 지원합니다.',
+      '지역 이름으로 지역을 검색합니다. 국가 코드를 함께 제공하면 해당 국가의 지역만 검색합니다.',
   })
   @ApiResponse({
     status: 200,

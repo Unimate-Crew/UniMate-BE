@@ -44,6 +44,22 @@ export class Region extends BaseEntity {
     this.name = name;
   }
 
+  public getCountryCode(): CountryCode | undefined {
+    return this.countryCode;
+  }
+
+  public setCountryCode(countryCode: CountryCode): void {
+    this.countryCode = countryCode;
+  }
+
+  public getAdmin1Code(): string | undefined {
+    return this.admin1Code;
+  }
+
+  public setAdmin1Code(admin1Code: string): void {
+    this.admin1Code = admin1Code;
+  }
+
   public getStateId(): string {
     return this.stateId;
   }

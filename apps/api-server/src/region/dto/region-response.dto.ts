@@ -5,7 +5,7 @@ import { RegionInfo } from './region-info.dto';
 
 export class RegionListResponse {
   @ApiProperty({ description: '지역 정보 목록', type: [RegionInfo] })
-  content: RegionInfo[];
+  contents: RegionInfo[];
 
   @ApiProperty({ description: '다음 페이지 존재 여부' })
   hasNext: boolean;
@@ -17,7 +17,7 @@ export class RegionListResponse {
    */
   static fromPagedResult(pagedResult: PagedResult<Region>): RegionListResponse {
     const response = new RegionListResponse();
-    response.content = pagedResult.content.map((region) =>
+    response.contents = pagedResult.content.map((region) =>
       RegionInfo.from(region),
     );
     response.hasNext = pagedResult.hasNext;
