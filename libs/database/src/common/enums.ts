@@ -36,3 +36,7 @@ export enum SortDirection {
   ASC = 'ASC',
   DESC = 'DESC',
 }
+
+export enum CountryCode {
+  US = 'US', // 미국
+}

@@ -1,4 +1,5 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core';
+import { CountryCode } from '@app/database/common/enums';
 import { RegionRepository } from './region.repository';
 import { BaseEntity } from '../../common/base.entity';
 
@@ -10,8 +11,8 @@ export class Region extends BaseEntity {
   @Property()
   name!: string;
 
-  @Property()
-  countryCode?: string; // ISO 3166-1 alpha-2 코드 (국가 코드 ex. KR, US)
+  @Enum(() => CountryCode)
+  countryCode?: CountryCode; // ISO 3166-1 alpha-2 코드 (국가 코드 ex. KR, US)
 
   @Property({ fieldName: 'admin1_code' })
   admin1Code?: string; // 1차 행정구역 코드
