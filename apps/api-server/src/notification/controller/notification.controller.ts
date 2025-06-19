@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
 import { GetNotificationsParamsDto } from '../service/dto/get-notifications-params.dto';
+import { GetNotificationsResultDto } from '../service/dto/get-notifications-result.dto';
 
 @ApiTags('알림')
 @ApiBearerAuth('accessToken')
@@ -34,14 +35,14 @@ export class NotificationController {
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
     @Query() requestDto: GetNotificationsRequestDto,
   ): Promise<GetNotificationsResponseDto> {
-    const params = GetNotificationsParamsDto.from(
+    const params: GetNotificationsParamsDto = GetNotificationsParamsDto.of(
       userTokenInfo.userId,
       requestDto.page,
       requestDto.limit,
     );
+    const result: GetNotificationsResultDto =
+      await this.notificationService.getNotifications(params);
 
-    const result = await this.notificationService.getNotifications(params);
-
-    return GetNotificationsResponseDto.fromServiceResponse(result);
+    return GetNotificationsResponseDto.fromResult(result);
   }
 }

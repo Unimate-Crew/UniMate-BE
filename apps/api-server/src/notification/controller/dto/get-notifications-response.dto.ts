@@ -14,7 +14,7 @@ export class GetNotificationsResponseDto {
     this.hasNext = hasNext;
   }
 
-  static fromServiceResponse(
+  static fromResult(
     result: GetNotificationsResultDto,
   ): GetNotificationsResponseDto {
     return new GetNotificationsResponseDto(result.items, result.hasNext);

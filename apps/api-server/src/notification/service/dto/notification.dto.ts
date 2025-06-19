@@ -30,16 +30,36 @@ export class NotificationDto {
   @ApiProperty({ description: '생성 일시' })
   createdAt: Date;
 
-  static from(notification: Notification): NotificationDto {
-    const dto = new NotificationDto();
-    dto.id = notification.getId();
-    dto.userId = notification.getUserId();
-    dto.productId = notification.getProductId();
-    dto.productStatus = notification.getProductStatus();
-    dto.notificationType = notification.getNotificationType();
-    dto.content = notification.getContent();
-    dto.isRead = notification.getIsRead();
-    dto.createdAt = notification.getCreatedAt();
-    return dto;
+  private constructor(
+    id: number,
+    userId: number,
+    productId: number,
+    productStatus: NotificationProductStatus,
+    notificationType: NotificationType,
+    content: string,
+    isRead: boolean,
+    createdAt: Date,
+  ) {
+    this.id = id;
+    this.userId = userId;
+    this.productId = productId;
+    this.productStatus = productStatus;
+    this.notificationType = notificationType;
+    this.content = content;
+    this.isRead = isRead;
+    this.createdAt = createdAt;
+  }
+
+  static fromEntity(notification: Notification): NotificationDto {
+    return new NotificationDto(
+      notification.id,
+      notification.userId,
+      notification.productId,
+      notification.productStatus,
+      notification.notificationType,
+      notification.content,
+      notification.isRead,
+      notification.createdAt,
+    );
   }
 }

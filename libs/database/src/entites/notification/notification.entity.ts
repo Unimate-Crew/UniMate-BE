@@ -9,51 +9,23 @@ import { NotificationRepository } from './notification.repository';
 @Entity({ repository: () => NotificationRepository })
 export class Notification extends BaseEntity {
   @PrimaryKey()
-  private readonly id!: number;
+  readonly id!: number;
 
   @Property()
-  private userId!: number;
+  readonly userId!: number;
 
   @Property()
-  private productId!: number;
+  readonly productId!: number;
 
   @Enum(() => NotificationProductStatus)
-  private productStatus!: NotificationProductStatus;
+  productStatus!: NotificationProductStatus;
 
   @Enum(() => NotificationType)
-  private notificationType!: NotificationType;
+  notificationType!: NotificationType;
 
   @Property()
-  private content!: string;
+  content!: string;
 
   @Property()
-  private isRead: boolean = false;
-
-  public getId(): number {
-    return this.id;
-  }
-
-  public getUserId(): number {
-    return this.userId;
-  }
-
-  public getProductId(): number {
-    return this.productId;
-  }
-
-  public getProductStatus(): NotificationProductStatus {
-    return this.productStatus;
-  }
-
-  public getNotificationType(): NotificationType {
-    return this.notificationType;
-  }
-
-  public getContent(): string {
-    return this.content;
-  }
-
-  public getIsRead(): boolean {
-    return this.isRead;
-  }
+  isRead: boolean = false;
 }
