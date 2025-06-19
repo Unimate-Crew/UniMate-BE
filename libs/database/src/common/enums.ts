@@ -32,6 +32,16 @@ export enum TradeType {
   ONLINE = 'ONLINE', // 비대면 거래
 }
 
+export enum NotificationProductStatus {
+  CHAT = 'CHAT',
+  LIKE = 'LIKE',
+}
+
+export enum NotificationType {
+  SALE_ENDED = 'SALE_ENDED',
+  PRICE_CHANGED = 'PRICE_CHANGED',
+}
+
 export enum SortDirection {
   ASC = 'ASC',
   DESC = 'DESC',

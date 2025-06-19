@@ -17,7 +17,7 @@ export class RegionListResponse {
    */
   static fromPagedResult(pagedResult: PagedResult<Region>): RegionListResponse {
     const response = new RegionListResponse();
-    response.contents = pagedResult.content.map((region) =>
+    response.contents = pagedResult.contents.map((region) =>
       RegionInfo.from(region),
     );
     response.hasNext = pagedResult.hasNext;

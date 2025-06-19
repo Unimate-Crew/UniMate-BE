@@ -8,6 +8,7 @@ import { User } from './entites/user/user.entity';
 import { UsState } from './entites/region/us-state.entity';
 import { UsCounty } from './entites/region/us-county.entity';
 import { Region } from './entites/region/region.entity';
+import { Notification } from './entites/notification/notification.entity';
 
 @Global()
 @Module({
@@ -51,7 +52,7 @@ import { Region } from './entites/region/region.entity';
         debug: true,
       }),
     }),
-    MikroOrmModule.forFeature([User, UsState, UsCounty, Region]),
+    MikroOrmModule.forFeature([User, UsState, UsCounty, Region, Notification]),
   ],
   exports: [MikroOrmModule],
 })
