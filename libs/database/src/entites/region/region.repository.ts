@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
-import { PagedResult } from '@app/common';
+import { createPagedResult, PagedResult } from '@app/common';
 import type { Region } from './region.entity';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class RegionRepository extends EntityRepository<Region> {
     page: number,
     limit: number,
   ): Promise<PagedResult<Region>> {
-    const [entities, totalCount] = await this.findAndCount(
+    const regions = await this.find(
       {
         name: { $like: `%${name}%` } as any,
         isDeleted: false,
@@ -36,14 +36,7 @@ export class RegionRepository extends EntityRepository<Region> {
       },
     );
 
-    return {
-      content: entities,
-      page,
-      limit,
-      totalItems: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      hasNext: page * limit < totalCount,
-    };
+    return createPagedResult(regions, limit);
   }
 
   async findAllActive(): Promise<Region[]> {
