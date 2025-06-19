@@ -1,4 +1,5 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core';
+import { CountryCode } from '@app/database/common/enums';
 import { RegionRepository } from './region.repository';
 import { BaseEntity } from '../../common/base.entity';
 
@@ -10,6 +11,12 @@ export class Region extends BaseEntity {
   @Property()
   name!: string;
 
+  @Enum(() => CountryCode)
+  countryCode?: CountryCode; // ISO 3166-1 alpha-2 코드 (국가 코드 ex. KR, US)
+
+  @Property({ fieldName: 'admin1_code' })
+  admin1Code?: string; // 1차 행정구역 코드
+
   @Property()
   stateId!: string;
 
@@ -17,7 +24,7 @@ export class Region extends BaseEntity {
   countyId?: string;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
-  private latitude?: number;
+  latitude?: number;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
   longitude?: number;
@@ -35,6 +42,22 @@ export class Region extends BaseEntity {
 
   public setName(name: string): void {
     this.name = name;
+  }
+
+  public getCountryCode(): CountryCode | undefined {
+    return this.countryCode;
+  }
+
+  public setCountryCode(countryCode: CountryCode): void {
+    this.countryCode = countryCode;
+  }
+
+  public getAdmin1Code(): string | undefined {
+    return this.admin1Code;
+  }
+
+  public setAdmin1Code(admin1Code: string): void {
+    this.admin1Code = admin1Code;
   }
 
   public getStateId(): string {

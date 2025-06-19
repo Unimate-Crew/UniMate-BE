@@ -16,7 +16,7 @@ export class GetNotificationsResultDto {
     pagedResult: PagedResult<Notification>,
   ): GetNotificationsResultDto {
     return new GetNotificationsResultDto(
-      pagedResult.items.map((notification) =>
+      pagedResult.contents.map((notification) =>
         NotificationDto.fromEntity(notification),
       ),
       pagedResult.hasNext,

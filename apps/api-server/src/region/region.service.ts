@@ -12,13 +12,16 @@ export class RegionService {
   async searchRegions(
     searchRegionDto: SearchRegionDto,
   ): Promise<RegionListResponse> {
-    const { name, page = 1, limit = 20 } = searchRegionDto;
+    const { name, countryCode, page = 1, limit = 20 } = searchRegionDto;
 
-    // 커스텀 리포지토리 메서드 사용
     const result: PagedResult<Region> =
-      await this.regionRepository.findByNameLike(name, page, limit);
+      await this.regionRepository.findByNameAndCountryCodeLike(
+        page,
+        limit,
+        name,
+        countryCode,
+      );
 
-    // 정적 팩토리 메서드를 사용하여 응답 생성
     return RegionListResponse.fromPagedResult(result);
   }
 

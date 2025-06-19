@@ -54,7 +54,7 @@ export interface PaginationParams {
  * 페이지네이션 결과 인터페이스
  */
 export interface PagedResult<T> {
-  items: T[];
+  contents: T[];
   hasNext: boolean;
 }
 
@@ -64,13 +64,13 @@ export interface PagedResult<T> {
 export function createPagedResult<T>(data: T[], limit: number): PagedResult<T> {
   if (data.length <= limit) {
     return {
-      items: data,
+      contents: data,
       hasNext: false,
     };
   }
 
   return {
-    items: data.slice(0, limit),
+    contents: data.slice(0, limit),
     hasNext: true,
   };
 }
