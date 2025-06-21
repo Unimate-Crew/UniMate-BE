@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
 import { User } from '@app/database/entites/user/user.entity';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
@@ -20,6 +24,7 @@ import { CreateProductPostParam } from './dto/create-product-post.param';
 import { ProductPostInfo } from './dto/product-post.info';
 import { GeneratePresignedUrlParam } from './dto/generate-presigned-url.param';
 import { ProductCategoryInfo } from './dto/Product-category.info';
+import { UpdateProductPostParam } from './dto/update-product-post.param';
 
 @Injectable()
 export class ProductPostService {
@@ -230,6 +235,88 @@ export class ProductPostService {
         0, // TODO: 채팅방 수 구현
       );
     });
+  }
+
+  /**
+   * 상품 게시글을 수정합니다.
+   *
+   * @param productPostId 수정할 상품 게시글 ID
+   * @param updateProductPostParam 수정할 데이터
+   * @param userId 현재 로그인한 유저 ID
+   * @returns 수정된 상품 게시글 ID
+   */
+  @Transactional()
+  async updateProductPost(
+    productPostId: number,
+    updateProductPostParam: UpdateProductPostParam,
+    userId: number,
+  ): Promise<number> {
+    // 1. 상품 게시글 조회
+    const productPost: ProductPost =
+      await this.productPostRepository.findById(productPostId);
+
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    // 2. 삭제된 게시글인지 확인
+    if (productPost.isProductPostDeleted()) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_DELETED,
+        message: '삭제된 상품 게시글입니다.',
+      });
+    }
+
+    // 3. 권한 검증 (본인이 작성한 게시글만 수정 가능)
+    if (productPost.getUserId() !== userId) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '본인이 작성한 상품 게시글만 수정할 수 있습니다.',
+      });
+    }
+
+    // 4. 상품 게시글 수정
+    if (updateProductPostParam.tradeStatus !== undefined) {
+      productPost.setTradeStatus(updateProductPostParam.tradeStatus);
+    }
+
+    if (updateProductPostParam.title !== undefined) {
+      productPost.setTitle(updateProductPostParam.title);
+    }
+
+    if (updateProductPostParam.description !== undefined) {
+      productPost.setDescription(updateProductPostParam.description);
+    }
+
+    if (updateProductPostParam.price !== undefined) {
+      productPost.setPrice(updateProductPostParam.price);
+    }
+
+    if (updateProductPostParam.currencyType !== undefined) {
+      productPost.setCurrencyType(updateProductPostParam.currencyType);
+    }
+
+    if (updateProductPostParam.category !== undefined) {
+      productPost.setCategory(updateProductPostParam.category);
+    }
+
+    if (updateProductPostParam.tradeType !== undefined) {
+      productPost.setTradeType(updateProductPostParam.tradeType);
+    }
+
+    if (updateProductPostParam.tradeTypeDescription !== undefined) {
+      productPost.setTradeTypeDescription(
+        updateProductPostParam.tradeTypeDescription,
+      );
+    }
+
+    // 5. 변경사항 저장
+    await this.productPostRepository.persistAndFlush(productPost);
+
+    return productPost.getId();
   }
 
   /**

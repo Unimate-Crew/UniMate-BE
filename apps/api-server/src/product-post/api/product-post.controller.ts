@@ -1,4 +1,13 @@
-import { Controller, Get, Query, UseGuards, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  Post,
+  Body,
+  Patch,
+  Param,
+} from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -23,6 +32,8 @@ import { ProductPostInfo } from '../application/dto/product-post.info';
 import { FindCategoriesRequestDto } from './dto/find-categories-request.dto';
 import { FindCategoriesResponseDto } from './dto/find-categories-response.dto';
 import { ProductCategoryInfo } from '../application/dto/Product-category.info';
+import { UpdateProductPostRequestDto } from './dto/update-product-post-request.dto';
+import { UpdateProductPostResponseDto } from './dto/update-product-post-response.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -179,5 +190,80 @@ export class ProductPostController {
       await this.productPostService.findCategories(query.regionId);
 
     return FindCategoriesResponseDto.of(productCategoryInfos);
+  }
+
+  @Patch('/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 수정 API',
+    description: '상품 게시글의 정보를 수정합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '상품 게시글 수정 성공',
+    type: UpdateProductPostResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (본인이 작성한 게시글만 수정 가능)',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'P002',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '본인이 작성한 상품 게시글만 수정할 수 있습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '상품 게시글을 찾을 수 없음',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'P001',
+          description: '에러 코드 (P001: 게시글 없음, P003: 삭제된 게시글)',
+        },
+        message: {
+          type: 'string',
+          example: '상품 게시글을 찾을 수 없습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async updateProductPost(
+    @Param('id') productPostId: number,
+    @Body() updateProductPostRequestDto: UpdateProductPostRequestDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<UpdateProductPostResponseDto> {
+    const updatedProductPostId =
+      await this.productPostService.updateProductPost(
+        productPostId,
+        updateProductPostRequestDto.toParam(),
+        userTokenInfo.userId,
+      );
+
+    return UpdateProductPostResponseDto.of(updatedProductPostId);
   }
 }
