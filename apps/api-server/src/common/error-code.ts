@@ -18,4 +18,5 @@ export enum ErrorCode {
 
   // 관심지역
   INTEREST_REGION_NOT_FOUND = 'IR001',
+  PRIMARY_INTEREST_REGION_CANNOT_BE_DELETED = 'IR004',
 }
