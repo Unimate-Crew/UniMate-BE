@@ -20,15 +20,18 @@ import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
 import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list-response.dto';
 import { ProductPostInfo } from '../application/dto/product-post.info';
+import { FindCategoriesRequestDto } from './dto/find-categories-request.dto';
+import { FindCategoriesResponseDto } from './dto/find-categories-response.dto';
+import { ProductCategoryInfo } from '../application/dto/Product-category.info';
 
 @ApiTags('상품 게시글')
-@ApiBearerAuth('accessToken')
-@UseGuards(JwtAuthGuard)
 @Controller({ path: 'product-posts' })
 export class ProductPostController {
   constructor(private readonly productPostService: ProductPostService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
   @ApiOperation({ summary: '상품 게시글 목록 조회 API' })
   @ApiResponse({
     status: 200,
@@ -58,6 +61,8 @@ export class ProductPostController {
   }
 
   @Get('/search')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '상품 게시글 검색 API',
     description:
@@ -112,6 +117,7 @@ export class ProductPostController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
   @ApiOperation({ summary: '제품 게시글 생성' })
   @ApiResponse({
     status: 201,
@@ -131,6 +137,8 @@ export class ProductPostController {
   }
 
   @Post('/presigned-url')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
   @ApiOperation({ summary: '상품 이미지 업로드를 위한 Presigned URL 발급' })
   @ApiResponse({
     status: 200,
@@ -146,5 +154,30 @@ export class ProductPostController {
     );
 
     return GeneratePresignedUrlListResponseDto.of(urlList);
+  }
+
+  @Get('/categories')
+  @ApiOperation({
+    summary: '상품 카테고리 목록 조회 API',
+    description:
+      '모든 상품 카테고리와 각 카테고리별 상품 게시글 개수를 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '상품 카테고리 목록 조회 성공',
+    type: FindCategoriesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  async findCategories(
+    @Query() query: FindCategoriesRequestDto,
+  ): Promise<FindCategoriesResponseDto> {
+    const productCategoryInfos: ProductCategoryInfo[] =
+      await this.productPostService.findCategories(query.regionId);
+
+    return FindCategoriesResponseDto.of(productCategoryInfos);
   }
 }

@@ -4,7 +4,7 @@ import { User } from '@app/database/entites/user/user.entity';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { ProductImageRepository } from '@app/database/entites/product-post/product-image.repository';
 import { ProductImage } from '@app/database/entites/product-post/product-image.entity';
-import { TradeStatus } from '@app/database/common/enums';
+import { TradeStatus, ProductCategory } from '@app/database/common/enums';
 import { Transactional } from '@mikro-orm/core';
 import { UserRepository } from '@app/database/entites/user/user.repository';
 import { ConfigService } from '@nestjs/config';
@@ -14,10 +14,12 @@ import { LikeRepository } from '@app/database/entites/like/like.repository';
 import { Slice } from '@app/common/utils/pagination';
 import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
 import { UserBlockRepository } from '@app/database/entites/user-block/user-block.repository';
+import { CategoryCountDto } from '@app/database/entites/product-post/dto/category-count.dto';
 import { ErrorCode } from '../../common/error-code';
 import { CreateProductPostParam } from './dto/create-product-post.param';
 import { ProductPostInfo } from './dto/product-post.info';
 import { GeneratePresignedUrlParam } from './dto/generate-presigned-url.param';
+import { ProductCategoryInfo } from './dto/Product-category.info';
 
 @Injectable()
 export class ProductPostService {
@@ -228,5 +230,19 @@ export class ProductPostService {
         0, // TODO: 채팅방 수 구현
       );
     });
+  }
+
+  /**
+   * 상품 카테고리 목록을 조회합니다.
+   * 각 카테고리별 상품 게시글 개수를 포함합니다.
+   *
+   * @param regionId 지역 ID (옵셔널)
+   * @returns 카테고리 목록과 각 카테고리의 상품 개수
+   */
+  async findCategories(regionId?: string): Promise<ProductCategoryInfo[]> {
+    const categoryCounts: CategoryCountDto[] =
+      await this.productPostRepository.findCategoryCounts(regionId);
+
+    return ProductCategoryInfo.of(categoryCounts);
   }
 }

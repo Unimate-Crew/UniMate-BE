@@ -5,6 +5,7 @@ import { TradeStatus, ProductCategory } from '../../common/enums';
 // eslint-disable-next-line import/no-cycle
 import { ProductPost } from './product-post.entity';
 import { ProductPostWithRelations } from './dto/product-post-with-relations.dto';
+import { CategoryCountDto } from './dto/category-count.dto';
 
 @Injectable()
 export class ProductPostRepository extends EntityRepository<ProductPost> {
@@ -258,5 +259,36 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     );
 
     return Slice.of(content, hasNext);
+  }
+
+  /**
+   * 카테고리별 상품 게시글 개수를 조회합니다.
+   *
+   * @param regionId 지역 ID (옵셔널)
+   * @returns 카테고리별 상품 개수 배열
+   */
+  async findCategoryCounts(regionId?: string): Promise<CategoryCountDto[]> {
+    const knex = this.em.getKnex();
+
+    const query = knex
+      .select(['product_post.category', knex.raw('COUNT(*) as count')])
+      .from('product_post')
+      .where('product_post.is_deleted', false)
+      .groupBy('product_post.category');
+
+    // 지역 필터링
+    if (regionId && regionId.trim() !== '') {
+      query.where('product_post.region_id', regionId);
+    }
+
+    const results = await query;
+
+    return results.map(
+      (row) =>
+        new CategoryCountDto(
+          row.category as ProductCategory,
+          Number(row.count),
+        ),
+    );
   }
 }
