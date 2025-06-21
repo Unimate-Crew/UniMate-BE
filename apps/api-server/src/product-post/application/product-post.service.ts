@@ -81,16 +81,27 @@ export class ProductPostService {
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 5. ProductPostInfo로 변환
-    return productPostSlice.map((post) => {
-      return new ProductPostInfo(
-        post.productPost,
-        post.universityName,
-        post.thumbnailUrl,
-        likeCountMap.get(post.productPost.getId()) ?? 0,
-        0, // TODO: 채팅방 수 구현
-      );
-    });
+    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    const productPostInfos = await Promise.all(
+      productPostSlice.contents.map(async (post) => {
+        let thumbnailUrl = null;
+        if (post.thumbnailImageKey) {
+          thumbnailUrl = await this.s3Service.generateGetPresignedUrl(
+            post.thumbnailImageKey,
+          );
+        }
+
+        return new ProductPostInfo(
+          post.productPost,
+          post.universityName,
+          thumbnailUrl,
+          likeCountMap.get(post.productPost.getId()) ?? 0,
+          0, // TODO: 채팅방 수 구현
+        );
+      }),
+    );
+
+    return Slice.of(productPostInfos, productPostSlice.hasNext);
   }
 
   @Transactional()
@@ -141,7 +152,7 @@ export class ProductPostService {
     return Promise.all(
       generatePresignedUrlParam.fileNames.map(async (fileName) => {
         const key = `${this.configService.get<string>('NODE_ENV', 'development')}/product/${Date.now()}-${fileName}`;
-        const presignedUrl = await this.s3Service.generatePresignedUrl(key);
+        const presignedUrl = await this.s3Service.generatePutPresignedUrl(key);
 
         return PresignedUrlDto.of(presignedUrl, key);
       }),
@@ -220,16 +231,27 @@ export class ProductPostService {
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 5. ProductPostInfo로 변환
-    return productPostSlice.map((post) => {
-      return new ProductPostInfo(
-        post.productPost,
-        post.universityName,
-        post.thumbnailUrl,
-        likeCountMap.get(post.productPost.getId()) ?? 0,
-        0, // TODO: 채팅방 수 구현
-      );
-    });
+    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    const productPostInfos = await Promise.all(
+      productPostSlice.contents.map(async (post) => {
+        let thumbnailUrl = null;
+        if (post.thumbnailImageKey) {
+          thumbnailUrl = await this.s3Service.generateGetPresignedUrl(
+            post.thumbnailImageKey,
+          );
+        }
+
+        return new ProductPostInfo(
+          post.productPost,
+          post.universityName,
+          thumbnailUrl,
+          likeCountMap.get(post.productPost.getId()) ?? 0,
+          0, // TODO: 채팅방 수 구현
+        );
+      }),
+    );
+
+    return Slice.of(productPostInfos, productPostSlice.hasNext);
   }
 
   /**

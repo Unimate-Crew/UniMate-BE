@@ -72,7 +72,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       .select([
         'product_post.*',
         'university.name as university_name',
-        'product_image.image_url as thumbnail_url',
+        'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
       .leftJoin('university', 'product_post.university_id', 'university.id')
@@ -123,7 +123,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             deletedAt: row.deleted_at,
           }),
           universityName: row.university_name,
-          thumbnailUrl: row.thumbnail_url,
+          thumbnailImageKey: row.thumbnail_image_key,
         }),
     );
 
@@ -169,7 +169,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       .select([
         'product_post.*',
         'university.name as university_name',
-        'product_image.image_url as thumbnail_url',
+        'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
       .leftJoin('university', 'product_post.university_id', 'university.id')
@@ -254,7 +254,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             deletedAt: row.deleted_at,
           }),
           universityName: row.university_name,
-          thumbnailUrl: row.thumbnail_url,
+          thumbnailImageKey: row.thumbnail_image_key,
         }),
     );
 

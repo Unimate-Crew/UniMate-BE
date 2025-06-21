@@ -6,15 +6,15 @@ export class ProductPostWithRelations {
 
   readonly universityName: string | null;
 
-  readonly thumbnailUrl: string | null;
+  readonly thumbnailImageKey: string | null;
 
   constructor(params: {
     productPost: ProductPost;
     universityName: string | null;
-    thumbnailUrl: string | null;
+    thumbnailImageKey: string | null;
   }) {
     this.productPost = params.productPost;
     this.universityName = params.universityName;
-    this.thumbnailUrl = params.thumbnailUrl;
+    this.thumbnailImageKey = params.thumbnailImageKey;
   }
 }

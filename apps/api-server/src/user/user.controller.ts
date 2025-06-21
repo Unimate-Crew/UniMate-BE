@@ -233,7 +233,7 @@ export class UserController {
     @Body() generatePresignedUrlRequestDto: GeneratePresignedUrlRequestDto,
   ): Promise<GeneratePresignedUrlResponseDto> {
     const key = `${this.configService.get<string>('NODE_ENV', 'development')}/user/${Date.now()}-${generatePresignedUrlRequestDto.fileName}`;
-    const presignedUrl = await this.s3Service.generatePresignedUrl(key);
+    const presignedUrl = await this.s3Service.generatePutPresignedUrl(key);
 
     return GeneratePresignedUrlResponseDto.of(presignedUrl, key);
   }
