@@ -4,6 +4,8 @@ import { PagedResult } from '@app/common/utils/pagination';
 import { Notification } from '@app/database/entites/notification/notification.entity';
 import { GetNotificationsParamsDto } from './dto/get-notifications-params.dto';
 import { GetNotificationsResultDto } from './dto/get-notifications-result.dto';
+import { DeleteNotificationsParamsDto } from './dto/delete-notifications-params.dto';
+import { DeleteNotificationsResultDto } from './dto/delete-notifications-result.dto';
 
 @Injectable()
 export class NotificationService {
@@ -22,5 +24,25 @@ export class NotificationService {
       );
 
     return GetNotificationsResultDto.fromPagedResult(notifications);
+  }
+
+  async deleteNotifications(
+    params: DeleteNotificationsParamsDto,
+  ): Promise<DeleteNotificationsResultDto> {
+    const deletedCount = await this.notificationRepository.deleteNotifications(
+      params.userId,
+      params.notificationIds,
+    );
+
+    return DeleteNotificationsResultDto.of(deletedCount);
+  }
+
+  async deleteAllNotifications(
+    userId: number,
+  ): Promise<DeleteNotificationsResultDto> {
+    const deletedCount =
+      await this.notificationRepository.deleteAllNotifications(userId);
+
+    return DeleteNotificationsResultDto.of(deletedCount);
   }
 }
