@@ -41,11 +41,11 @@ export class SignUpDto {
   nickname!: string;
 
   @ApiProperty({
-    description: '프로필 이미지 URL',
-    example: 'https://example.com/profile.jpg',
+    description: '프로필 이미지 키',
+    example: 'development/user/20250617T12:34:56.987Z-1234567890.jpg',
     required: false,
   })
   @IsString()
   @IsOptional()
-  profileImageUrl?: string;
+  profileImageKey?: string;
 }

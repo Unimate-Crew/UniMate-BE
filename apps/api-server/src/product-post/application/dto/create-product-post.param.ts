@@ -6,12 +6,20 @@ import {
 
 export class CreateProductPostParam {
   title: string;
-  imageUrls: string[];
+
+  imageKeys: string[];
+
   category: ProductCategory;
+
   price: number;
+
   currencyType: CurrencyType;
+
   description: string;
+
   tradeType: TradeType;
+
   tradeTypeDescription: string;
+
   regionId: string;
 }

@@ -55,7 +55,7 @@ export class UserService {
   }
 
   async signUp(signUpDto: SignUpDto): Promise<User> {
-    const { provider, providerId, oAuthToken, nickname, profileImageUrl } =
+    const { provider, providerId, oAuthToken, nickname, profileImageKey } =
       signUpDto;
 
     await this.validateSnsUserInfo(provider, providerId, oAuthToken);
@@ -70,7 +70,7 @@ export class UserService {
         provider,
         providerId,
         nickname,
-        profileImageUrl,
+        profileImageKey,
       });
       await this.userRepository.flush();
     }

@@ -114,11 +114,11 @@ export class ProductPostService {
     });
     await this.productPostRepository.persistAndFlush(productPost);
 
-    const productImages = createProductPostParam.imageUrls.map(
-      (imageUrl, index) => {
+    const productImages = createProductPostParam.imageKeys.map(
+      (imageKey, index) => {
         const productImage: ProductImage = this.productImageRepository.create({
           productId: productPost.getId(),
-          imageUrl,
+          imageKey,
           isThumbnail: index === 0,
         });
         return productImage;
