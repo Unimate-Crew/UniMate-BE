@@ -11,7 +11,7 @@ export class ProductImage extends BaseEntity {
   productId!: number;
 
   @Property()
-  imageUrl!: string;
+  imageKey!: string;
 
   @Property({ default: false })
   isThumbnail: boolean = false;
@@ -28,12 +28,12 @@ export class ProductImage extends BaseEntity {
     this.productId = productId;
   }
 
-  public getImageUrl(): string {
-    return this.imageUrl;
+  public getImageKey(): string {
+    return this.imageKey;
   }
 
-  public setImageUrl(imageUrl: string): void {
-    this.imageUrl = imageUrl;
+  public setImageKey(imageKey: string): void {
+    this.imageKey = imageKey;
   }
 
   public getIsThumbnail(): boolean {
