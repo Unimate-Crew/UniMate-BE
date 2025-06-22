@@ -36,6 +36,7 @@ import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-req
 import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
 import { UserTokenInfo } from '../common/types/user-token-info';
 import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
+import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -164,6 +165,35 @@ export class UserController {
       userTokenInfo.userId,
       saveInterestRegionsDto.regionIds,
       saveInterestRegionsDto.primaryRegionId,
+    );
+  }
+
+  @Post('/regions')
+  @ApiOperation({ summary: '개별 관심지역 저장 API' })
+  @ApiResponse({
+    status: 201,
+    description: '개별 관심지역 저장 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code: R001(지역이 존재하지 않음), IR002(이미 관심지역으로 등록된 지역), IR003(관심지역 개수 초과)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(201)
+  async saveInterestRegion(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Body() saveInterestRegionDto: SaveInterestRegionDto,
+  ): Promise<void> {
+    await this.userService.saveInterestRegion(
+      userTokenInfo.userId,
+      saveInterestRegionDto.regionId,
     );
   }
 
