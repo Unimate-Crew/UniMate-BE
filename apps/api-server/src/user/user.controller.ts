@@ -9,6 +9,7 @@ import {
   Query,
   Patch,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -250,6 +251,32 @@ export class UserController {
       userTokenInfo.userId,
       regionId,
     );
+  }
+
+  @Delete('/regions/:regionId')
+  @ApiOperation({ summary: '관심지역 삭제 API' })
+  @ApiResponse({
+    status: 204,
+    description: '관심지역 삭제 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code: U001(유저가 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음), IR002(기본 관심지역은 삭제할 수 없음)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async deleteInterestRegion(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Param('regionId') regionId: string,
+  ): Promise<void> {
+    await this.userService.deleteInterestRegion(userTokenInfo.userId, regionId);
   }
 
   @Post('/presigned-url')

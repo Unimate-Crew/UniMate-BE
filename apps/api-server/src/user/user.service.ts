@@ -207,6 +207,36 @@ export class UserService {
     this.interestRegionRepository.persist(targetInterestRegion);
   }
 
+  @Transactional()
+  async deleteInterestRegion(userId: number, regionId: string): Promise<void> {
+    // 해당 지역이 유저의 관심 지역 목록에 있는지 확인
+    const targetInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findByUserIdAndRegionId(
+        userId,
+        regionId,
+      );
+
+    if (!targetInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_NOT_FOUND,
+        message: '해당 지역이 관심 지역 목록에 존재하지 않습니다.',
+      });
+    }
+
+    // 삭제할 지역이 기본 관심지역인 경우 삭제 불가
+    if (targetInterestRegion.getIsPrimary()) {
+      throw new NotFoundException({
+        code: ErrorCode.PRIMARY_INTEREST_REGION_CANNOT_BE_DELETED,
+        message:
+          '기본 관심지역은 삭제할 수 없습니다. 다른 지역을 기본으로 설정한 후 삭제해주세요.',
+      });
+    }
+
+    // 관심지역 삭제 (논리적 삭제)
+    targetInterestRegion.delete();
+    this.interestRegionRepository.persist(targetInterestRegion);
+  }
+
   async saveInterestRegion(userId: number, regionId: string): Promise<void> {
     // 지역 ID가 유효한지 확인
     const region: Region | null = await this.regionRepository.findOne(regionId);
