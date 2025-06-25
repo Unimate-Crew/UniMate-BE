@@ -20,7 +20,7 @@ export class User extends BaseEntity {
   nickname!: string;
 
   @Property({ nullable: true })
-  profileImageUrl?: string;
+  profileImageKey?: string;
 
   @Property({ nullable: true })
   phoneNumber?: string;
@@ -57,12 +57,12 @@ export class User extends BaseEntity {
     this.nickname = nickname;
   }
 
-  public getProfileImageUrl(): string | undefined {
-    return this.profileImageUrl;
+  public getProfileImageKey(): string | undefined {
+    return this.profileImageKey;
   }
 
-  public setProfileImageUrl(profileImageUrl: string): void {
-    this.profileImageUrl = profileImageUrl;
+  public setProfileImageKey(profileImageKey: string): void {
+    this.profileImageKey = profileImageKey;
   }
 
   public getProvider(): OAuthProvider {

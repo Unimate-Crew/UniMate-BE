@@ -9,6 +9,7 @@ import {
   Query,
   Patch,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -36,6 +37,7 @@ import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-req
 import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
 import { UserTokenInfo } from '../common/types/user-token-info';
 import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
+import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -167,6 +169,35 @@ export class UserController {
     );
   }
 
+  @Post('/regions')
+  @ApiOperation({ summary: '개별 관심지역 저장 API' })
+  @ApiResponse({
+    status: 201,
+    description: '개별 관심지역 저장 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code: R001(지역이 존재하지 않음), IR002(이미 관심지역으로 등록된 지역), IR003(관심지역 개수 초과)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(201)
+  async saveInterestRegion(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Body() saveInterestRegionDto: SaveInterestRegionDto,
+  ): Promise<void> {
+    await this.userService.saveInterestRegion(
+      userTokenInfo.userId,
+      saveInterestRegionDto.regionId,
+    );
+  }
+
   @Get('/regions')
   @ApiOperation({
     summary: '관심지역 리스트 조회 API (기본 관심지역 정보 포함)',
@@ -222,6 +253,32 @@ export class UserController {
     );
   }
 
+  @Delete('/regions/:regionId')
+  @ApiOperation({ summary: '관심지역 삭제 API' })
+  @ApiResponse({
+    status: 204,
+    description: '관심지역 삭제 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description:
+      'code: U001(유저가 존재하지 않음), IR001(유저의 관심지역 목록에 해당 지역이 존재하지 않음), IR002(기본 관심지역은 삭제할 수 없음)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async deleteInterestRegion(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Param('regionId') regionId: string,
+  ): Promise<void> {
+    await this.userService.deleteInterestRegion(userTokenInfo.userId, regionId);
+  }
+
   @Post('/presigned-url')
   @ApiOperation({ summary: '프로필 이미지 업로드를 위한 Presigned URL 발급' })
   @ApiResponse({
@@ -233,7 +290,7 @@ export class UserController {
     @Body() generatePresignedUrlRequestDto: GeneratePresignedUrlRequestDto,
   ): Promise<GeneratePresignedUrlResponseDto> {
     const key = `${this.configService.get<string>('NODE_ENV', 'development')}/user/${Date.now()}-${generatePresignedUrlRequestDto.fileName}`;
-    const presignedUrl = await this.s3Service.generatePresignedUrl(key);
+    const presignedUrl = await this.s3Service.generatePutPresignedUrl(key);
 
     return GeneratePresignedUrlResponseDto.of(presignedUrl, key);
   }

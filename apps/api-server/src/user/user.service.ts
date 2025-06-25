@@ -21,6 +21,8 @@ import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 
+const INTEREST_REGIONS_MAX_COUNT = 3;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -55,7 +57,7 @@ export class UserService {
   }
 
   async signUp(signUpDto: SignUpDto): Promise<User> {
-    const { provider, providerId, oAuthToken, nickname, profileImageUrl } =
+    const { provider, providerId, oAuthToken, nickname, profileImageKey } =
       signUpDto;
 
     await this.validateSnsUserInfo(provider, providerId, oAuthToken);
@@ -70,7 +72,7 @@ export class UserService {
         provider,
         providerId,
         nickname,
-        profileImageUrl,
+        profileImageKey,
       });
       await this.userRepository.flush();
     }
@@ -203,5 +205,79 @@ export class UserService {
     // 새로운 기본 관심 지역 설정
     targetInterestRegion.setPrimary(true);
     this.interestRegionRepository.persist(targetInterestRegion);
+  }
+
+  @Transactional()
+  async deleteInterestRegion(userId: number, regionId: string): Promise<void> {
+    // 해당 지역이 유저의 관심 지역 목록에 있는지 확인
+    const targetInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findByUserIdAndRegionId(
+        userId,
+        regionId,
+      );
+
+    if (!targetInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_NOT_FOUND,
+        message: '해당 지역이 관심 지역 목록에 존재하지 않습니다.',
+      });
+    }
+
+    // 삭제할 지역이 기본 관심지역인 경우 삭제 불가
+    if (targetInterestRegion.getIsPrimary()) {
+      throw new NotFoundException({
+        code: ErrorCode.PRIMARY_INTEREST_REGION_CANNOT_BE_DELETED,
+        message:
+          '기본 관심지역은 삭제할 수 없습니다. 다른 지역을 기본으로 설정한 후 삭제해주세요.',
+      });
+    }
+
+    // 관심지역 삭제 (논리적 삭제)
+    targetInterestRegion.delete();
+    this.interestRegionRepository.persist(targetInterestRegion);
+  }
+
+  async saveInterestRegion(userId: number, regionId: string): Promise<void> {
+    // 지역 ID가 유효한지 확인
+    const region: Region | null = await this.regionRepository.findOne(regionId);
+
+    if (!region) {
+      throw new NotFoundException({
+        code: ErrorCode.REGION_NOT_FOUND,
+        message: '존재하지 않는 지역입니다.',
+      });
+    }
+
+    // 현재 관심지역 개수 확인 및 중복 등록 확인 (최대 3개 제한)
+    const currentInterestRegions: InterestRegion[] =
+      await this.interestRegionRepository.findByUserId(userId);
+
+    // 중복 등록 확인 (조회된 결과에서 확인)
+    const existingInterestRegion = currentInterestRegions.find(
+      (interestRegion) => interestRegion.getRegion().getId() === regionId,
+    );
+
+    if (existingInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_ALREADY_EXISTS,
+        message: '이미 관심지역으로 등록된 지역입니다.',
+      });
+    }
+
+    // 개수 제한 확인
+    if (currentInterestRegions.length >= INTEREST_REGIONS_MAX_COUNT) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_LIMIT_EXCEEDED,
+        message: `관심지역은 최대 ${INTEREST_REGIONS_MAX_COUNT}개까지 등록할 수 있습니다.`,
+      });
+    }
+
+    // 새로운 관심지역 생성
+    const interestRegion = this.interestRegionRepository.create({
+      user: userId,
+      region: regionId,
+      isPrimary: false,
+    });
+    this.interestRegionRepository.persist(interestRegion);
   }
 }

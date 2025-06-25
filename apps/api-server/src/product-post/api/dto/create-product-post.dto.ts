@@ -26,17 +26,17 @@ export class CreateProductPostDto {
   title: string;
 
   @ApiProperty({
-    description: '제품 이미지 URL 배열 (첫 번째 이미지가 썸네일)',
+    description: '제품 이미지 키 배열 (첫 번째 이미지가 썸네일)',
     example: [
-      'https://example.com/image1.jpg',
-      'https://example.com/image2.jpg',
+      'development/product/20250617T12:34:56.987Z-1234567890.jpg',
+      'development/product/20250617T12:34:56.988Z-1234567891.jpg',
     ],
     type: [String],
   })
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(10)
-  imageUrls: string[];
+  imageKeys: string[];
 
   @ApiProperty({
     description: '제품 카테고리',
@@ -96,7 +96,7 @@ export class CreateProductPostDto {
   toParam(): CreateProductPostParam {
     const param = new CreateProductPostParam();
     param.title = this.title;
-    param.imageUrls = this.imageUrls;
+    param.imageKeys = this.imageKeys;
     param.category = this.category;
     param.price = this.price;
     param.currencyType = this.currencyType;
