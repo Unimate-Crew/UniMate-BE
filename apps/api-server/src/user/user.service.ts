@@ -21,6 +21,8 @@ import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 
+const INTEREST_REGIONS_MAX_COUNT = 3;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -55,7 +57,7 @@ export class UserService {
   }
 
   async signUp(signUpDto: SignUpDto): Promise<User> {
-    const { provider, providerId, oAuthToken, nickname, profileImageUrl } =
+    const { provider, providerId, oAuthToken, nickname, profileImageKey } =
       signUpDto;
 
     await this.validateSnsUserInfo(provider, providerId, oAuthToken);
@@ -70,7 +72,7 @@ export class UserService {
         provider,
         providerId,
         nickname,
-        profileImageUrl,
+        profileImageKey,
       });
       await this.userRepository.flush();
     }
@@ -233,5 +235,49 @@ export class UserService {
     // 관심지역 삭제 (논리적 삭제)
     targetInterestRegion.delete();
     this.interestRegionRepository.persist(targetInterestRegion);
+  }
+
+  async saveInterestRegion(userId: number, regionId: string): Promise<void> {
+    // 지역 ID가 유효한지 확인
+    const region: Region | null = await this.regionRepository.findOne(regionId);
+
+    if (!region) {
+      throw new NotFoundException({
+        code: ErrorCode.REGION_NOT_FOUND,
+        message: '존재하지 않는 지역입니다.',
+      });
+    }
+
+    // 현재 관심지역 개수 확인 및 중복 등록 확인 (최대 3개 제한)
+    const currentInterestRegions: InterestRegion[] =
+      await this.interestRegionRepository.findByUserId(userId);
+
+    // 중복 등록 확인 (조회된 결과에서 확인)
+    const existingInterestRegion = currentInterestRegions.find(
+      (interestRegion) => interestRegion.getRegion().getId() === regionId,
+    );
+
+    if (existingInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_ALREADY_EXISTS,
+        message: '이미 관심지역으로 등록된 지역입니다.',
+      });
+    }
+
+    // 개수 제한 확인
+    if (currentInterestRegions.length >= INTEREST_REGIONS_MAX_COUNT) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_LIMIT_EXCEEDED,
+        message: `관심지역은 최대 ${INTEREST_REGIONS_MAX_COUNT}개까지 등록할 수 있습니다.`,
+      });
+    }
+
+    // 새로운 관심지역 생성
+    const interestRegion = this.interestRegionRepository.create({
+      user: userId,
+      region: regionId,
+      isPrimary: false,
+    });
+    this.interestRegionRepository.persist(interestRegion);
   }
 }
