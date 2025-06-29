@@ -13,9 +13,6 @@ export class User extends BaseEntity {
   @PrimaryKey()
   id!: number;
 
-  @Property()
-  name!: string;
-
   @Property({ unique: true })
   nickname!: string;
 
@@ -39,14 +36,6 @@ export class User extends BaseEntity {
 
   public getId(): number {
     return this.id;
-  }
-
-  public getName(): string {
-    return this.name;
-  }
-
-  public setName(name: string): void {
-    this.name = name;
   }
 
   public getNickname(): string {
