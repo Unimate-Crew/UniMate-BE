@@ -1,4 +1,13 @@
-import { Controller, Get, Query, UseGuards, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  Post,
+  Body,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -23,6 +32,8 @@ import { ProductPostInfo } from '../application/dto/product-post.info';
 import { FindCategoriesRequestDto } from './dto/find-categories-request.dto';
 import { FindCategoriesResponseDto } from './dto/find-categories-response.dto';
 import { ProductCategoryInfo } from '../application/dto/Product-category.info';
+import { FindProductPostDetailResponseDto } from './dto/find-product-post-detail-response.dto';
+import { ProductPostDetailInfo } from '../application/dto/product-post-detail.info';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -179,5 +190,37 @@ export class ProductPostController {
       await this.productPostService.findCategories(query.regionId);
 
     return FindCategoriesResponseDto.of(productCategoryInfos);
+  }
+
+  @Get('/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({ summary: '상품 게시글 상세 조회 API' })
+  @ApiResponse({
+    status: 200,
+    description: '상품 게시글 상세 조회 성공',
+    type: FindProductPostDetailResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '상품 게시글을 찾을 수 없음',
+    type: ErrorResponse,
+  })
+  async findProductPostDetail(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<FindProductPostDetailResponseDto> {
+    const productPostDetail: ProductPostDetailInfo =
+      await this.productPostService.findProductPostDetail(
+        id,
+        userTokenInfo.userId,
+      );
+
+    return FindProductPostDetailResponseDto.from(productPostDetail);
   }
 }
