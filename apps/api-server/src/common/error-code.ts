@@ -2,6 +2,7 @@ export enum ErrorCode {
   // 인증/인가
   UNAUTHORIZED = 'A001',
   INVALID_SNS_TOKEN = 'A002',
+  FORBIDDEN = 'A003',
 
   // 유저
   USER_NOT_FOUND = 'U001',
@@ -24,4 +25,6 @@ export enum ErrorCode {
 
   // 상품 게시글
   PRODUCT_POST_NOT_FOUND = 'PP001',
+  PRODUCT_POST_UPDATE_FORBIDDEN = 'PP002',
+  PRODUCT_POST_DELETED = 'PP003',
 }

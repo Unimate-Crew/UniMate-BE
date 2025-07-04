@@ -24,4 +24,32 @@ export class NotificationRepository extends EntityRepository<Notification> {
 
     return createPagedResult(notifications, limit);
   }
+
+  async deleteNotifications(
+    userId: number,
+    notificationIds: number[],
+  ): Promise<number> {
+    const result = await this.nativeUpdate(
+      {
+        id: { $in: notificationIds },
+        userId,
+        isDeleted: false,
+      },
+      { isDeleted: true },
+    );
+
+    return result;
+  }
+
+  async deleteAllNotifications(userId: number): Promise<number> {
+    const result = await this.nativeUpdate(
+      {
+        userId,
+        isDeleted: false,
+      },
+      { isDeleted: true },
+    );
+
+    return result;
+  }
 }
