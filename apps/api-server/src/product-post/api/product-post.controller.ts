@@ -9,6 +9,7 @@ import {
   Param,
   ParseIntPipe,
   HttpCode,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -276,12 +277,12 @@ export class ProductPostController {
   @HttpCode(201)
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '상품 게시글 좋아요 API',
-    description: '상품 게시글에 좋아요를 추가합니다.',
+    summary: '상품 게시글 찜 API',
+    description: '해당 상품 게시글을 찜합니다.',
   })
   @ApiResponse({
     status: 201,
-    description: '좋아요 성공',
+    description: '찜 성공',
   })
   @ApiResponse({
     status: 400,
@@ -295,7 +296,7 @@ export class ProductPostController {
   })
   @ApiResponse({
     status: 409,
-    description: '이미 좋아요한 게시글',
+    description: '이미 찜한 게시글',
     schema: {
       type: 'object',
       properties: {
@@ -306,7 +307,7 @@ export class ProductPostController {
         },
         message: {
           type: 'string',
-          example: '이미 좋아요한 상품 게시글입니다.',
+          example: '이미 찜한 상품 게시글입니다.',
           description: '에러 메시지',
         },
       },
@@ -336,6 +337,28 @@ export class ProductPostController {
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.productPostService.likeProductPost(
+      productPostId,
+      userTokenInfo.userId,
+    );
+  }
+
+  @Delete('/:id/like')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 찜 취소 API',
+    description: '상품 게시글에 대한 찜을 취소합니다.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '찜 취소 성공',
+  })
+  async unlikeProductPost(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.unlikeProductPost(
       productPostId,
       userTokenInfo.userId,
     );

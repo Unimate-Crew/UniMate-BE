@@ -47,6 +47,13 @@ export class LikeRepository extends EntityRepository<Like> {
     await this.em.removeAndFlush(like);
   }
 
+  async deleteByProductIdAndUserId(
+    productId: number,
+    userId: number,
+  ): Promise<number> {
+    return this.nativeDelete({ productId, userId });
+  }
+
   /**
    * 상품 ID 목록에 대한 좋아요 수를 그룹화하여 가져옵니다.
    * @param productIds 상품 ID 목록

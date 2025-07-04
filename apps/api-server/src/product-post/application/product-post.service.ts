@@ -389,6 +389,19 @@ export class ProductPostService {
   }
 
   /**
+   * 상품 게시글 좋아요 취소
+   * @param productPostId
+   * @param userId
+   */
+  @Transactional()
+  async unlikeProductPost(
+    productPostId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.likeRepository.deleteByProductIdAndUserId(productPostId, userId);
+  }
+
+  /**
    * 상품 게시글 상세 정보를 조회합니다.
    *
    * @param productPostId 상품 게시글 ID
