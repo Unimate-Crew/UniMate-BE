@@ -53,19 +53,14 @@ export class ProductPostService {
     regionId?: string,
     userId?: number,
   ): Promise<Slice<ProductPostInfo>> {
-    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
     let blockedUserIds: number[] = [];
     if (userId) {
-      // 내가 차단한 유저
+      // 내가 차단한 유저만 조회
       const blockedByMe =
         await this.userBlockRepository.findByBlockerId(userId);
-      // 나를 차단한 유저
-      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
 
-      blockedUserIds = [
-        ...blockedByMe.map((block) => block.blockedId),
-        ...blockedMe.map((block) => block.blockerId),
-      ];
+      blockedUserIds = blockedByMe.map((block) => block.blockedId);
     }
 
     // 2. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
@@ -195,19 +190,14 @@ export class ProductPostService {
     regionId?: string,
     userId?: number,
   ): Promise<Slice<ProductPostInfo>> {
-    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
     let blockedUserIds: number[] = [];
     if (userId) {
-      // 내가 차단한 유저
+      // 내가 차단한 유저만 조회
       const blockedByMe =
         await this.userBlockRepository.findByBlockerId(userId);
-      // 나를 차단한 유저
-      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
 
-      blockedUserIds = [
-        ...blockedByMe.map((block) => block.blockedId),
-        ...blockedMe.map((block) => block.blockerId),
-      ];
+      blockedUserIds = blockedByMe.map((block) => block.blockedId);
     }
 
     // 2. 상품 목록 검색 (대학교 정보와 썸네일 URL 포함)
