@@ -8,6 +8,7 @@ import {
   Patch,
   Param,
   ParseIntPipe,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -268,6 +269,76 @@ export class ProductPostController {
       );
 
     return UpdateProductPostResponseDto.of(updatedProductPostId);
+  }
+
+  @Post('/:id/like')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(201)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 좋아요 API',
+    description: '상품 게시글에 좋아요를 추가합니다.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '좋아요 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 409,
+    description: '이미 좋아요한 게시글',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP004',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '이미 좋아요한 상품 게시글입니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '상품 게시글을 찾을 수 없음',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP001',
+          description: '게시글 없음',
+        },
+        message: {
+          type: 'string',
+          example: '상품 게시글을 찾을 수 없습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async likeProductPost(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.likeProductPost(
+      productPostId,
+      userTokenInfo.userId,
+    );
   }
 
   @Get('/:id')
