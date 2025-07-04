@@ -1,4 +1,5 @@
 import { Entity, PrimaryKey, Property, Enum } from '@mikro-orm/core';
+// eslint-disable-next-line import/no-cycle
 import { ProductPostRepository } from './product-post.repository';
 import {
   CurrencyType,
@@ -45,6 +46,10 @@ export class ProductPost extends BaseEntity {
 
   @Property({ nullable: true })
   universityId?: number;
+
+  public isOwner(userId: number): boolean {
+    return this.userId === userId;
+  }
 
   public getId(): number {
     return this.id;
