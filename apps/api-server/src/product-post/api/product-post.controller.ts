@@ -39,6 +39,7 @@ import { UpdateProductPostRequestDto } from './dto/update-product-post-request.d
 import { UpdateProductPostResponseDto } from './dto/update-product-post-response.dto';
 import { FindProductPostDetailResponseDto } from './dto/find-product-post-detail-response.dto';
 import { ProductPostDetailInfo } from '../application/dto/product-post-detail.info';
+import { CreateProductPostResponseDto } from './dto/create-product-post-response.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -138,18 +139,28 @@ export class ProductPostController {
   @ApiResponse({
     status: 201,
     description: '제품 게시글 생성 성공',
-    type: ProductPost,
+    type: CreateProductPostResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
   })
   async createProductPost(
     @Body() createProductPostDto: CreateProductPostDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
-  ): Promise<{ productPostId: number }> {
+  ): Promise<CreateProductPostResponseDto> {
     const productPostId = await this.productPostService.createProductPost(
       createProductPostDto.toParam(),
       userTokenInfo.userId,
     );
 
-    return { productPostId };
+    return CreateProductPostResponseDto.of(productPostId);
   }
 
   @Post('/presigned-url')
