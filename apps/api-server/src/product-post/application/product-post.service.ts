@@ -19,12 +19,15 @@ import { Slice } from '@app/common/utils/pagination';
 import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
 import { UserBlockRepository } from '@app/database/entites/user-block/user-block.repository';
 import { CategoryCountDto } from '@app/database/entites/product-post/dto/category-count.dto';
+import { Like } from '@app/database/entites/like/like.entity';
+import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
 import { ErrorCode } from '../../common/error-code';
 import { CreateProductPostParam } from './dto/create-product-post.param';
 import { ProductPostInfo } from './dto/product-post.info';
 import { GeneratePresignedUrlParam } from './dto/generate-presigned-url.param';
 import { ProductCategoryInfo } from './dto/Product-category.info';
 import { UpdateProductPostParam } from './dto/update-product-post.param';
+import { ProductPostDetailInfo } from './dto/product-post-detail.info';
 
 @Injectable()
 export class ProductPostService {
@@ -53,19 +56,14 @@ export class ProductPostService {
     regionId?: string,
     userId?: number,
   ): Promise<Slice<ProductPostInfo>> {
-    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
     let blockedUserIds: number[] = [];
     if (userId) {
-      // 내가 차단한 유저
+      // 내가 차단한 유저만 조회
       const blockedByMe =
         await this.userBlockRepository.findByBlockerId(userId);
-      // 나를 차단한 유저
-      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
 
-      blockedUserIds = [
-        ...blockedByMe.map((block) => block.blockedId),
-        ...blockedMe.map((block) => block.blockerId),
-      ];
+      blockedUserIds = blockedByMe.map((block) => block.blockedId);
     }
 
     // 2. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
@@ -195,19 +193,14 @@ export class ProductPostService {
     regionId?: string,
     userId?: number,
   ): Promise<Slice<ProductPostInfo>> {
-    // 1. 차단된 유저 목록 조회 (양방향 차단)
+    // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
     let blockedUserIds: number[] = [];
     if (userId) {
-      // 내가 차단한 유저
+      // 내가 차단한 유저만 조회
       const blockedByMe =
         await this.userBlockRepository.findByBlockerId(userId);
-      // 나를 차단한 유저
-      const blockedMe = await this.userBlockRepository.findByBlockedId(userId);
 
-      blockedUserIds = [
-        ...blockedByMe.map((block) => block.blockedId),
-        ...blockedMe.map((block) => block.blockerId),
-      ];
+      blockedUserIds = blockedByMe.map((block) => block.blockedId);
     }
 
     // 2. 상품 목록 검색 (대학교 정보와 썸네일 URL 포함)
@@ -353,5 +346,72 @@ export class ProductPostService {
       await this.productPostRepository.findCategoryCounts(regionId);
 
     return ProductCategoryInfo.of(categoryCounts);
+  }
+
+  /**
+   * 상품 게시글 상세 정보를 조회합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @param userId 현재 로그인한 유저 ID
+   * @returns 상품 게시글 상세 정보
+   */
+  async findProductPostDetail(
+    productPostId: number,
+    userId?: number,
+  ): Promise<ProductPostDetailInfo> {
+    // 1. 상품 게시글 상세 정보 조회
+    const productPostDetail: ProductPostDetailWithRelations =
+      await this.productPostRepository.findProductPostDetail(productPostId);
+    if (!productPostDetail) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: 'Product post not found',
+      });
+    }
+
+    // 2. 이미지 URL들을 Presigned URL로 변환
+    const imageUrls = await Promise.all(
+      productPostDetail.imageKeys.map(
+        (imageKey) =>
+          // this.s3Service.generateGetPresignedUrl(imageKey),
+          imageKey, // TODO: 이미지 키 그대로 반환 (아직 s3 안만들어서)
+      ),
+    );
+
+    // 3. 좋아요 수 조회
+    const likeCount: number =
+      await this.likeRepository.countByProductId(productPostId);
+
+    // 4. 좋아요 여부 조회 (로그인한 유저인 경우)
+    let isLiked = false;
+    if (userId) {
+      const like: Like = await this.likeRepository.findByProductIdAndUserId(
+        productPostId,
+        userId,
+      );
+      isLiked = like !== null;
+    }
+
+    // 5. 판매자 프로필 이미지 URL 생성
+    let sellerProfileImageUrl: string | null = null;
+    if (productPostDetail.sellerProfileImageKey) {
+      // sellerProfileImageUrl = await this.s3Service.generateGetPresignedUrl(
+      //   productPostDetail.sellerProfileImageKey,
+      // );
+      sellerProfileImageUrl = productPostDetail.sellerProfileImageKey; // TODO: 이미지 키 그대로 반환 (아직 s3 안만들어서)
+    }
+
+    // 6. 상품 게시글 주인 여부 확인
+    const isOwner = productPostDetail.productPost.isOwner(userId);
+
+    return ProductPostDetailInfo.of(
+      productPostDetail,
+      imageUrls,
+      isLiked,
+      likeCount,
+      0, // TODO: 채팅방 수 구현
+      isOwner,
+      sellerProfileImageUrl,
+    );
   }
 }

@@ -6,11 +6,78 @@ import { TradeStatus, ProductCategory } from '../../common/enums';
 import { ProductPost } from './product-post.entity';
 import { ProductPostWithRelations } from './dto/product-post-with-relations.dto';
 import { CategoryCountDto } from './dto/category-count.dto';
+import { ProductPostDetailWithRelations } from './dto/product-post-detail-with-relations.dto';
 
 @Injectable()
 export class ProductPostRepository extends EntityRepository<ProductPost> {
   async findById(id: number): Promise<ProductPost | null> {
     return this.findOne({ id, isDeleted: false });
+  }
+
+  /**
+   * 상품 게시글 상세 정보를 조회합니다.
+   * 판매자 정보와 이미지 정보를 포함하여 조회합니다.
+   *
+   * @param id 상품 게시글 ID
+   * @returns 상품 게시글과 관련 정보
+   */
+  async findProductPostDetail(
+    id: number,
+  ): Promise<ProductPostDetailWithRelations | null> {
+    const knex = this.em.getKnex();
+
+    const result = await knex
+      .select([
+        'product_post.*',
+        'user.id as seller_id',
+        'user.nickname as seller_nickname',
+        'user.profile_image_key as seller_profile_image_key',
+      ])
+      .from('product_post')
+      .leftJoin('user', 'product_post.user_id', 'user.id')
+      .where('product_post.id', id)
+      .where('product_post.is_deleted', false)
+      .first();
+
+    if (!result) {
+      return null;
+    }
+
+    // 이미지 키들 조회
+    const imageKeys = await knex
+      .select('image_key')
+      .from('product_image')
+      .where('product_id', id)
+      .where('is_deleted', false)
+      .orderBy('is_thumbnail', 'desc')
+      .orderBy('id', 'asc');
+
+    const productPost = this.em.map(ProductPost, {
+      id: result.id,
+      title: result.title,
+      description: result.description,
+      userId: result.user_id,
+      price: result.price,
+      currencyType: result.currency_type,
+      category: result.category,
+      tradeStatus: result.trade_status,
+      tradeType: result.trade_type,
+      tradeTypeDescription: result.trade_type_description,
+      regionId: result.region_id,
+      universityId: result.university_id,
+      isDeleted: result.is_deleted,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at,
+      deletedAt: result.deleted_at,
+    });
+
+    return ProductPostDetailWithRelations.of({
+      productPost,
+      sellerId: result.seller_id,
+      sellerNickname: result.seller_nickname,
+      sellerProfileImageKey: result.seller_profile_image_key,
+      imageKeys: imageKeys.map((img) => img.image_key),
+    });
   }
 
   async findByUserId(userId: number): Promise<ProductPost[]> {
