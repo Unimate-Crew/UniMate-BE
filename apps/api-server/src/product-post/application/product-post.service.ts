@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
 import { User } from '@app/database/entites/user/user.entity';
@@ -346,6 +347,58 @@ export class ProductPostService {
       await this.productPostRepository.findCategoryCounts(regionId);
 
     return ProductCategoryInfo.of(categoryCounts);
+  }
+
+  /**
+   * 상품 게시글에 좋아요를 추가합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @param userId 좋아요할 사용자 ID
+   * @returns 생성된 좋아요 정보
+   */
+  @Transactional()
+  async likeProductPost(productPostId: number, userId: number): Promise<void> {
+    // 1. 상품 게시글 존재 여부 확인
+    const productPost =
+      await this.productPostRepository.findById(productPostId);
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    // 2. 이미 좋아요했는지 확인
+    const existingLike: Like | null =
+      await this.likeRepository.findByProductIdAndUserId(productPostId, userId);
+
+    if (existingLike) {
+      throw new ConflictException({
+        code: ErrorCode.PRODUCT_POST_ALREADY_LIKED,
+        message: '이미 좋아요한 상품 게시글입니다.',
+      });
+    }
+
+    // 3. 좋아요 생성
+    const like: Like = this.likeRepository.create({
+      productId: productPostId,
+      userId,
+    });
+
+    await this.likeRepository.persistAndFlush(like);
+  }
+
+  /**
+   * 상품 게시글 좋아요 취소
+   * @param productPostId
+   * @param userId
+   */
+  @Transactional()
+  async unlikeProductPost(
+    productPostId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.likeRepository.deleteByProductIdAndUserId(productPostId, userId);
   }
 
   /**
