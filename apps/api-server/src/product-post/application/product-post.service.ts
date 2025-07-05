@@ -424,10 +424,8 @@ export class ProductPostService {
 
     // 2. 이미지 URL들을 Presigned URL로 변환
     const imageUrls = await Promise.all(
-      productPostDetail.imageKeys.map(
-        (imageKey) =>
-          // this.s3Service.generateGetPresignedUrl(imageKey),
-          imageKey, // TODO: 이미지 키 그대로 반환 (아직 s3 안만들어서)
+      productPostDetail.imageKeys.map((imageKey) =>
+        this.s3Service.generateGetPresignedUrl(imageKey),
       ),
     );
 
@@ -448,10 +446,9 @@ export class ProductPostService {
     // 5. 판매자 프로필 이미지 URL 생성
     let sellerProfileImageUrl: string | null = null;
     if (productPostDetail.sellerProfileImageKey) {
-      // sellerProfileImageUrl = await this.s3Service.generateGetPresignedUrl(
-      //   productPostDetail.sellerProfileImageKey,
-      // );
-      sellerProfileImageUrl = productPostDetail.sellerProfileImageKey; // TODO: 이미지 키 그대로 반환 (아직 s3 안만들어서)
+      sellerProfileImageUrl = await this.s3Service.generateGetPresignedUrl(
+        productPostDetail.sellerProfileImageKey,
+      );
     }
 
     // 6. 상품 게시글 주인 여부 확인
