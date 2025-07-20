@@ -42,7 +42,7 @@ export class SignUpDto {
 
   @ApiProperty({
     description: '프로필 이미지 키',
-    example: 'development/user/20250617T12:34:56.987Z-1234567890.jpg',
+    example: 'user/1752992559501-1234567890.jpg',
     required: false,
   })
   @IsString()

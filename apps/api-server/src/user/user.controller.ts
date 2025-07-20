@@ -11,7 +11,6 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ApiOperation,
   ApiResponse,
@@ -46,7 +45,6 @@ export class UserController {
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly s3Service: S3Service,
-    private readonly configService: ConfigService,
   ) {}
 
   @ApiOperation({
@@ -289,8 +287,10 @@ export class UserController {
   async generatePresignedUrl(
     @Body() generatePresignedUrlRequestDto: GeneratePresignedUrlRequestDto,
   ): Promise<GeneratePresignedUrlResponseDto> {
-    const key = `${this.configService.get<string>('NODE_ENV', 'development')}/user/${Date.now()}-${generatePresignedUrlRequestDto.fileName}`;
-    const presignedUrl = await this.s3Service.generatePutPresignedUrl(key);
+    const { presignedUrl, key } = await this.s3Service.generatePutPresignedUrl({
+      fileName: generatePresignedUrlRequestDto.fileName,
+      path: 'user',
+    });
 
     return GeneratePresignedUrlResponseDto.of(presignedUrl, key);
   }

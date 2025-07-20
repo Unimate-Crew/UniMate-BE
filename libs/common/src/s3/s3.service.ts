@@ -9,11 +9,14 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
+  private readonly env: string;
+
   private readonly s3Client: S3Client;
 
   private readonly bucket: string;
 
   constructor(configService: ConfigService) {
+    this.env = configService.get<string>('NODE_ENV', 'dev');
     this.s3Client = new S3Client({
       region: configService.get<string>('AWS_REGION'),
       credentials: {
@@ -24,16 +27,25 @@ export class S3Service {
     this.bucket = configService.get<string>('AWS_S3_BUCKET');
   }
 
-  async generatePutPresignedUrl(
-    key: string,
-    expiresIn: number = 3000,
-  ): Promise<string> {
+  async generatePutPresignedUrl(params: {
+    fileName: string;
+    path: string;
+    expiresIn?: number;
+  }): Promise<{ presignedUrl: string; key: string }> {
+    const { fileName, path, expiresIn = 3000 } = params;
+
+    const key = `${path}/${Date.now()}-${fileName}`;
+
     const command = new PutObjectCommand({
       Bucket: this.bucket,
-      Key: key,
+      Key: `${this.env}/${key}`,
     });
 
-    return getSignedUrl(this.s3Client, command, { expiresIn });
+    const presignedUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn,
+    });
+
+    return { presignedUrl, key };
   }
 
   async generateGetPresignedUrl(
@@ -42,7 +54,7 @@ export class S3Service {
   ): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
-      Key: key,
+      Key: `${this.env}/${key}`,
     });
 
     return getSignedUrl(this.s3Client, command, { expiresIn });
