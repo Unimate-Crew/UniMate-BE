@@ -28,8 +28,8 @@ export class CreateProductPostDto {
   @ApiProperty({
     description: '제품 이미지 키 배열 (첫 번째 이미지가 썸네일)',
     example: [
-      'development/product/20250617T12:34:56.987Z-1234567890.jpg',
-      'development/product/20250617T12:34:56.988Z-1234567891.jpg',
+      'product-post/1752992559501-1234567890.jpg',
+      'product-post/1752992559502-1234567891.jpg',
     ],
     type: [String],
   })
