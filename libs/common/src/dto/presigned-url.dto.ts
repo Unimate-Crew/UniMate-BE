@@ -9,7 +9,7 @@ export class PresignedUrlDto {
 
   @ApiProperty({
     description: 'S3에 저장될 파일의 키',
-    example: 'development/user/20250617T12:34:56.987Z-1234567890.jpg',
+    example: 'user/1752992559501-1234567890.jpg',
   })
   key: string;
 

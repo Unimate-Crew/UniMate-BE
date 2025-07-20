@@ -18,7 +18,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SortDirection } from '@app/database/common/enums';
-import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { Slice } from '@app/common/utils/pagination';
 import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts-request.dto';

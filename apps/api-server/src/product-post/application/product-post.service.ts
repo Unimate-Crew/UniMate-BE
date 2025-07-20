@@ -9,10 +9,9 @@ import { User } from '@app/database/entites/user/user.entity';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { ProductImageRepository } from '@app/database/entites/product-post/product-image.repository';
 import { ProductImage } from '@app/database/entites/product-post/product-image.entity';
-import { TradeStatus, ProductCategory } from '@app/database/common/enums';
+import { TradeStatus } from '@app/database/common/enums';
 import { Transactional } from '@mikro-orm/core';
 import { UserRepository } from '@app/database/entites/user/user.repository';
-import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
 import { LikeRepository } from '@app/database/entites/like/like.repository';
@@ -39,7 +38,6 @@ export class ProductPostService {
     private readonly likeRepository: LikeRepository,
     private readonly userBlockRepository: UserBlockRepository,
     private readonly s3Service: S3Service,
-    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -155,8 +153,11 @@ export class ProductPostService {
   ): Promise<PresignedUrlDto[]> {
     return Promise.all(
       generatePresignedUrlParam.fileNames.map(async (fileName) => {
-        const key = `${this.configService.get<string>('NODE_ENV', 'development')}/product/${Date.now()}-${fileName}`;
-        const presignedUrl = await this.s3Service.generatePutPresignedUrl(key);
+        const { presignedUrl, key } =
+          await this.s3Service.generatePutPresignedUrl({
+            fileName,
+            path: 'product-post',
+          });
 
         return PresignedUrlDto.of(presignedUrl, key);
       }),

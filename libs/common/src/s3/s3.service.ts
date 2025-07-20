@@ -13,7 +13,10 @@ export class S3Service {
 
   private readonly bucket: string;
 
+  private readonly configService: ConfigService;
+
   constructor(configService: ConfigService) {
+    this.configService = configService;
     this.s3Client = new S3Client({
       region: configService.get<string>('AWS_REGION'),
       credentials: {
@@ -24,16 +27,26 @@ export class S3Service {
     this.bucket = configService.get<string>('AWS_S3_BUCKET');
   }
 
-  async generatePutPresignedUrl(
-    key: string,
-    expiresIn: number = 3000,
-  ): Promise<string> {
+  async generatePutPresignedUrl(params: {
+    fileName: string;
+    path: string;
+    expiresIn?: number;
+  }): Promise<{ presignedUrl: string; key: string }> {
+    const { fileName, path, expiresIn = 3000 } = params;
+
+    const env = this.configService.get<string>('NODE_ENV', 'dev');
+    const key = `${path}/${Date.now()}-${fileName}`;
+
     const command = new PutObjectCommand({
       Bucket: this.bucket,
-      Key: key,
+      Key: `${env}/${key}`,
     });
 
-    return getSignedUrl(this.s3Client, command, { expiresIn });
+    const presignedUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn,
+    });
+
+    return { presignedUrl, key };
   }
 
   async generateGetPresignedUrl(
