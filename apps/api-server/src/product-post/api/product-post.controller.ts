@@ -66,12 +66,12 @@ export class ProductPostController {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
     const productPostInfoSlice: Slice<ProductPostInfo> =
-      await this.productPostService.findPagedProductPosts(
-        pageNumber,
-        pageSize,
+      await this.productPostService.findPagedProductPosts({
+        page: pageNumber,
+        limit: pageSize,
         regionId,
-        userTokenInfo.userId,
-      );
+        userId: userTokenInfo.userId,
+      });
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
   }
@@ -113,9 +113,9 @@ export class ProductPostController {
     } = query;
 
     const productPostInfoSlice: Slice<ProductPostInfo> =
-      await this.productPostService.searchProductPosts(
-        pageNumber,
-        pageSize,
+      await this.productPostService.searchProductPosts({
+        page: pageNumber,
+        limit: pageSize,
         searchKeyword,
         universityId,
         currencyType,
@@ -125,8 +125,8 @@ export class ProductPostController {
         tradeStatus,
         sortDirection,
         regionId,
-        userTokenInfo.userId,
-      );
+        userId: userTokenInfo.userId,
+      });
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
   }
@@ -154,10 +154,19 @@ export class ProductPostController {
     @Body() createProductPostDto: CreateProductPostDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<CreateProductPostResponseDto> {
-    const productPostId = await this.productPostService.createProductPost(
-      createProductPostDto.toParam(),
-      userTokenInfo.userId,
-    );
+    const productPostId: number =
+      await this.productPostService.createProductPost({
+        title: createProductPostDto.title,
+        imageKeys: createProductPostDto.imageKeys,
+        category: createProductPostDto.category,
+        price: createProductPostDto.price,
+        currencyType: createProductPostDto.currencyType,
+        description: createProductPostDto.description,
+        tradeType: createProductPostDto.tradeType,
+        tradeTypeDescription: createProductPostDto.tradeTypeDescription,
+        regionId: createProductPostDto.regionId,
+        userId: userTokenInfo.userId,
+      });
 
     return CreateProductPostResponseDto.of(productPostId);
   }
@@ -175,9 +184,9 @@ export class ProductPostController {
     @Body()
     generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
   ): Promise<GeneratePresignedUrlListResponseDto> {
-    const urlList = await this.productPostService.generatePresignedUrlList(
-      generatePresignedUrlListRequestDto.toParam(),
-    );
+    const urlList = await this.productPostService.generatePresignedUrlList({
+      fileNames: generatePresignedUrlListRequestDto.fileNames,
+    });
 
     return GeneratePresignedUrlListResponseDto.of(urlList);
   }
@@ -272,12 +281,19 @@ export class ProductPostController {
     @Body() updateProductPostRequestDto: UpdateProductPostRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<UpdateProductPostResponseDto> {
-    const updatedProductPostId =
-      await this.productPostService.updateProductPost(
+    const updatedProductPostId: number =
+      await this.productPostService.updateProductPost({
         productPostId,
-        updateProductPostRequestDto.toParam(),
-        userTokenInfo.userId,
-      );
+        userId: userTokenInfo.userId,
+        tradeStatus: updateProductPostRequestDto.tradeStatus,
+        title: updateProductPostRequestDto.title,
+        description: updateProductPostRequestDto.description,
+        price: updateProductPostRequestDto.price,
+        currencyType: updateProductPostRequestDto.currencyType,
+        category: updateProductPostRequestDto.category,
+        tradeType: updateProductPostRequestDto.tradeType,
+        tradeTypeDescription: updateProductPostRequestDto.tradeTypeDescription,
+      });
 
     return UpdateProductPostResponseDto.of(updatedProductPostId);
   }
@@ -346,10 +362,10 @@ export class ProductPostController {
     @Param('id', ParseIntPipe) productPostId: number,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
-    await this.productPostService.likeProductPost(
+    await this.productPostService.likeProductPost({
       productPostId,
-      userTokenInfo.userId,
-    );
+      userId: userTokenInfo.userId,
+    });
   }
 
   @Delete('/:id/like')
@@ -368,10 +384,10 @@ export class ProductPostController {
     @Param('id', ParseIntPipe) productPostId: number,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
-    await this.productPostService.unlikeProductPost(
+    await this.productPostService.unlikeProductPost({
       productPostId,
-      userTokenInfo.userId,
-    );
+      userId: userTokenInfo.userId,
+    });
   }
 
   @Get('/:id')
@@ -398,10 +414,10 @@ export class ProductPostController {
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindProductPostDetailResponseDto> {
     const productPostDetail: ProductPostDetailInfo =
-      await this.productPostService.findProductPostDetail(
-        id,
-        userTokenInfo.userId,
-      );
+      await this.productPostService.findProductPostDetail({
+        productPostId: id,
+        userId: userTokenInfo.userId,
+      });
 
     return FindProductPostDetailResponseDto.from(productPostDetail);
   }

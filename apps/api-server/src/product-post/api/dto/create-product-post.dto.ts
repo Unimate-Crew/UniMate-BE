@@ -13,7 +13,6 @@ import {
   ProductCategory,
   TradeType,
 } from '@app/database/common/enums';
-import { CreateProductPostParam } from '../../application/dto/create-product-post.param';
 
 export class CreateProductPostDto {
   @ApiProperty({
@@ -92,18 +91,4 @@ export class CreateProductPostDto {
   @IsString()
   @IsNotEmpty()
   regionId: string;
-
-  toParam(): CreateProductPostParam {
-    const param = new CreateProductPostParam();
-    param.title = this.title;
-    param.imageKeys = this.imageKeys;
-    param.category = this.category;
-    param.price = this.price;
-    param.currencyType = this.currencyType;
-    param.description = this.description;
-    param.tradeType = this.tradeType;
-    param.tradeTypeDescription = this.tradeTypeDescription;
-    param.regionId = this.regionId;
-    return param;
-  }
 }
