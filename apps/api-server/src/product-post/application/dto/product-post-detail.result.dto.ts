@@ -1,9 +1,23 @@
 import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
-import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
+import {
+  ProductCategory,
+  TradeStatus,
+  CurrencyType,
+  TradeType,
+} from '@app/database/common/enums';
 
 export class ProductPostDetailResultDto {
   constructor(
-    public readonly productPost: ProductPost,
+    public readonly id: number,
+    public readonly title: string,
+    public readonly description: string | null,
+    public readonly price: number,
+    public readonly currencyType: CurrencyType,
+    public readonly category: ProductCategory,
+    public readonly tradeStatus: TradeStatus,
+    public readonly tradeType: TradeType,
+    public readonly tradeTypeDescription: string | null,
+    public readonly createdAt: Date,
     public readonly imageUrls: string[],
     public readonly isLiked: boolean,
     public readonly likeCount: number,
@@ -23,8 +37,18 @@ export class ProductPostDetailResultDto {
     isOwner: boolean,
     sellerProfileImageUrl: string | null,
   ): ProductPostDetailResultDto {
+    const { productPost } = productPostDetail;
     return new ProductPostDetailResultDto(
-      productPostDetail.productPost,
+      productPost.getId(),
+      productPost.getTitle(),
+      productPost.getDescription(),
+      productPost.getPrice(),
+      productPost.getCurrencyType(),
+      productPost.getCategory(),
+      productPost.getTradeStatus(),
+      productPost.getTradeType(),
+      productPost.getTradeTypeDescription(),
+      productPost.createdAt,
       imageUrls,
       isLiked,
       likeCount,
