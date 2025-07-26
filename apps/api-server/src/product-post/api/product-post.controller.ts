@@ -20,25 +20,25 @@ import {
 import { SortDirection } from '@app/database/common/enums';
 import { Slice } from '@app/common/utils/pagination';
 import { ProductPostService } from '../application/product-post.service';
-import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts-request.dto';
-import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts-response.dto';
+import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts.request.dto';
+import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts.response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../../common/error-response';
-import { SearchProductPostsRequestDto } from './dto/search-product-posts-request.dto';
-import { CreateProductPostDto } from './dto/create-product-post.dto';
+import { SearchProductPostsRequestDto } from './dto/search-product-posts.request.dto';
+import { CreateProductPostRequestDto } from './dto/create-product-post.request.dto';
 import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
 import { UserTokenInfo } from '../../common/types/user-token-info';
-import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list-request.dto';
-import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list-response.dto';
-import { ProductPostInfo } from '../application/dto/product-post.info';
-import { FindCategoriesRequestDto } from './dto/find-categories-request.dto';
-import { FindCategoriesResponseDto } from './dto/find-categories-response.dto';
-import { ProductCategoryInfo } from '../application/dto/Product-category.info';
-import { UpdateProductPostRequestDto } from './dto/update-product-post-request.dto';
-import { UpdateProductPostResponseDto } from './dto/update-product-post-response.dto';
-import { FindProductPostDetailResponseDto } from './dto/find-product-post-detail-response.dto';
-import { ProductPostDetailInfo } from '../application/dto/product-post-detail.info';
-import { CreateProductPostResponseDto } from './dto/create-product-post-response.dto';
+import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list.request.dto';
+import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list.response.dto';
+import { ProductPostResultDto } from '../application/dto/product-post.result.dto';
+import { FindCategoriesRequestDto } from './dto/find-categories.request.dto';
+import { FindCategoriesResponseDto } from './dto/find-categories.response.dto';
+import { ProductCategoryResultDto } from '../application/dto/Product-category.result.dto';
+import { UpdateProductPostRequestDto } from './dto/update-product-post.request.dto';
+import { UpdateProductPostResponseDto } from './dto/update-product-post.response.dto';
+import { FindProductPostDetailResponseDto } from './dto/find-product-post-detail.response.dto';
+import { ProductPostDetailResultDto } from '../application/dto/product-post-detail.result.dto';
+import { CreateProductPostResponseDto } from './dto/create-product-post.response.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -65,7 +65,7 @@ export class ProductPostController {
   ): Promise<FindPagedProductPostsResponseDto> {
     const { pageNumber = 1, pageSize = 10, regionId } = query;
 
-    const productPostInfoSlice: Slice<ProductPostInfo> =
+    const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findPagedProductPosts({
         page: pageNumber,
         limit: pageSize,
@@ -112,7 +112,7 @@ export class ProductPostController {
       regionId,
     } = query;
 
-    const productPostInfoSlice: Slice<ProductPostInfo> =
+    const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.searchProductPosts({
         page: pageNumber,
         limit: pageSize,
@@ -151,7 +151,7 @@ export class ProductPostController {
     type: ErrorResponse,
   })
   async createProductPost(
-    @Body() createProductPostDto: CreateProductPostDto,
+    @Body() createProductPostDto: CreateProductPostRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<CreateProductPostResponseDto> {
     const productPostId: number =
@@ -210,7 +210,7 @@ export class ProductPostController {
   async findCategories(
     @Query() query: FindCategoriesRequestDto,
   ): Promise<FindCategoriesResponseDto> {
-    const productCategoryInfos: ProductCategoryInfo[] =
+    const productCategoryInfos: ProductCategoryResultDto[] =
       await this.productPostService.findCategories(query.regionId);
 
     return FindCategoriesResponseDto.of(productCategoryInfos);
@@ -413,7 +413,7 @@ export class ProductPostController {
     @Param('id', ParseIntPipe) id: number,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindProductPostDetailResponseDto> {
-    const productPostDetail: ProductPostDetailInfo =
+    const productPostDetail: ProductPostDetailResultDto =
       await this.productPostService.findProductPostDetail({
         productPostId: id,
         userId: userTokenInfo.userId,

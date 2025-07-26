@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Slice } from '@app/common/utils/pagination';
 import { Country } from '../../common/enums';
-import { UniversityInfo } from './dto/university.info';
+import { UniversityResultDto } from './dto/university.result.dto';
 
 @Injectable()
 export class UniversityService {
@@ -10,20 +10,20 @@ export class UniversityService {
     name?: string;
     pageNumber?: number;
     pageSize?: number;
-  }): Promise<Slice<UniversityInfo>> {
+  }): Promise<Slice<UniversityResultDto>> {
     const { name, pageNumber = 1, pageSize = 10 } = params;
 
     // 모의 데이터 (실제 구현 시 데이터베이스 조회 로직으로 대체)
-    const mockUniversities: UniversityInfo[] = [
-      new UniversityInfo(1, 'Harvard University', Country.USA),
-      new UniversityInfo(2, 'Seoul National University', Country.KOREA),
-      new UniversityInfo(
+    const mockUniversities: UniversityResultDto[] = [
+      new UniversityResultDto(1, 'Harvard University', Country.USA),
+      new UniversityResultDto(2, 'Seoul National University', Country.KOREA),
+      new UniversityResultDto(
         3,
         'Massachusetts Institute of Technology',
         Country.USA,
       ),
-      new UniversityInfo(4, 'University of Oxford', Country.UK),
-      new UniversityInfo(5, 'Kyoto University', Country.JAPAN),
+      new UniversityResultDto(4, 'University of Oxford', Country.UK),
+      new UniversityResultDto(5, 'Kyoto University', Country.JAPAN),
     ];
 
     // 필터링 조건 적용 (name과 country)

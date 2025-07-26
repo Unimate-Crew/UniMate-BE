@@ -1,7 +1,7 @@
 import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 
-export class ProductPostDetailInfo {
+export class ProductPostDetailResultDto {
   constructor(
     public readonly productPost: ProductPost,
     public readonly imageUrls: string[],
@@ -22,8 +22,8 @@ export class ProductPostDetailInfo {
     chatRoomCount: number,
     isOwner: boolean,
     sellerProfileImageUrl: string | null,
-  ): ProductPostDetailInfo {
-    return new ProductPostDetailInfo(
+  ): ProductPostDetailResultDto {
+    return new ProductPostDetailResultDto(
       productPostDetail.productPost,
       imageUrls,
       isLiked,

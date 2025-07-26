@@ -6,7 +6,7 @@ import {
   CurrencyType,
   TradeType,
 } from '@app/database/common/enums';
-import { ProductPostDetailInfo } from '../../application/dto/product-post-detail.info';
+import { ProductPostDetailResultDto } from '../../application/dto/product-post-detail.result.dto';
 
 export class FindProductPostDetailResponseDto {
   @ApiProperty({ description: '상품 게시글 ID' })
@@ -95,7 +95,7 @@ export class FindProductPostDetailResponseDto {
   }
 
   static from(
-    productPostDetail: ProductPostDetailInfo,
+    productPostDetail: ProductPostDetailResultDto,
   ): FindProductPostDetailResponseDto {
     return new FindProductPostDetailResponseDto(
       productPostDetail.productPost,

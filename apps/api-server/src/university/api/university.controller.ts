@@ -6,8 +6,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UniversityService } from '../application/university.service';
-import { SearchUniversitiesRequestDto } from './dto/search-universities-request.dto';
-import { SearchUniversitiesResponseDto } from './dto/search-universities-response.dto';
+import { SearchUniversitiesRequestDto } from './dto/search-universities.request.dto';
+import { SearchUniversitiesResponseDto } from './dto/search-universities.response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @ApiTags('대학교')

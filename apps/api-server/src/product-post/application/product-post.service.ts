@@ -27,9 +27,9 @@ import { CategoryCountDto } from '@app/database/entites/product-post/dto/categor
 import { Like } from '@app/database/entites/like/like.entity';
 import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
 import { ErrorCode } from '../../common/error-code';
-import { ProductPostInfo } from './dto/product-post.info';
-import { ProductCategoryInfo } from './dto/Product-category.info';
-import { ProductPostDetailInfo } from './dto/product-post-detail.info';
+import { ProductPostResultDto } from './dto/product-post.result.dto';
+import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
+import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
 
 @Injectable()
 export class ProductPostService {
@@ -56,7 +56,7 @@ export class ProductPostService {
     limit: number;
     regionId?: string;
     userId?: number;
-  }): Promise<Slice<ProductPostInfo>> {
+  }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
     let blockedUserIds: number[] = [];
     if (params.userId) {
@@ -87,7 +87,7 @@ export class ProductPostService {
       await this.likeRepository.countByProductIds(productIds);
 
     // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
-    const productPostInfos: ProductPostInfo[] = await Promise.all(
+    const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
         if (post.thumbnailImageKey) {
@@ -96,7 +96,7 @@ export class ProductPostService {
           );
         }
 
-        return new ProductPostInfo(
+        return new ProductPostResultDto(
           post.productPost,
           post.universityName,
           thumbnailUrl,
@@ -210,7 +210,7 @@ export class ProductPostService {
     sortDirection?: string;
     regionId?: string;
     userId?: number;
-  }): Promise<Slice<ProductPostInfo>> {
+  }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
     let blockedUserIds: number[] = [];
     if (params.userId) {
@@ -258,7 +258,7 @@ export class ProductPostService {
           );
         }
 
-        return new ProductPostInfo(
+        return new ProductPostResultDto(
           post.productPost,
           post.universityName,
           thumbnailUrl,
@@ -373,11 +373,11 @@ export class ProductPostService {
    * @param regionId 지역 ID (옵셔널)
    * @returns 카테고리 목록과 각 카테고리의 상품 개수
    */
-  async findCategories(regionId?: string): Promise<ProductCategoryInfo[]> {
+  async findCategories(regionId?: string): Promise<ProductCategoryResultDto[]> {
     const categoryCounts: CategoryCountDto[] =
       await this.productPostRepository.findCategoryCounts(regionId);
 
-    return ProductCategoryInfo.of(categoryCounts);
+    return ProductCategoryResultDto.of(categoryCounts);
   }
 
   /**
@@ -452,7 +452,7 @@ export class ProductPostService {
   async findProductPostDetail(params: {
     productPostId: number;
     userId?: number;
-  }): Promise<ProductPostDetailInfo> {
+  }): Promise<ProductPostDetailResultDto> {
     // 1. 상품 게시글 상세 정보 조회
     const productPostDetail: ProductPostDetailWithRelations =
       await this.productPostRepository.findProductPostDetail(
@@ -498,7 +498,7 @@ export class ProductPostService {
     // 6. 상품 게시글 주인 여부 확인
     const isOwner = productPostDetail.productPost.isOwner(params.userId);
 
-    return ProductPostDetailInfo.of(
+    return ProductPostDetailResultDto.of(
       productPostDetail,
       imageUrls,
       isLiked,

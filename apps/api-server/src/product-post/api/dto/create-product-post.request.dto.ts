@@ -14,7 +14,7 @@ import {
   TradeType,
 } from '@app/database/common/enums';
 
-export class CreateProductPostDto {
+export class CreateProductPostRequestDto {
   @ApiProperty({
     description: '제품 게시글 제목',
     example: '아이폰 15 Pro 팝니다',

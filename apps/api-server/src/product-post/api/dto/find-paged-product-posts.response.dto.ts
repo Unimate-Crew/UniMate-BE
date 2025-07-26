@@ -2,7 +2,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyType, TradeStatus } from '@app/database/common/enums';
 import { Slice } from '@app/common/utils/pagination';
-import { ProductPostInfo } from '../../application/dto/product-post.info';
+import { ProductPostResultDto } from '../../application/dto/product-post.result.dto';
 
 export class ProductPostItemDto {
   @ApiProperty({
@@ -119,7 +119,7 @@ export class FindPagedProductPostsResponseDto {
   }
 
   static of(
-    productPostInfoSlice: Slice<ProductPostInfo>,
+    productPostInfoSlice: Slice<ProductPostResultDto>,
   ): FindPagedProductPostsResponseDto {
     const response = new FindPagedProductPostsResponseDto(
       productPostInfoSlice.contents.map(
