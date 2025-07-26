@@ -16,11 +16,11 @@ export class LikeRepository extends EntityRepository<Like> {
     return this.find({ userId });
   }
 
-  async findByProductIdAndUserId(
-    productId: number,
-    userId: number,
-  ): Promise<Like | null> {
-    return this.findOne({ productId, userId });
+  async findByProductIdAndUserId(params: {
+    productId: number;
+    userId: number;
+  }): Promise<Like | null> {
+    return this.findOne({ productId: params.productId, userId: params.userId });
   }
 
   async countByProductId(productId: number): Promise<number> {
@@ -47,11 +47,14 @@ export class LikeRepository extends EntityRepository<Like> {
     await this.em.removeAndFlush(like);
   }
 
-  async deleteByProductIdAndUserId(
-    productId: number,
-    userId: number,
-  ): Promise<number> {
-    return this.nativeDelete({ productId, userId });
+  async deleteByProductIdAndUserId(params: {
+    productId: number;
+    userId: number;
+  }): Promise<number> {
+    return this.nativeDelete({
+      productId: params.productId,
+      userId: params.userId,
+    });
   }
 
   /**

@@ -70,15 +70,15 @@ export class ProductPostService {
 
     // 2. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
-      await this.productPostRepository.findPagedProductPosts(
-        params.page,
-        params.limit,
-        params.regionId,
+      await this.productPostRepository.findPagedProductPosts({
+        page: params.page,
+        limit: params.limit,
+        regionId: params.regionId,
         blockedUserIds,
-      );
+      });
 
     // 3. 상품 ID 목록 추출
-    const productIds = productPostSlice.contents.map((post) =>
+    const productIds: number[] = productPostSlice.contents.map((post) =>
       post.productPost.getId(),
     );
 
@@ -87,7 +87,7 @@ export class ProductPostService {
       await this.likeRepository.countByProductIds(productIds);
 
     // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
-    const productPostInfos = await Promise.all(
+    const productPostInfos: ProductPostInfo[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
         if (post.thumbnailImageKey) {
@@ -164,11 +164,11 @@ export class ProductPostService {
     return productPost.getId();
   }
 
-  async generatePresignedUrlList(params: {
-    fileNames: string[];
-  }): Promise<PresignedUrlDto[]> {
+  async generatePresignedUrlList(
+    fileNames: string[],
+  ): Promise<PresignedUrlDto[]> {
     return Promise.all(
-      params.fileNames.map(async (fileName) => {
+      fileNames.map(async (fileName) => {
         const { presignedUrl, key } =
           await this.s3Service.generatePutPresignedUrl({
             fileName,
@@ -224,20 +224,20 @@ export class ProductPostService {
 
     // 2. 상품 목록 검색 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
-      await this.productPostRepository.searchProductPosts(
-        params.searchKeyword,
-        params.universityId,
-        params.currencyType,
-        params.minPrice,
-        params.maxPrice,
-        params.category,
-        params.tradeStatus,
-        params.sortDirection,
-        params.page,
-        params.limit,
-        params.regionId,
+      await this.productPostRepository.searchProductPosts({
+        searchKeyword: params.searchKeyword,
+        universityId: params.universityId,
+        currencyType: params.currencyType,
+        minPrice: params.minPrice,
+        maxPrice: params.maxPrice,
+        category: params.category,
+        tradeStatus: params.tradeStatus,
+        sortDirection: params.sortDirection,
+        page: params.page,
+        limit: params.limit,
+        regionId: params.regionId,
         blockedUserIds,
-      );
+      });
 
     // 3. 상품 ID 목록 추출
     const productIds = productPostSlice.contents.map((post) =>
@@ -405,10 +405,10 @@ export class ProductPostService {
 
     // 2. 이미 좋아요했는지 확인
     const existingLike: Like | null =
-      await this.likeRepository.findByProductIdAndUserId(
-        params.productPostId,
-        params.userId,
-      );
+      await this.likeRepository.findByProductIdAndUserId({
+        productId: params.productPostId,
+        userId: params.userId,
+      });
 
     if (existingLike) {
       throw new ConflictException({
@@ -436,10 +436,10 @@ export class ProductPostService {
     productPostId: number;
     userId: number;
   }): Promise<void> {
-    await this.likeRepository.deleteByProductIdAndUserId(
-      params.productPostId,
-      params.userId,
-    );
+    await this.likeRepository.deleteByProductIdAndUserId({
+      productId: params.productPostId,
+      userId: params.userId,
+    });
   }
 
   /**
@@ -480,10 +480,10 @@ export class ProductPostService {
     // 4. 좋아요 여부 조회 (로그인한 유저인 경우)
     let isLiked = false;
     if (params.userId) {
-      const like: Like = await this.likeRepository.findByProductIdAndUserId(
-        params.productPostId,
-        params.userId,
-      );
+      const like: Like = await this.likeRepository.findByProductIdAndUserId({
+        productId: params.productPostId,
+        userId: params.userId,
+      });
       isLiked = like !== null;
     }
 

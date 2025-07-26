@@ -184,9 +184,9 @@ export class ProductPostController {
     @Body()
     generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
   ): Promise<GeneratePresignedUrlListResponseDto> {
-    const urlList = await this.productPostService.generatePresignedUrlList({
-      fileNames: generatePresignedUrlListRequestDto.fileNames,
-    });
+    const urlList = await this.productPostService.generatePresignedUrlList(
+      generatePresignedUrlListRequestDto.fileNames,
+    );
 
     return GeneratePresignedUrlListResponseDto.of(urlList);
   }
