@@ -129,7 +129,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
   async findPagedProductPosts(params: {
     page: number;
     limit: number;
-    regionId?: string;
+    regionId: string;
     blockedUserIds?: number[];
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
@@ -226,7 +226,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     sortDirection?: string;
     page?: number;
     limit?: number;
-    regionId?: string;
+    regionId: string;
     blockedUserIds?: number[];
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FindPagedProductPostsRequestDto {
@@ -33,7 +33,7 @@ export class FindPagedProductPostsRequestDto {
     required: false,
   })
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @Type(() => String)
-  regionId?: string;
+  regionId: string;
 }

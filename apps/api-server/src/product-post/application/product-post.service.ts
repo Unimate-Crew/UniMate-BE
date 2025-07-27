@@ -54,7 +54,7 @@ export class ProductPostService {
   async findPagedProductPosts(params: {
     page: number;
     limit: number;
-    regionId?: string;
+    regionId: string;
     userId?: number;
   }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
@@ -208,7 +208,7 @@ export class ProductPostService {
     category?: string;
     tradeStatus?: string;
     sortDirection?: string;
-    regionId?: string;
+    regionId: string;
     userId?: number;
   }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
