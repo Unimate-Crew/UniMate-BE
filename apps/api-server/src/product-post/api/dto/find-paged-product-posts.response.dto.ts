@@ -26,8 +26,10 @@ export class ProductPostItemDto {
   @ApiProperty({
     description: '대학교 이름',
     example: '서울대학교',
+    required: false,
+    nullable: true,
   })
-  universityName: string;
+  universityName?: string | null;
 
   @ApiProperty({
     description: '상품 게시글 대표 사진 URL',
