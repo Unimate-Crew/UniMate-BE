@@ -18,24 +18,24 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { S3Service } from '@app/common/s3/s3.service';
-import { UserService } from './user.service';
+import { UserService } from '../application/user.service';
 import { SignUpDto } from './dto/sign-up.dto';
-import { AuthService } from '../auth/auth.service';
+import { AuthService } from '../../auth/auth.service';
 import { SignUpResponseDto } from './dto/sign-up-response.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ErrorResponse } from '../common/error-response';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ErrorResponse } from '../../common/error-response';
 import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-request.dto';
 import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
-import { UserTokenInfo } from '../common/types/user-token-info';
-import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
+import { UserTokenInfo } from '../../common/types/user-token-info';
+import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
 import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
 
 @ApiTags('유저')

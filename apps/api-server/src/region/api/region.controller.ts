@@ -7,7 +7,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RegionService } from './region.service';
+import { RegionService } from '../application/region.service';
 import { SearchRegionDto } from './dto/search-region.dto';
 import { RegionInfo, RegionListResponse } from './dto/region-response.dto';
 

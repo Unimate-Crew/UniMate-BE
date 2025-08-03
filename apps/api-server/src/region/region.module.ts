@@ -3,8 +3,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Region } from '@app/database/entites/region/region.entity';
 import { UsState } from '@app/database/entites/region/us-state.entity';
 import { UsCounty } from '@app/database/entites/region/us-county.entity';
-import { RegionController } from './region.controller';
-import { RegionService } from './region.service';
+import { RegionController } from './api/region.controller';
+import { RegionService } from './application/region.service';
 
 @Module({
   imports: [MikroOrmModule.forFeature([Region, UsState, UsCounty])],

@@ -13,13 +13,13 @@ import {
   Region,
   RegionRepository,
 } from '@app/database';
-import { SignUpDto } from './dto/sign-up.dto';
-import { SnsServiceFactory } from '../sns/sns.service.factory';
-import { SignInDto } from './dto/sign-in.dto';
-import { ErrorCode } from '../common/error-code';
-import { CheckUserExistsDto } from './dto/check-user-exists.dto';
-import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
-import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
+import { SignUpDto } from '../api/dto/sign-up.dto';
+import { SnsServiceFactory } from '../../sns/application/sns.service.factory';
+import { SignInDto } from '../api/dto/sign-in.dto';
+import { ErrorCode } from '../../common/error-code';
+import { CheckUserExistsDto } from '../api/dto/check-user-exists.dto';
+import { CheckNicknameExistsDto } from '../api/dto/check-nickname-exists.dto';
+import { InterestRegionInfosDto } from '../api/dto/inrerest-resion-info.dto';
 
 const INTEREST_REGIONS_MAX_COUNT = 3;
 
