@@ -620,4 +620,98 @@ export class ProductPostService {
       sellerProfileImageUrl,
     );
   }
+
+  /**
+   * 상품 게시글을 숨김 처리합니다.
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @param params.userId 현재 로그인한 유저 ID
+   */
+  @Transactional()
+  async hideProductPost(params: {
+    productPostId: number;
+    userId: number;
+  }): Promise<void> {
+    // 1. 상품 게시글 조회
+    const productPost = await this.productPostRepository.findById(
+      params.productPostId,
+    );
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    // 2. 본인이 작성한 게시글인지 확인
+    if (!productPost.isOwner(params.userId)) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '본인이 작성한 상품 게시글만 숨길 수 있습니다.',
+      });
+    }
+
+    // 3. 예약중인 게시글인지 확인
+    if (productPost.isReserved()) {
+      throw new ConflictException({
+        code: ErrorCode.PRODUCT_POST_RESERVED_CANNOT_HIDE,
+        message: '예약중인 상품 게시글은 숨길 수 없습니다.',
+      });
+    }
+
+    // 4. 이미 숨김 처리된 게시글인지 확인
+    if (productPost.getIsHidden()) {
+      throw new ConflictException({
+        code: ErrorCode.PRODUCT_POST_ALREADY_HIDDEN,
+        message: '이미 숨김 처리된 상품 게시글입니다.',
+      });
+    }
+
+    // 5. 숨김 처리
+    productPost.setIsHidden(true);
+    await this.productPostRepository.persistAndFlush(productPost);
+  }
+
+  /**
+   * 상품 게시글 숨김을 해제합니다.
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @param params.userId 현재 로그인한 유저 ID
+   */
+  @Transactional()
+  async unhideProductPost(params: {
+    productPostId: number;
+    userId: number;
+  }): Promise<void> {
+    // 1. 상품 게시글 조회
+    const productPost = await this.productPostRepository.findById(
+      params.productPostId,
+    );
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    // 2. 본인이 작성한 게시글인지 확인
+    if (!productPost.isOwner(params.userId)) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '본인이 작성한 상품 게시글만 숨김 해제할 수 있습니다.',
+      });
+    }
+
+    // 3. 숨김 처리되지 않은 게시글인지 확인
+    if (!productPost.getIsHidden()) {
+      throw new ConflictException({
+        code: ErrorCode.PRODUCT_POST_NOT_HIDDEN,
+        message: '숨김 처리되지 않은 상품 게시글입니다.',
+      });
+    }
+
+    // 4. 숨김 해제
+    productPost.setIsHidden(false);
+    await this.productPostRepository.persistAndFlush(productPost);
+  }
 }

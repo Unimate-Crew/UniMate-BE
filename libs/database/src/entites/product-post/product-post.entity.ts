@@ -47,6 +47,9 @@ export class ProductPost extends BaseEntity {
   @Property({ nullable: true })
   universityId?: number;
 
+  @Property({ default: false })
+  isHidden!: boolean;
+
   public isOwner(userId: number): boolean {
     return this.userId === userId;
   }
@@ -145,5 +148,17 @@ export class ProductPost extends BaseEntity {
 
   public setUniversityId(universityId: number): void {
     this.universityId = universityId;
+  }
+
+  public getIsHidden(): boolean {
+    return this.isHidden;
+  }
+
+  public setIsHidden(isHidden: boolean): void {
+    this.isHidden = isHidden;
+  }
+
+  public isReserved(): boolean {
+    return this.tradeStatus === TradeStatus.RESERVED;
   }
 }

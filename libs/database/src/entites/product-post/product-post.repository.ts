@@ -66,6 +66,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       regionId: result.region_id,
       universityId: result.university_id,
       isDeleted: result.is_deleted,
+      isHidden: result.is_hidden,
       createdAt: result.created_at,
       updatedAt: result.updated_at,
       deletedAt: result.deleted_at,
@@ -148,7 +149,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
           .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
           .andOn('product_image.is_deleted', '=', knex.raw('?', [false]));
       })
-      .where('product_post.is_deleted', false);
+      .where('product_post.is_deleted', false)
+      .where('product_post.is_hidden', false);
 
     if (params.regionId) {
       query.where('product_post.region_id', params.regionId);
@@ -185,6 +187,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             regionId: row.region_id,
             universityId: row.university_id,
             isDeleted: row.is_deleted,
+            isHidden: row.is_hidden,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
             deletedAt: row.deleted_at,
@@ -247,7 +250,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
           .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
           .andOn('product_image.is_deleted', '=', knex.raw('?', [false]));
       })
-      .where('product_post.is_deleted', false);
+      .where('product_post.is_deleted', false)
+      .where('product_post.is_hidden', false);
 
     // 검색 키워드로 제목 검색
     if (params.searchKeyword) {
@@ -318,6 +322,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             regionId: row.region_id,
             universityId: row.university_id,
             isDeleted: row.is_deleted,
+            isHidden: row.is_hidden,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
             deletedAt: row.deleted_at,
@@ -396,6 +401,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             regionId: row.region_id,
             universityId: row.university_id,
             isDeleted: row.is_deleted,
+            isHidden: row.is_hidden,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
             deletedAt: row.deleted_at,
@@ -421,6 +427,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       .select(['product_post.category', knex.raw('COUNT(*) as count')])
       .from('product_post')
       .where('product_post.is_deleted', false)
+      .where('product_post.is_hidden', false)
       .groupBy('product_post.category');
 
     // 지역 필터링

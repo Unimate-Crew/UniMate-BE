@@ -213,6 +213,160 @@ export class ProductPostController {
     return FindUserSalesResponseDto.of(productPostInfoSlice);
   }
 
+  @Patch('/:id/hide')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 숨기기 API',
+    description:
+      '상품 게시글을 숨김 처리합니다. 숨김 처리된 게시글은 다른 사람들에게 조회되지 않습니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '상품 게시글 숨기기 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (본인이 작성한 게시글만 숨길 수 있음)',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP003',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '본인이 작성한 상품 게시글만 숨길 수 있습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 409,
+    description: '이미 숨김 처리된 게시글 또는 예약중인 게시글',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP005',
+          description:
+            '에러 코드 (PP005: 이미 숨김 처리됨, PP007: 예약중인 게시글)',
+        },
+        message: {
+          type: 'string',
+          example: '이미 숨김 처리된 상품 게시글입니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async hideProductPost(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.hideProductPost({
+      productPostId,
+      userId: userTokenInfo.userId,
+    });
+  }
+
+  @Patch('/:id/unhide')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 숨김 해제 API',
+    description: '숨김 처리된 상품 게시글의 숨김을 해제합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '상품 게시글 숨김 해제 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (본인이 작성한 게시글만 숨김 해제할 수 있음)',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP003',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '본인이 작성한 상품 게시글만 숨김 해제할 수 있습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '상품 게시글을 찾을 수 없음',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP001',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '상품 게시글을 찾을 수 없습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 409,
+    description: '숨김 처리되지 않은 게시글',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'PP006',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '숨김 처리되지 않은 상품 게시글입니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async unhideProductPost(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.unhideProductPost({
+      productPostId,
+      userId: userTokenInfo.userId,
+    });
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('accessToken')
