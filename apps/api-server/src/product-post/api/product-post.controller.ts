@@ -159,14 +159,14 @@ export class ProductPostController {
     @Query() query: FindMySalesRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindMySalesResponseDto> {
-    const { pageNumber = 1, pageSize = 10, tradeStatus } = query;
+    const { pageNumber = 1, pageSize = 10, mySalesFilter } = query;
 
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findMySales({
         page: pageNumber,
         limit: pageSize,
         userId: userTokenInfo.userId,
-        tradeStatus,
+        mySalesFilter,
       });
 
     return FindMySalesResponseDto.of(productPostInfoSlice);
@@ -200,14 +200,14 @@ export class ProductPostController {
     @Param('userId', ParseIntPipe) userId: number,
     @Query() query: FindUserSalesRequestDto,
   ): Promise<FindUserSalesResponseDto> {
-    const { pageNumber = 1, pageSize = 10, tradeStatus } = query;
+    const { pageNumber = 1, pageSize = 10, userSalesFilter } = query;
 
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findUserSales({
         page: pageNumber,
         limit: pageSize,
         userId,
-        tradeStatus,
+        userSalesFilter,
       });
 
     return FindUserSalesResponseDto.of(productPostInfoSlice);

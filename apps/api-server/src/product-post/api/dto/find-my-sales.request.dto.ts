@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsOptional, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TradeStatus } from '@app/database/common/enums';
+import { MySalesFilter } from '@app/database/common/enums';
 
 export class FindMySalesRequestDto {
   @ApiProperty({
@@ -29,12 +29,12 @@ export class FindMySalesRequestDto {
   pageSize?: number = 10;
 
   @ApiProperty({
-    description: '거래 상태 필터',
-    enum: TradeStatus,
-    example: TradeStatus.FOR_SALE,
+    description: '판매내역 필터',
+    enum: MySalesFilter,
+    example: MySalesFilter.FOR_SALE,
     required: false,
   })
-  @IsEnum(TradeStatus)
+  @IsEnum(MySalesFilter)
   @IsOptional()
-  tradeStatus?: TradeStatus;
+  mySalesFilter?: MySalesFilter;
 }

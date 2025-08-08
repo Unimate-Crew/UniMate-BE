@@ -14,6 +14,8 @@ import {
   CurrencyType,
   ProductCategory,
   TradeType,
+  MySalesFilter,
+  UserSalesFilter,
 } from '@app/database/common/enums';
 import { Transactional } from '@mikro-orm/core';
 import { UserRepository } from '@app/database/entites/user/user.repository';
@@ -277,34 +279,56 @@ export class ProductPostService {
    * @param params.page 페이지 번호 (1부터 시작)
    * @param params.limit 페이지 크기
    * @param params.userId 현재 로그인한 유저 ID
-   * @param params.tradeStatus 거래 상태 필터 (옵셔널)
+   * @param params.mySalesFilter 판매내역 필터 (옵셔널)
    * @returns 페이지네이션된 내 판매내역 목록과 다음 페이지 존재 여부
    */
   async findMySales(params: {
     page: number;
     limit: number;
     userId: number;
-    tradeStatus?: TradeStatus;
+    mySalesFilter?: MySalesFilter;
   }): Promise<Slice<ProductPostResultDto>> {
-    // 1. 내가 작성한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
+    // 1. 필터 파라미터 설정
+    let tradeStatus: TradeStatus[] | undefined;
+    let isHidden: boolean | undefined;
+
+    if (params.mySalesFilter) {
+      switch (params.mySalesFilter) {
+        case MySalesFilter.FOR_SALE:
+          tradeStatus = [TradeStatus.FOR_SALE, TradeStatus.RESERVED];
+          break;
+        case MySalesFilter.COMPLETED:
+          tradeStatus = [TradeStatus.COMPLETED];
+          break;
+        case MySalesFilter.HIDDEN:
+          isHidden = true;
+          break;
+        default:
+          // 전체 조회 - 필터링 없음
+          break;
+      }
+    }
+
+    // 2. 내가 작성한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
-      await this.productPostRepository.findMyProductPosts({
+      await this.productPostRepository.findPagedSales({
         page: params.page,
         limit: params.limit,
         userId: params.userId,
-        tradeStatus: params.tradeStatus,
+        tradeStatus,
+        isHidden,
       });
 
-    // 2. 상품 ID 목록 추출
+    // 3. 상품 ID 목록 추출
     const productIds: number[] = productPostSlice.contents.map((post) =>
       post.productPost.getId(),
     );
 
-    // 3. 좋아요 수 조회
+    // 4. 좋아요 수 조회
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 4. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
     const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
@@ -333,34 +357,53 @@ export class ProductPostService {
    * @param params.page 페이지 번호 (1부터 시작)
    * @param params.limit 페이지 크기
    * @param params.userId 조회할 유저 ID
-   * @param params.tradeStatus 거래 상태 필터 (옵셔널)
+   * @param params.userSalesFilter 판매내역 필터 (옵셔널)
    * @returns 페이지네이션된 유저의 판매내역 목록과 다음 페이지 존재 여부
    */
   async findUserSales(params: {
     page: number;
     limit: number;
     userId: number;
-    tradeStatus?: TradeStatus;
+    userSalesFilter?: UserSalesFilter;
   }): Promise<Slice<ProductPostResultDto>> {
-    // 1. 특정 유저가 작성한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
+    // 1. 필터 파라미터 설정
+    let tradeStatus: TradeStatus[] | undefined;
+    const isHidden = false; // 다른 유저의 판매내역에서는 숨겨진 게시글 제외
+
+    if (params.userSalesFilter) {
+      switch (params.userSalesFilter) {
+        case UserSalesFilter.FOR_SALE:
+          tradeStatus = [TradeStatus.FOR_SALE, TradeStatus.RESERVED];
+          break;
+        case UserSalesFilter.COMPLETED:
+          tradeStatus = [TradeStatus.COMPLETED];
+          break;
+        default:
+          // 전체 조회 - 필터링 없음
+          break;
+      }
+    }
+
+    // 2. 특정 유저가 작성한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
-      await this.productPostRepository.findMyProductPosts({
+      await this.productPostRepository.findPagedSales({
         page: params.page,
         limit: params.limit,
         userId: params.userId,
-        tradeStatus: params.tradeStatus,
+        tradeStatus,
+        isHidden,
       });
 
-    // 2. 상품 ID 목록 추출
+    // 3. 상품 ID 목록 추출
     const productIds: number[] = productPostSlice.contents.map((post) =>
       post.productPost.getId(),
     );
 
-    // 3. 좋아요 수 조회
+    // 4. 좋아요 수 조회
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 4. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
     const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;

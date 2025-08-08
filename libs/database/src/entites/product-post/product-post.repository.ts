@@ -345,11 +345,12 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @param params.tradeStatus 거래 상태 필터 (옵셔널)
    * @returns Slice<ProductPostWithRelations>
    */
-  async findMyProductPosts(params: {
+  async findPagedSales(params: {
     page: number;
     limit: number;
     userId: number;
-    tradeStatus?: TradeStatus;
+    tradeStatus?: TradeStatus[];
+    isHidden?: boolean;
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
     const offset = (params.page - 1) * params.limit;
@@ -371,8 +372,13 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       .where('product_post.user_id', params.userId);
 
     // 거래 상태 필터링
-    if (params.tradeStatus) {
-      query.where('product_post.trade_status', params.tradeStatus);
+    if (params.tradeStatus !== undefined) {
+      query.whereIn('product_post.trade_status', params.tradeStatus);
+    }
+
+    // 숨김 여부 필터링
+    if (params.isHidden !== undefined) {
+      query.where('product_post.is_hidden', params.isHidden);
     }
 
     const results = await query

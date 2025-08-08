@@ -47,6 +47,17 @@ export enum SortDirection {
   DESC = 'DESC',
 }
 
+export enum MySalesFilter {
+  FOR_SALE = 'FOR_SALE', // 판매중
+  COMPLETED = 'COMPLETED', // 거래완료
+  HIDDEN = 'HIDDEN', // 숨김
+}
+
+export enum UserSalesFilter {
+  FOR_SALE = 'FOR_SALE', // 판매중
+  COMPLETED = 'COMPLETED', // 거래완료
+}
+
 export enum CountryCode {
   US = 'US', // 미국
 }
