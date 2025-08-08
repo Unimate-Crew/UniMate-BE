@@ -40,6 +40,11 @@ import { FindProductPostDetailResponseDto } from './dto/find-product-post-detail
 import { ProductPostDetailResultDto } from '../application/dto/product-post-detail.result.dto';
 import { CreateProductPostResponseDto } from './dto/create-product-post.response.dto';
 
+import { FindMySalesRequestDto } from './dto/find-my-sales.request.dto';
+import { FindMySalesResponseDto } from './dto/find-my-sales.response.dto';
+import { FindUserSalesRequestDto } from './dto/find-user-sales.request.dto';
+import { FindUserSalesResponseDto } from './dto/find-user-sales.response.dto';
+
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
 export class ProductPostController {
@@ -129,6 +134,83 @@ export class ProductPostController {
       });
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
+  }
+
+  @Get('/my/sales')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({ summary: '나의 판매내역 목록 조회 API' })
+  @ApiResponse({
+    status: 200,
+    description: '나의 판매내역 목록 조회 성공',
+    type: FindMySalesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async findMySales(
+    @Query() query: FindMySalesRequestDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<FindMySalesResponseDto> {
+    const { pageNumber = 1, pageSize = 10, tradeStatus } = query;
+
+    const productPostInfoSlice: Slice<ProductPostResultDto> =
+      await this.productPostService.findMySales({
+        page: pageNumber,
+        limit: pageSize,
+        userId: userTokenInfo.userId,
+        tradeStatus,
+      });
+
+    return FindMySalesResponseDto.of(productPostInfoSlice);
+  }
+
+  @Get('/user/:userId/sales')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({ summary: '다른 유저의 판매내역 목록 조회 API' })
+  @ApiResponse({
+    status: 200,
+    description: '다른 유저의 판매내역 목록 조회 성공',
+    type: FindUserSalesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '유저를 찾을 수 없음',
+    type: ErrorResponse,
+  })
+  async findUserSales(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Query() query: FindUserSalesRequestDto,
+  ): Promise<FindUserSalesResponseDto> {
+    const { pageNumber = 1, pageSize = 10, tradeStatus } = query;
+
+    const productPostInfoSlice: Slice<ProductPostResultDto> =
+      await this.productPostService.findUserSales({
+        page: pageNumber,
+        limit: pageSize,
+        userId,
+        tradeStatus,
+      });
+
+    return FindUserSalesResponseDto.of(productPostInfoSlice);
   }
 
   @Post()
