@@ -44,6 +44,8 @@ import { FindMySalesRequestDto } from './dto/find-my-sales.request.dto';
 import { FindMySalesResponseDto } from './dto/find-my-sales.response.dto';
 import { FindUserSalesRequestDto } from './dto/find-user-sales.request.dto';
 import { FindUserSalesResponseDto } from './dto/find-user-sales.response.dto';
+import { FindMyLikesRequestDto } from './dto/find-my-likes.request.dto';
+import { FindMyLikesResponseDto } from './dto/find-my-likes.response.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -211,6 +213,41 @@ export class ProductPostController {
       });
 
     return FindUserSalesResponseDto.of(productPostInfoSlice);
+  }
+
+  @Get('/my/likes')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({ summary: '내가 찜한 상품게시글 목록 조회 API' })
+  @ApiResponse({
+    status: 200,
+    description: '내가 찜한 상품게시글 목록 조회 성공',
+    type: FindMyLikesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async findMyLikes(
+    @Query() query: FindMyLikesRequestDto,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<FindMyLikesResponseDto> {
+    const { pageNumber = 1, pageSize = 10 } = query;
+
+    const productPostInfoSlice: Slice<ProductPostResultDto> =
+      await this.productPostService.findMyLikes({
+        page: pageNumber,
+        limit: pageSize,
+        userId: userTokenInfo.userId,
+      });
+
+    return FindMyLikesResponseDto.of(productPostInfoSlice);
   }
 
   @Patch('/:id/hide')
