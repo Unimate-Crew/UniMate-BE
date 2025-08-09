@@ -1,6 +1,6 @@
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 
-export class ProductPostInfo {
+export class ProductPostResultDto {
   productPost: ProductPost;
 
   universityName: string;

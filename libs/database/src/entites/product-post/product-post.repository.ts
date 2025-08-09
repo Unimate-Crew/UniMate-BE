@@ -120,20 +120,20 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * 페이지네이션된 상품 목록을 조회합니다.
    * 대학교 정보와 썸네일 URL을 포함하여 조회합니다.
    *
-   * @param page 페이지 번호 (1부터 시작)
-   * @param limit 페이지 크기
-   * @param regionId 지역 ID
-   * @param blockedUserIds 차단된 유저 ID 목록
+   * @param params.page 페이지 번호 (1부터 시작)
+   * @param params.limit 페이지 크기
+   * @param params.regionId 지역 ID
+   * @param params.blockedUserIds 차단된 유저 ID 목록
    * @returns Slice<ProductPostWithRelations>
    */
-  async findPagedProductPosts(
-    page: number,
-    limit: number,
-    regionId?: string,
-    blockedUserIds?: number[],
-  ): Promise<Slice<ProductPostWithRelations>> {
+  async findPagedProductPosts(params: {
+    page: number;
+    limit: number;
+    regionId: string;
+    blockedUserIds?: number[];
+  }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
-    const offset = (page - 1) * limit;
+    const offset = (params.page - 1) * params.limit;
 
     const query = knex
       .select([
@@ -150,21 +150,21 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       })
       .where('product_post.is_deleted', false);
 
-    if (regionId) {
-      query.where('product_post.region_id', regionId);
+    if (params.regionId) {
+      query.where('product_post.region_id', params.regionId);
     }
 
     // 차단된 유저의 게시글 제외
-    if (blockedUserIds && blockedUserIds.length > 0) {
-      query.whereNotIn('product_post.user_id', blockedUserIds);
+    if (params.blockedUserIds && params.blockedUserIds.length > 0) {
+      query.whereNotIn('product_post.user_id', params.blockedUserIds);
     }
 
     const results = await query
       .orderBy('product_post.created_at', 'desc')
-      .limit(limit + 1)
+      .limit(params.limit + 1)
       .offset(offset);
 
-    const hasNext = results.length > limit;
+    const hasNext = results.length > params.limit;
     const posts = hasNext ? results.slice(0, -1) : results;
 
     // ProductPostWithRelations DTO로 변환
@@ -201,35 +201,37 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * 검색 조건에 따라 페이지네이션된 상품 목록을 조회합니다.
    * 대학교 정보와 썸네일 URL을 포함하여 조회합니다.
    *
-   * @param searchKeyword 검색 키워드
-   * @param universityId 대학교 ID
-   * @param currencyType 통화 타입
-   * @param minPrice 최소 가격
-   * @param maxPrice 최대 가격
-   * @param category 상품 카테고리
-   * @param tradeStatus 거래 상태
-   * @param sortDirection 정렬 방향
-   * @param page 페이지 번호 (1부터 시작)
-   * @param limit 페이지 크기
-   * @param regionId 지역 ID
-   * @param blockedUserIds 차단된 유저 ID 목록
+   * @param params.searchKeyword 검색 키워드
+   * @param params.universityId 대학교 ID
+   * @param params.currencyType 통화 타입
+   * @param params.minPrice 최소 가격
+   * @param params.maxPrice 최대 가격
+   * @param params.category 상품 카테고리
+   * @param params.tradeStatus 거래 상태
+   * @param params.sortDirection 정렬 방향
+   * @param params.page 페이지 번호 (1부터 시작)
+   * @param params.limit 페이지 크기
+   * @param params.regionId 지역 ID
+   * @param params.blockedUserIds 차단된 유저 ID 목록
    * @returns Slice<ProductPostWithRelations>
    */
-  async searchProductPosts(
-    searchKeyword?: string,
-    universityId?: number,
-    currencyType?: string,
-    minPrice?: number,
-    maxPrice?: number,
-    category?: string,
-    tradeStatus?: string,
-    sortDirection?: string,
-    page: number = 1,
-    limit: number = 10,
-    regionId?: string,
-    blockedUserIds?: number[],
-  ): Promise<Slice<ProductPostWithRelations>> {
+  async searchProductPosts(params: {
+    searchKeyword?: string;
+    universityId?: number;
+    currencyType?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    category?: string;
+    tradeStatus?: string;
+    sortDirection?: string;
+    page?: number;
+    limit?: number;
+    regionId: string;
+    blockedUserIds?: number[];
+  }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 10;
     const offset = (page - 1) * limit;
 
     const query = knex
@@ -248,50 +250,50 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       .where('product_post.is_deleted', false);
 
     // 검색 키워드로 제목 검색
-    if (searchKeyword) {
-      query.where('product_post.title', 'like', `%${searchKeyword}%`);
+    if (params.searchKeyword) {
+      query.where('product_post.title', 'like', `%${params.searchKeyword}%`);
     }
 
     // 대학교 필터링
-    if (universityId) {
-      query.where('product_post.university_id', universityId);
+    if (params.universityId) {
+      query.where('product_post.university_id', params.universityId);
     }
 
     // 통화 타입 필터링
-    if (currencyType) {
-      query.where('product_post.currency_type', currencyType);
+    if (params.currencyType) {
+      query.where('product_post.currency_type', params.currencyType);
     }
 
     // 가격 범위 필터링
-    if (minPrice) {
-      query.where('product_post.price', '>=', minPrice);
+    if (params.minPrice) {
+      query.where('product_post.price', '>=', params.minPrice);
     }
-    if (maxPrice) {
-      query.where('product_post.price', '<=', maxPrice);
+    if (params.maxPrice) {
+      query.where('product_post.price', '<=', params.maxPrice);
     }
 
     // 카테고리 필터링
-    if (category) {
-      query.where('product_post.category', category);
+    if (params.category) {
+      query.where('product_post.category', params.category);
     }
 
     // 거래 상태 필터링
-    if (tradeStatus) {
-      query.where('product_post.trade_status', tradeStatus);
+    if (params.tradeStatus) {
+      query.where('product_post.trade_status', params.tradeStatus);
     }
 
     // 지역 필터링
-    if (regionId) {
-      query.where('product_post.region_id', regionId);
+    if (params.regionId) {
+      query.where('product_post.region_id', params.regionId);
     }
 
     // 차단된 유저의 게시글 제외
-    if (blockedUserIds && blockedUserIds.length > 0) {
-      query.whereNotIn('product_post.user_id', blockedUserIds);
+    if (params.blockedUserIds && params.blockedUserIds.length > 0) {
+      query.whereNotIn('product_post.user_id', params.blockedUserIds);
     }
 
     const results = await query
-      .orderBy('product_post.created_at', sortDirection.toLowerCase())
+      .orderBy('product_post.created_at', params.sortDirection?.toLowerCase())
       .limit(limit + 1)
       .offset(offset);
 

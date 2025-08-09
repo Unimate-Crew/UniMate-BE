@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { UniversityService } from './university.service';
-import { UniversityController } from './university.controller';
+import { UniversityService } from './application/university.service';
+import { UniversityController } from './api/university.controller';
 
 @Module({
   providers: [UniversityService],

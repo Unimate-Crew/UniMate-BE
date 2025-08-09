@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -128,7 +129,7 @@ export class SearchProductPostsRequestDto {
     required: false,
   })
   @IsString()
+  @IsNotEmpty()
   @Type(() => String)
-  @IsOptional()
-  regionId?: string;
+  regionId: string;
 }

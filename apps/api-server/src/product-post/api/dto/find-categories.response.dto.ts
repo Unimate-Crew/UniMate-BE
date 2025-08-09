@@ -1,7 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductCategory } from '@app/database/common/enums';
-import { ProductCategoryInfo } from '../../application/dto/Product-category.info';
+import { ProductCategoryResultDto } from '../../application/dto/Product-category.result.dto';
 
 export class ProductCategoryItemDto {
   @ApiProperty({
@@ -35,7 +35,7 @@ export class FindCategoriesResponseDto {
   }
 
   static of(
-    productCategoryInfos: ProductCategoryInfo[],
+    productCategoryInfos: ProductCategoryResultDto[],
   ): FindCategoriesResponseDto {
     const productCategoryItemDtos: ProductCategoryItemDto[] =
       productCategoryInfos.map(

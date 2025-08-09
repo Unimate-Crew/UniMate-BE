@@ -12,7 +12,6 @@ import {
   ProductCategory,
   TradeType,
 } from '@app/database/common/enums';
-import { UpdateProductPostParam } from '../../application/dto/update-product-post.param';
 
 export class UpdateProductPostRequestDto {
   @ApiProperty({
@@ -91,17 +90,4 @@ export class UpdateProductPostRequestDto {
   @IsString()
   @IsOptional()
   tradeTypeDescription?: string;
-
-  toParam(): UpdateProductPostParam {
-    return new UpdateProductPostParam(
-      this.tradeStatus,
-      this.title,
-      this.description,
-      this.price,
-      this.currencyType,
-      this.category,
-      this.tradeType,
-      this.tradeTypeDescription,
-    );
-  }
 }

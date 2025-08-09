@@ -16,11 +16,15 @@ export class UserBlockRepository extends EntityRepository<UserBlock> {
     return this.find({ blockedId, isDeleted: false });
   }
 
-  async findByBlockerIdAndBlockedId(
-    blockerId: number,
-    blockedId: number,
-  ): Promise<UserBlock | null> {
-    return this.findOne({ blockerId, blockedId, isDeleted: false });
+  async findByBlockerIdAndBlockedId(params: {
+    blockerId: number;
+    blockedId: number;
+  }): Promise<UserBlock | null> {
+    return this.findOne({
+      blockerId: params.blockerId,
+      blockedId: params.blockedId,
+      isDeleted: false,
+    });
   }
 
   async persist(userBlock: UserBlock): Promise<void> {

@@ -1,39 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsOptional, IsString, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Country } from '../../common/enums';
 
 export class SearchUniversitiesRequestDto {
   @ApiProperty({
-    description: '대학교 이름 검색 키워드',
+    description: '대학교 이름 (검색 키워드)',
     example: 'Harvard',
     required: false,
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   name?: string;
 
   @ApiProperty({
-    description: '페이지 번호',
+    description: '페이지 번호 (1부터 시작)',
     example: 1,
-    default: 1,
     required: false,
+    default: 1,
   })
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
   @IsOptional()
-  pageNumber?: number = 1;
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  pageNumber?: number;
 
   @ApiProperty({
     description: '페이지 크기',
     example: 10,
-    default: 10,
     required: false,
+    default: 10,
   })
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
   @IsOptional()
-  pageSize?: number = 10;
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
 }

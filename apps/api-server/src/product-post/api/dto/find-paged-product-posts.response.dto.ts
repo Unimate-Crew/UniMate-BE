@@ -2,7 +2,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyType, TradeStatus } from '@app/database/common/enums';
 import { Slice } from '@app/common/utils/pagination';
-import { ProductPostInfo } from '../../application/dto/product-post.info';
+import { ProductPostResultDto } from '../../application/dto/product-post.result.dto';
 
 export class ProductPostItemDto {
   @ApiProperty({
@@ -26,8 +26,10 @@ export class ProductPostItemDto {
   @ApiProperty({
     description: '대학교 이름',
     example: '서울대학교',
+    required: false,
+    nullable: true,
   })
-  universityName: string;
+  universityName?: string | null;
 
   @ApiProperty({
     description: '상품 게시글 대표 사진 URL',
@@ -119,7 +121,7 @@ export class FindPagedProductPostsResponseDto {
   }
 
   static of(
-    productPostInfoSlice: Slice<ProductPostInfo>,
+    productPostInfoSlice: Slice<ProductPostResultDto>,
   ): FindPagedProductPostsResponseDto {
     const response = new FindPagedProductPostsResponseDto(
       productPostInfoSlice.contents.map(

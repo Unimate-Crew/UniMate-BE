@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import {
   ProductCategory,
   TradeStatus,
   CurrencyType,
   TradeType,
 } from '@app/database/common/enums';
-import { ProductPostDetailInfo } from '../../application/dto/product-post-detail.info';
+import { ProductPostDetailResultDto } from '../../application/dto/product-post-detail.result.dto';
 
 export class FindProductPostDetailResponseDto {
   @ApiProperty({ description: '상품 게시글 ID' })
@@ -64,7 +63,16 @@ export class FindProductPostDetailResponseDto {
   sellerProfileImageUrl: string;
 
   constructor(
-    productPost: ProductPost,
+    id: number,
+    title: string,
+    description: string,
+    price: number,
+    currencyType: CurrencyType,
+    category: ProductCategory,
+    tradeStatus: TradeStatus,
+    tradeType: TradeType,
+    tradeTypeDescription: string,
+    createdAt: Date,
     imageUrls: string[],
     isLiked: boolean,
     likeCount: number,
@@ -74,16 +82,16 @@ export class FindProductPostDetailResponseDto {
     sellerNickname: string,
     sellerProfileImageUrl: string,
   ) {
-    this.id = productPost.getId();
-    this.title = productPost.getTitle();
-    this.description = productPost.getDescription() || '';
-    this.price = productPost.getPrice();
-    this.currencyType = productPost.getCurrencyType();
-    this.category = productPost.getCategory();
-    this.tradeStatus = productPost.getTradeStatus();
-    this.tradeType = productPost.getTradeType();
-    this.tradeTypeDescription = productPost.getTradeTypeDescription() || '';
-    this.createdAt = productPost.createdAt;
+    this.id = id;
+    this.title = title;
+    this.description = description;
+    this.price = price;
+    this.currencyType = currencyType;
+    this.category = category;
+    this.tradeStatus = tradeStatus;
+    this.tradeType = tradeType;
+    this.tradeTypeDescription = tradeTypeDescription;
+    this.createdAt = createdAt;
     this.imageUrls = imageUrls;
     this.isLiked = isLiked;
     this.likeCount = likeCount;
@@ -95,10 +103,19 @@ export class FindProductPostDetailResponseDto {
   }
 
   static from(
-    productPostDetail: ProductPostDetailInfo,
+    productPostDetail: ProductPostDetailResultDto,
   ): FindProductPostDetailResponseDto {
     return new FindProductPostDetailResponseDto(
-      productPostDetail.productPost,
+      productPostDetail.id,
+      productPostDetail.title,
+      productPostDetail.description || '',
+      productPostDetail.price,
+      productPostDetail.currencyType,
+      productPostDetail.category,
+      productPostDetail.tradeStatus,
+      productPostDetail.tradeType,
+      productPostDetail.tradeTypeDescription || '',
+      productPostDetail.createdAt,
       productPostDetail.imageUrls,
       productPostDetail.isLiked,
       productPostDetail.likeCount,
@@ -106,7 +123,7 @@ export class FindProductPostDetailResponseDto {
       productPostDetail.isOwner,
       productPostDetail.sellerId,
       productPostDetail.sellerNickname,
-      productPostDetail.sellerProfileImageUrl,
+      productPostDetail.sellerProfileImageUrl || '',
     );
   }
 }

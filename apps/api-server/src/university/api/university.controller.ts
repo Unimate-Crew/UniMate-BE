@@ -5,10 +5,10 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { UniversityService } from './university.service';
-import { SearchUniversitiesRequestDto } from './dto/search-universities-request.dto';
-import { SearchUniversitiesResponseDto } from './dto/search-universities-response.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UniversityService } from '../application/university.service';
+import { SearchUniversitiesRequestDto } from './dto/search-universities.request.dto';
+import { SearchUniversitiesResponseDto } from './dto/search-universities.response.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @ApiTags('대학교')
 @ApiBearerAuth('accessToken')
@@ -32,13 +32,15 @@ export class UniversityController {
   ): Promise<SearchUniversitiesResponseDto> {
     const { name, pageNumber = 1, pageSize = 10 } = query;
 
-    const { universities, hasNext } =
-      await this.universityService.searchUniversities(
-        name,
-        pageNumber,
-        pageSize,
-      );
+    const universitySlice = await this.universityService.searchUniversities({
+      name,
+      pageNumber,
+      pageSize,
+    });
 
-    return SearchUniversitiesResponseDto.of(universities, hasNext);
+    return SearchUniversitiesResponseDto.of(
+      universitySlice.contents,
+      universitySlice.hasNext,
+    );
   }
 }
