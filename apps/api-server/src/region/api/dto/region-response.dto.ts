@@ -3,7 +3,7 @@ import { PagedResult } from '@app/common';
 import { Region } from '@app/database/entites/region/region.entity';
 import { RegionInfo } from './region-info.dto';
 
-export class RegionListResponse {
+export class SearchRegionsResponseDto {
   @ApiProperty({ description: '지역 정보 목록', type: [RegionInfo] })
   contents: RegionInfo[];
 
@@ -11,16 +11,14 @@ export class RegionListResponse {
   hasNext: boolean;
 
   /**
-   * PagedResult<Region>에서 RegionListResponse DTO 객체를 생성합니다.
-   * @param pagedResult Region 페이징 결과
-   * @returns RegionListResponse DTO 객체
+   * SearchRegionsResultDto에서 SearchRegionsResponseDto DTO 객체를 생성합니다.
+   * @param result SearchRegionsResultDto 결과
+   * @returns SearchRegionsResponseDto DTO 객체
    */
-  static fromPagedResult(pagedResult: PagedResult<Region>): RegionListResponse {
-    const response = new RegionListResponse();
-    response.contents = pagedResult.contents.map((region) =>
-      RegionInfo.from(region),
-    );
-    response.hasNext = pagedResult.hasNext;
+  static fromResult(result: any): SearchRegionsResponseDto {
+    const response = new SearchRegionsResponseDto();
+    response.contents = result.contents;
+    response.hasNext = result.hasNext;
     return response;
   }
 }

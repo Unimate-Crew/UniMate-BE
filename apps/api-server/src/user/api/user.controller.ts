@@ -19,24 +19,36 @@ import {
 } from '@nestjs/swagger';
 import { S3Service } from '@app/common/s3/s3.service';
 import { UserService } from '../application/user.service';
-import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../../auth/auth.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ErrorResponse } from '../../common/error-response';
+import { UserTokenInfo } from '../../common/types/user-token-info';
+import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
+import { SignUpDto } from './dto/sign-up.dto';
 import { SignUpResponseDto } from './dto/sign-up-response.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { ErrorResponse } from '../../common/error-response';
-import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
-import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
+import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
+import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
 import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-request.dto';
 import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
-import { UserTokenInfo } from '../../common/types/user-token-info';
-import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
-import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
+import { SignUpParamsDto } from '../application/dto/sign-up-params.dto';
+import { SignUpResultDto } from '../application/dto/sign-up-result.dto';
+import { SignInParamsDto } from '../application/dto/sign-in-params.dto';
+import { SignInResultDto } from '../application/dto/sign-in-result.dto';
+import { CheckUserExistsParamsDto } from '../application/dto/check-user-exists-params.dto';
+import { CheckUserExistsResultDto } from '../application/dto/check-user-exists-result.dto';
+import { CheckNicknameExistsParamsDto } from '../application/dto/check-nickname-exists-params.dto';
+import { CheckNicknameExistsResultDto } from '../application/dto/check-nickname-exists-result.dto';
+import { SaveInterestRegionsParamsDto } from '../application/dto/save-interest-regions-params.dto';
+import { SaveInterestRegionParamsDto } from '../application/dto/save-interest-region-params.dto';
+import { SetPrimaryInterestRegionParamsDto } from '../application/dto/set-primary-interest-region-params.dto';
+import { DeleteInterestRegionParamsDto } from '../application/dto/delete-interest-region-params.dto';
+import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -61,9 +73,16 @@ export class UserController {
     description: '잘못된 요청',
   })
   @Post('signup')
-  async signUp(@Body() signUpDto: SignUpDto): Promise<SignUpResponseDto> {
-    const user = await this.userService.signUp(signUpDto);
-    const tokens = await this.authService.generateTokens(user);
+  async signUp(@Body() requestDto: SignUpDto): Promise<SignUpResponseDto> {
+    const params: SignUpParamsDto = SignUpParamsDto.of(
+      requestDto.provider,
+      requestDto.providerId,
+      requestDto.oAuthToken,
+      requestDto.nickname,
+      requestDto.profileImageKey,
+    );
+    const result: SignUpResultDto = await this.userService.signUp(params);
+    const tokens = await this.authService.generateTokens(result);
 
     return SignUpResponseDto.of(tokens);
   }
@@ -86,11 +105,16 @@ export class UserController {
     description: '인증 실패',
   })
   @Post('signin')
-  async signIn(@Body() signInDto: SignInDto): Promise<SignInResponseDto> {
-    const user = await this.userService.signIn(signInDto);
+  async signIn(@Body() requestDto: SignInDto): Promise<SignInResponseDto> {
+    const params: SignInParamsDto = SignInParamsDto.of(
+      requestDto.provider,
+      requestDto.providerId,
+      requestDto.oAuthToken,
+    );
+    const result: SignInResultDto = await this.userService.signIn(params);
     const token = await this.authService.generateAccessToken(
-      user.getId(),
-      user.getProvider(),
+      result.getId(),
+      result.getProvider(),
     );
 
     return SignInResponseDto.of(token);
@@ -107,11 +131,16 @@ export class UserController {
   })
   @Post('exists')
   async checkUserExists(
-    @Body() checkUserExistsDto: CheckUserExistsDto,
+    @Body() requestDto: CheckUserExistsDto,
   ): Promise<CheckUserExistsResponseDto> {
-    const exists = await this.userService.checkUserExists(checkUserExistsDto);
+    const params: CheckUserExistsParamsDto = CheckUserExistsParamsDto.of(
+      requestDto.provider,
+      requestDto.providerId,
+    );
+    const result: CheckUserExistsResultDto =
+      await this.userService.checkUserExists(params);
 
-    return CheckUserExistsResponseDto.of(exists);
+    return CheckUserExistsResponseDto.of(result.exists);
   }
 
   @Get('nickname/exists')
@@ -129,12 +158,13 @@ export class UserController {
     description: '닉네임에 특수문자나 공백이 포함되어 있습니다.',
   })
   async checkNicknameExists(
-    @Query() checkNicknameExistsDto: CheckNicknameExistsDto,
+    @Query() requestDto: CheckNicknameExistsDto,
   ): Promise<CheckNicknameExistsResponseDto> {
-    const exists = await this.userService.checkNicknameExists(
-      checkNicknameExistsDto,
-    );
-    return CheckNicknameExistsResponseDto.of(exists);
+    const params: CheckNicknameExistsParamsDto =
+      CheckNicknameExistsParamsDto.of(requestDto.nickname);
+    const result: CheckNicknameExistsResultDto =
+      await this.userService.checkNicknameExists(params);
+    return CheckNicknameExistsResponseDto.of(result.exists);
   }
 
   @Put('/regions')
@@ -158,13 +188,15 @@ export class UserController {
   @HttpCode(204)
   async saveInterestRegions(
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
-    @Body() saveInterestRegionsDto: SaveInterestRegionsDto,
+    @Body() requestDto: SaveInterestRegionsDto,
   ): Promise<void> {
-    await this.userService.saveInterestRegions(
-      userTokenInfo.userId,
-      saveInterestRegionsDto.regionIds,
-      saveInterestRegionsDto.primaryRegionId,
-    );
+    const params: SaveInterestRegionsParamsDto =
+      SaveInterestRegionsParamsDto.of(
+        userTokenInfo.userId,
+        requestDto.regionIds,
+        requestDto.primaryRegionId,
+      );
+    await this.userService.saveInterestRegions(params);
   }
 
   @Post('/regions')
@@ -188,12 +220,13 @@ export class UserController {
   @HttpCode(201)
   async saveInterestRegion(
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
-    @Body() saveInterestRegionDto: SaveInterestRegionDto,
+    @Body() requestDto: SaveInterestRegionDto,
   ): Promise<void> {
-    await this.userService.saveInterestRegion(
+    const params: SaveInterestRegionParamsDto = SaveInterestRegionParamsDto.of(
       userTokenInfo.userId,
-      saveInterestRegionDto.regionId,
+      requestDto.regionId,
     );
+    await this.userService.saveInterestRegion(params);
   }
 
   @Get('/regions')
@@ -219,7 +252,10 @@ export class UserController {
   async findInterestRegions(
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<InterestRegionInfosDto> {
-    return this.userService.getInterestRegions(userTokenInfo.userId);
+    const result = await this.userService.getInterestRegions(
+      userTokenInfo.userId,
+    );
+    return result;
   }
 
   @Patch('/regions/:regionId/primary')
@@ -245,10 +281,9 @@ export class UserController {
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
     @Param('regionId') regionId: string,
   ): Promise<void> {
-    await this.userService.setPrimaryInterestRegion(
-      userTokenInfo.userId,
-      regionId,
-    );
+    const params: SetPrimaryInterestRegionParamsDto =
+      SetPrimaryInterestRegionParamsDto.of(userTokenInfo.userId, regionId);
+    await this.userService.setPrimaryInterestRegion(params);
   }
 
   @Delete('/regions/:regionId')
@@ -274,7 +309,9 @@ export class UserController {
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
     @Param('regionId') regionId: string,
   ): Promise<void> {
-    await this.userService.deleteInterestRegion(userTokenInfo.userId, regionId);
+    const params: DeleteInterestRegionParamsDto =
+      DeleteInterestRegionParamsDto.of(userTokenInfo.userId, regionId);
+    await this.userService.deleteInterestRegion(params);
   }
 
   @Post('/presigned-url')

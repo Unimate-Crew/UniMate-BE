@@ -8,8 +8,12 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegionService } from '../application/region.service';
-import { SearchRegionDto } from './dto/search-region.dto';
-import { RegionInfo, RegionListResponse } from './dto/region-response.dto';
+import { SearchRegionsRequestDto } from './dto/search-region.dto';
+import { SearchRegionsResponseDto } from './dto/region-response.dto';
+import { GetRegionByIdResponseDto } from './dto/get-region-by-id-response.dto';
+import { SearchRegionsParamsDto } from '../application/dto/search-regions-params.dto';
+import { SearchRegionsResultDto } from '../application/dto/search-regions-result.dto';
+import { GetRegionByIdResultDto } from '../application/dto/get-region-by-id-result.dto';
 
 @ApiTags('지역')
 @Controller({ path: 'regions' })
@@ -25,13 +29,21 @@ export class RegionController {
   @ApiResponse({
     status: 200,
     description: '지역 정보 목록',
-    type: RegionListResponse,
+    type: SearchRegionsResponseDto,
   })
   @UsePipes(new ValidationPipe({ transform: true }))
   async searchRegions(
-    @Query() searchRegionDto: SearchRegionDto,
-  ): Promise<RegionListResponse> {
-    return this.regionService.searchRegions(searchRegionDto);
+    @Query() requestDto: SearchRegionsRequestDto,
+  ): Promise<SearchRegionsResponseDto> {
+    const params: SearchRegionsParamsDto = SearchRegionsParamsDto.of(
+      requestDto.name,
+      requestDto.countryCode,
+      requestDto.page,
+      requestDto.limit,
+    );
+    const result: SearchRegionsResultDto =
+      await this.regionService.searchRegions(params);
+    return SearchRegionsResponseDto.fromResult(result);
   }
 
   @Get(':id')
@@ -42,10 +54,14 @@ export class RegionController {
   @ApiResponse({
     status: 200,
     description: '지역 상세 정보',
-    type: RegionInfo,
+    type: GetRegionByIdResponseDto,
   })
   @ApiResponse({ status: 404, description: '지역을 찾을 수 없음' })
-  async getRegionById(@Param('id') id: string): Promise<RegionInfo> {
-    return this.regionService.getRegionById(id);
+  async getRegionById(
+    @Param('id') id: string,
+  ): Promise<GetRegionByIdResponseDto> {
+    const result: GetRegionByIdResultDto =
+      await this.regionService.getRegionById(id);
+    return GetRegionByIdResponseDto.from(result);
   }
 }

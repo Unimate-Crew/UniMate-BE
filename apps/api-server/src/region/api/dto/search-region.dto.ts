@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsInt, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CountryCode } from '@app/database/common/enums';
 
-export class SearchRegionDto {
+export class SearchRegionsRequestDto {
   @ApiProperty({ description: '지역 이름', required: false })
   @IsString()
   @IsOptional()
