@@ -167,6 +167,43 @@ export class UserController {
     );
   }
 
+  @Post('/regions/onboarding')
+  @ApiOperation({
+    summary: '온보딩 관심지역 설정 API',
+    description:
+      '온보딩 과정에서 첫 번째 관심지역을 설정하고 기본 관심지역으로 지정합니다.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '온보딩 관심지역 설정 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    type: ErrorResponse,
+    description: 'code: IR004(이미 관심지역이 존재함)',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음), R001(지역이 존재하지 않음)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(201)
+  async setOnboardingInterestRegion(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Body() saveInterestRegionDto: SaveInterestRegionDto,
+  ): Promise<void> {
+    await this.userService.setOnboardingInterestRegion(
+      userTokenInfo.userId,
+      saveInterestRegionDto.regionId,
+    );
+  }
+
   @Post('/regions')
   @ApiOperation({ summary: '개별 관심지역 저장 API' })
   @ApiResponse({
