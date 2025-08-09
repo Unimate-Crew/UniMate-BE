@@ -352,6 +352,59 @@ export class ProductPostService {
   }
 
   /**
+   * 내가 좋아요한 상품게시글 목록을 페이지네이션하여 조회합니다.
+   *
+   * @param params.page 페이지 번호 (1부터 시작)
+   * @param params.limit 페이지 크기
+   * @param params.userId 현재 로그인한 유저 ID
+   * @returns 페이지네이션된 내가 좋아요한 상품게시글 목록과 다음 페이지 존재 여부
+   */
+  async findMyLikes(params: {
+    page: number;
+    limit: number;
+    userId: number;
+  }): Promise<Slice<ProductPostResultDto>> {
+    // 1. 내가 좋아요한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
+    const productPostSlice: Slice<ProductPostWithRelations> =
+      await this.productPostRepository.findPagedLikes({
+        page: params.page,
+        limit: params.limit,
+        userId: params.userId,
+      });
+
+    // 2. 상품 ID 목록 추출
+    const productIds: number[] = productPostSlice.contents.map((post) =>
+      post.productPost.getId(),
+    );
+
+    // 3. 좋아요 수 조회
+    const likeCountMap: Map<number, number> =
+      await this.likeRepository.countByProductIds(productIds);
+
+    // 4. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    const productPostInfos: ProductPostResultDto[] = await Promise.all(
+      productPostSlice.contents.map(async (post) => {
+        let thumbnailUrl = null;
+        if (post.thumbnailImageKey) {
+          thumbnailUrl = await this.s3Service.generateGetPresignedUrl(
+            post.thumbnailImageKey,
+          );
+        }
+
+        return new ProductPostResultDto(
+          post.productPost,
+          post.universityName,
+          thumbnailUrl,
+          likeCountMap.get(post.productPost.getId()) ?? 0,
+          0, // TODO: 채팅방 수 구현
+        );
+      }),
+    );
+
+    return Slice.of(productPostInfos, productPostSlice.hasNext);
+  }
+
+  /**
    * 특정 유저의 판매내역 목록을 페이지네이션하여 조회합니다.
    *
    * @param params.page 페이지 번호 (1부터 시작)
