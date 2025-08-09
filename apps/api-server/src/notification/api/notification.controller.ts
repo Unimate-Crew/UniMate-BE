@@ -12,7 +12,7 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { NotificationService } from '../service/notification.service';
+import { NotificationService } from '../application/notification.service';
 import { GetNotificationsRequestDto } from './dto/get-notifications-request.dto';
 import { GetNotificationsResponseDto } from './dto/get-notifications-response.dto';
 import { DeleteNotificationsRequestDto } from './dto/delete-notifications-request.dto';
@@ -20,10 +20,10 @@ import { DeleteNotificationsResponseDto } from './dto/delete-notifications-respo
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
-import { GetNotificationsParamsDto } from '../service/dto/get-notifications-params.dto';
-import { GetNotificationsResultDto } from '../service/dto/get-notifications-result.dto';
-import { DeleteNotificationsParamsDto } from '../service/dto/delete-notifications-params.dto';
-import { DeleteNotificationsResultDto } from '../service/dto/delete-notifications-result.dto';
+import { GetNotificationsParamsDto } from '../application/dto/get-notifications-params.dto';
+import { GetNotificationsResultDto } from '../application/dto/get-notifications-result.dto';
+import { DeleteNotificationsParamsDto } from '../application/dto/delete-notifications-params.dto';
+import { DeleteNotificationsResultDto } from '../application/dto/delete-notifications-result.dto';
 
 @ApiTags('알림')
 @ApiBearerAuth('accessToken')
