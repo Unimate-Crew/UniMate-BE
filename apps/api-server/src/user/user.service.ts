@@ -273,11 +273,11 @@ export class UserService {
     }
 
     // 새로운 관심지역 생성
-    const interestRegion = this.interestRegionRepository.create({
+    this.interestRegionRepository.create({
       user: userId,
       region: regionId,
       isPrimary: false,
     });
-    this.interestRegionRepository.persist(interestRegion);
+    await this.interestRegionRepository.flush();
   }
 }
