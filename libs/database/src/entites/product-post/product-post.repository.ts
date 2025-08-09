@@ -331,6 +331,84 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
   }
 
   /**
+   * 내가 작성한 상품 게시글 목록을 페이지네이션하여 조회합니다.
+   * 대학교 정보와 썸네일 URL을 포함하여 조회합니다.
+   *
+   * @param params.page 페이지 번호 (1부터 시작)
+   * @param params.limit 페이지 크기
+   * @param params.userId 유저 ID
+   * @param params.tradeStatus 거래 상태 필터 (옵셔널)
+   * @returns Slice<ProductPostWithRelations>
+   */
+  async findMyProductPosts(params: {
+    page: number;
+    limit: number;
+    userId: number;
+    tradeStatus?: TradeStatus;
+  }): Promise<Slice<ProductPostWithRelations>> {
+    const knex = this.em.getKnex();
+    const offset = (params.page - 1) * params.limit;
+
+    const query = knex
+      .select([
+        'product_post.*',
+        'university.name as university_name',
+        'product_image.image_key as thumbnail_image_key',
+      ])
+      .from('product_post')
+      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('product_image', function () {
+        this.on('product_post.id', '=', 'product_image.product_id')
+          .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
+          .andOn('product_image.is_deleted', '=', knex.raw('?', [false]));
+      })
+      .where('product_post.is_deleted', false)
+      .where('product_post.user_id', params.userId);
+
+    // 거래 상태 필터링
+    if (params.tradeStatus) {
+      query.where('product_post.trade_status', params.tradeStatus);
+    }
+
+    const results = await query
+      .orderBy('product_post.created_at', 'desc')
+      .limit(params.limit + 1)
+      .offset(offset);
+
+    const hasNext = results.length > params.limit;
+    const posts = hasNext ? results.slice(0, -1) : results;
+
+    // ProductPostWithRelations DTO로 변환
+    const content = posts.map(
+      (row) =>
+        new ProductPostWithRelations({
+          productPost: this.em.map(ProductPost, {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            userId: row.user_id,
+            price: row.price,
+            currencyType: row.currency_type,
+            category: row.category,
+            tradeStatus: row.trade_status,
+            tradeType: row.trade_type,
+            tradeTypeDescription: row.trade_type_description,
+            regionId: row.region_id,
+            universityId: row.university_id,
+            isDeleted: row.is_deleted,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+            deletedAt: row.deleted_at,
+          }),
+          universityName: row.university_name,
+          thumbnailImageKey: row.thumbnail_image_key,
+        }),
+    );
+
+    return Slice.of(content, hasNext);
+  }
+
+  /**
    * 카테고리별 상품 게시글 개수를 조회합니다.
    *
    * @param regionId 지역 ID (옵셔널)
