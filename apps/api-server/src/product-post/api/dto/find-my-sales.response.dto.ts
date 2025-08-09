@@ -75,6 +75,12 @@ export class MySalesItemDto {
   })
   tradeStatus: TradeStatus;
 
+  @ApiProperty({
+    description: '숨김 여부',
+    example: false,
+  })
+  isHidden: boolean;
+
   constructor(
     id: number,
     title: string,
@@ -87,6 +93,7 @@ export class MySalesItemDto {
     chatRoomCount: number,
     regionId: string,
     tradeStatus: TradeStatus,
+    isHidden: boolean,
   ) {
     this.id = id;
     this.title = title;
@@ -99,6 +106,7 @@ export class MySalesItemDto {
     this.chatRoomCount = chatRoomCount;
     this.regionId = regionId;
     this.tradeStatus = tradeStatus;
+    this.isHidden = isHidden;
   }
 }
 
@@ -138,6 +146,7 @@ export class FindMySalesResponseDto {
             info.chatRoomCount,
             info.productPost.getRegionId(),
             info.productPost.getTradeStatus(),
+            info.productPost.getIsHidden(),
           ),
       ),
       productPostInfoSlice.hasNext,
