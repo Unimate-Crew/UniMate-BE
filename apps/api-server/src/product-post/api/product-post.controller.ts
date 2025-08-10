@@ -18,7 +18,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SortDirection } from '@app/database/common/enums';
-import { Slice } from '@app/common/utils/pagination';
+import { Slice, PageRequest } from '@app/common';
 import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts.request.dto';
 import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts.response.dto';
@@ -70,13 +70,10 @@ export class ProductPostController {
     @Query() query: FindPagedProductPostsRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindPagedProductPostsResponseDto> {
-    const { pageNumber = 1, pageSize = 10, regionId } = query;
-
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findPagedProductPosts({
-        page: pageNumber,
-        limit: pageSize,
-        regionId,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
+        regionId: query.regionId,
         userId: userTokenInfo.userId,
       });
 
@@ -105,33 +102,18 @@ export class ProductPostController {
     @Query() query: SearchProductPostsRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindPagedProductPostsResponseDto> {
-    const {
-      searchKeyword,
-      universityId,
-      currencyType,
-      minPrice,
-      maxPrice,
-      category,
-      tradeStatus,
-      sortDirection = SortDirection.DESC,
-      pageNumber = 1,
-      pageSize = 10,
-      regionId,
-    } = query;
-
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.searchProductPosts({
-        page: pageNumber,
-        limit: pageSize,
-        searchKeyword,
-        universityId,
-        currencyType,
-        minPrice,
-        maxPrice,
-        category,
-        tradeStatus,
-        sortDirection,
-        regionId,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
+        searchKeyword: query.searchKeyword,
+        universityId: query.universityId,
+        currencyType: query.currencyType,
+        minPrice: query.minPrice,
+        maxPrice: query.maxPrice,
+        category: query.category,
+        tradeStatus: query.tradeStatus,
+        sortDirection: query.sortDirection || SortDirection.DESC,
+        regionId: query.regionId,
         userId: userTokenInfo.userId,
       });
 
@@ -161,14 +143,11 @@ export class ProductPostController {
     @Query() query: FindMySalesRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindMySalesResponseDto> {
-    const { pageNumber = 1, pageSize = 10, mySalesFilter } = query;
-
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findMySales({
-        page: pageNumber,
-        limit: pageSize,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
         userId: userTokenInfo.userId,
-        mySalesFilter,
+        mySalesFilter: query.mySalesFilter,
       });
 
     return FindMySalesResponseDto.of(productPostInfoSlice);
@@ -202,14 +181,11 @@ export class ProductPostController {
     @Param('userId', ParseIntPipe) userId: number,
     @Query() query: FindUserSalesRequestDto,
   ): Promise<FindUserSalesResponseDto> {
-    const { pageNumber = 1, pageSize = 10, userSalesFilter } = query;
-
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findUserSales({
-        page: pageNumber,
-        limit: pageSize,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
         userId,
-        userSalesFilter,
+        userSalesFilter: query.userSalesFilter,
       });
 
     return FindUserSalesResponseDto.of(productPostInfoSlice);
@@ -238,12 +214,9 @@ export class ProductPostController {
     @Query() query: FindMyLikesRequestDto,
     @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
   ): Promise<FindMyLikesResponseDto> {
-    const { pageNumber = 1, pageSize = 10 } = query;
-
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findMyLikes({
-        page: pageNumber,
-        limit: pageSize,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
         userId: userTokenInfo.userId,
       });
 

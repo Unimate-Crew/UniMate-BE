@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, Min, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { CountryCode } from '@app/database/common/enums';
+import { PageRequest } from '@app/common';
 
-export class SearchRegionDto {
+export class SearchRegionDto extends PageRequest {
   @ApiProperty({ description: '지역 이름', required: false })
   @IsString()
   @IsOptional()
@@ -19,21 +19,8 @@ export class SearchRegionDto {
   @IsEnum(CountryCode)
   countryCode?: CountryCode;
 
-  @ApiProperty({ description: '페이지 번호', default: 1, required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiProperty({
-    description: '페이지당 항목 수',
-    default: 20,
-    required: false,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 20;
+  constructor() {
+    super();
+    this.pageSize = 20;
+  }
 }

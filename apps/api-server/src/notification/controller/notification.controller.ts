@@ -48,8 +48,8 @@ export class NotificationController {
   ): Promise<GetNotificationsResponseDto> {
     const params: GetNotificationsParamsDto = GetNotificationsParamsDto.of(
       userTokenInfo.userId,
-      requestDto.page,
-      requestDto.limit,
+      requestDto.pageNumber,
+      requestDto.pageSize,
     );
     const result: GetNotificationsResultDto =
       await this.notificationService.getNotifications(params);

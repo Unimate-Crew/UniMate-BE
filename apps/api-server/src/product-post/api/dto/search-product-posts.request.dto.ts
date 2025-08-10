@@ -15,8 +15,9 @@ import {
   SortDirection,
   TradeStatus,
 } from '@app/database/common/enums';
+import { PageRequest } from '@app/common';
 
-export class SearchProductPostsRequestDto {
+export class SearchProductPostsRequestDto extends PageRequest {
   @ApiProperty({
     description: '검색 키워드 (제목 기준 또는 설명으로 검색)',
     example: '가이드북',
@@ -98,30 +99,6 @@ export class SearchProductPostsRequestDto {
   @IsEnum(SortDirection)
   @IsOptional()
   sortDirection?: SortDirection = SortDirection.DESC;
-
-  @ApiProperty({
-    description: '페이지 번호',
-    example: 1,
-    default: 1,
-    required: false,
-  })
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
-  @IsOptional()
-  pageNumber?: number = 1;
-
-  @ApiProperty({
-    description: '페이지 크기',
-    example: 10,
-    default: 10,
-    required: false,
-  })
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
-  @IsOptional()
-  pageSize?: number = 10;
 
   @ApiProperty({
     description: '지역 ID',
