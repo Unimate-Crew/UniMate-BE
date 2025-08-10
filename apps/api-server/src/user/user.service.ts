@@ -12,6 +12,7 @@ import {
   InterestRegion,
   Region,
   RegionRepository,
+  UniversityRepository,
 } from '@app/database';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
@@ -20,6 +21,8 @@ import { ErrorCode } from '../common/error-code';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
+import { GetUserProfileResultDto } from './dto/get-user-profile-result.dto';
+import { UniversityInfoDto } from './dto/university-info.dto';
 
 const INTEREST_REGIONS_MAX_COUNT = 3;
 
@@ -30,6 +33,7 @@ export class UserService {
     private readonly snsServiceFactory: SnsServiceFactory,
     private readonly interestRegionRepository: InterestRegionRepository,
     private readonly regionRepository: RegionRepository,
+    private readonly universityRepository: UniversityRepository,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -129,6 +133,39 @@ export class UserService {
       await this.interestRegionRepository.findWithRegionByUserId(userId);
 
     return InterestRegionInfosDto.of(interestRegions);
+  }
+
+  async getUserProfile(userId: number): Promise<GetUserProfileResultDto> {
+    const user = await this.userRepository.findOne(userId);
+
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '유저가 존재하지 않습니다.',
+      });
+    }
+
+    let university: UniversityInfoDto | undefined;
+
+    if (user.getUniversityId()) {
+      const universityEntity = await this.universityRepository.findOne(
+        user.getUniversityId()!,
+      );
+      if (universityEntity) {
+        university = UniversityInfoDto.of(
+          universityEntity.getId(),
+          universityEntity.getName(),
+          universityEntity.getDomain(),
+          universityEntity.getCountry(),
+        );
+      }
+    }
+
+    return GetUserProfileResultDto.of(
+      user.getNickname(),
+      user.getProfileImageKey(),
+      university,
+    );
   }
 
   @Transactional()

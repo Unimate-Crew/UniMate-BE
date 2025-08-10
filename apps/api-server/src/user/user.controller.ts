@@ -10,6 +10,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -37,6 +38,8 @@ import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-re
 import { UserTokenInfo } from '../common/types/user-token-info';
 import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
 import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
+import { GetMyProfileResponseDto } from './dto/get-my-profile.response.dto';
+import { GetUserProfileResponseDto } from './dto/get-user-profile.response.dto';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -330,5 +333,77 @@ export class UserController {
     });
 
     return GeneratePresignedUrlResponseDto.of(presignedUrl, key);
+  }
+
+  @Get('/me')
+  @ApiOperation({
+    summary: '내 프로필 조회',
+    description: '자기 자신의 프로필 정보를 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '프로필 조회 성공',
+    type: GetMyProfileResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음)',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  async getMyProfile(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<GetMyProfileResponseDto> {
+    const userProfile = await this.userService.getUserProfile(
+      userTokenInfo.userId,
+    );
+    const interestRegions = await this.userService.getInterestRegions(
+      userTokenInfo.userId,
+    );
+
+    return GetMyProfileResponseDto.of(
+      userProfile.nickname,
+      userProfile.profileImageKey,
+      userProfile.university,
+      interestRegions,
+    );
+  }
+
+  @Get('/:userId')
+  @ApiOperation({
+    summary: '유저 프로필 조회',
+    description: '다른 유저의 프로필 정보를 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '프로필 조회 성공',
+    type: GetUserProfileResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음)',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  async getUserProfile(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<GetUserProfileResponseDto> {
+    const userProfileResult = await this.userService.getUserProfile(userId);
+
+    return GetUserProfileResponseDto.of(
+      userProfileResult.nickname,
+      userProfileResult.profileImageKey,
+      userProfileResult.university,
+    );
   }
 }
