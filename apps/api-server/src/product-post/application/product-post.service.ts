@@ -22,7 +22,7 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { S3Service } from '@app/common/s3/s3.service';
 import { PresignedUrlDto } from '@app/common/dto/presigned-url.dto';
 import { LikeRepository } from '@app/database/entites/like/like.repository';
-import { Slice } from '@app/common/utils/pagination';
+import { Slice, PageRequest } from '@app/common';
 import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
 import { UserBlockRepository } from '@app/database/entites/user-block/user-block.repository';
 import { CategoryCountDto } from '@app/database/entites/product-post/dto/category-count.dto';
@@ -54,8 +54,7 @@ export class ProductPostService {
    * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
    */
   async findPagedProductPosts(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     regionId: string;
     userId?: number;
   }): Promise<Slice<ProductPostResultDto>> {
@@ -73,8 +72,7 @@ export class ProductPostService {
     // 2. 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
       await this.productPostRepository.findPagedProductPosts({
-        page: params.page,
-        limit: params.limit,
+        pageRequest: params.pageRequest,
         regionId: params.regionId,
         blockedUserIds,
       });
@@ -200,8 +198,7 @@ export class ProductPostService {
    * @returns 페이지네이션된 상품 게시글 목록과 다음 페이지 존재 여부
    */
   async searchProductPosts(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     searchKeyword?: string;
     universityId?: number;
     currencyType?: string;
@@ -235,8 +232,7 @@ export class ProductPostService {
         category: params.category,
         tradeStatus: params.tradeStatus,
         sortDirection: params.sortDirection,
-        page: params.page,
-        limit: params.limit,
+        pageRequest: params.pageRequest,
         regionId: params.regionId,
         blockedUserIds,
       });
@@ -283,8 +279,7 @@ export class ProductPostService {
    * @returns 페이지네이션된 내 판매내역 목록과 다음 페이지 존재 여부
    */
   async findMySales(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     userId: number;
     mySalesFilter?: MySalesFilter;
   }): Promise<Slice<ProductPostResultDto>> {
@@ -312,8 +307,7 @@ export class ProductPostService {
     // 2. 내가 작성한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
       await this.productPostRepository.findPagedSales({
-        page: params.page,
-        limit: params.limit,
+        pageRequest: params.pageRequest,
         userId: params.userId,
         tradeStatus,
         isHidden,
@@ -360,15 +354,13 @@ export class ProductPostService {
    * @returns 페이지네이션된 내가 좋아요한 상품게시글 목록과 다음 페이지 존재 여부
    */
   async findMyLikes(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     userId: number;
   }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 좋아요한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
       await this.productPostRepository.findPagedLikes({
-        page: params.page,
-        limit: params.limit,
+        pageRequest: params.pageRequest,
         userId: params.userId,
       });
 
@@ -414,8 +406,7 @@ export class ProductPostService {
    * @returns 페이지네이션된 유저의 판매내역 목록과 다음 페이지 존재 여부
    */
   async findUserSales(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     userId: number;
     userSalesFilter?: UserSalesFilter;
   }): Promise<Slice<ProductPostResultDto>> {
@@ -440,8 +431,7 @@ export class ProductPostService {
     // 2. 특정 유저가 작성한 상품 목록 조회 (대학교 정보와 썸네일 URL 포함)
     const productPostSlice: Slice<ProductPostWithRelations> =
       await this.productPostRepository.findPagedSales({
-        page: params.page,
-        limit: params.limit,
+        pageRequest: params.pageRequest,
         userId: params.userId,
         tradeStatus,
         isHidden,

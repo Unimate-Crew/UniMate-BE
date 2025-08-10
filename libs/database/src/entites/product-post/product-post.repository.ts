@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
-import { Slice } from '@app/common/utils/pagination';
+import { Slice, PageRequest } from '@app/common';
 import { TradeStatus, ProductCategory } from '../../common/enums';
 // eslint-disable-next-line import/no-cycle
 import { ProductPost } from './product-post.entity';
@@ -128,13 +128,11 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @returns Slice<ProductPostWithRelations>
    */
   async findPagedProductPosts(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     regionId: string;
     blockedUserIds?: number[];
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
-    const offset = (params.page - 1) * params.limit;
 
     const query = knex
       .select([
@@ -163,10 +161,10 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
     const results = await query
       .orderBy('product_post.created_at', 'desc')
-      .limit(params.limit + 1)
-      .offset(offset);
+      .limit(params.pageRequest.getLimit() + 1)
+      .offset(params.pageRequest.getOffset());
 
-    const hasNext = results.length > params.limit;
+    const hasNext = results.length > params.pageRequest.getLimit();
     const posts = hasNext ? results.slice(0, -1) : results;
 
     // ProductPostWithRelations DTO로 변환
@@ -227,15 +225,11 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     category?: string;
     tradeStatus?: string;
     sortDirection?: string;
-    page?: number;
-    limit?: number;
+    pageRequest: PageRequest;
     regionId: string;
     blockedUserIds?: number[];
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
-    const page = params.page ?? 1;
-    const limit = params.limit ?? 10;
-    const offset = (page - 1) * limit;
 
     const query = knex
       .select([
@@ -298,10 +292,10 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
     const results = await query
       .orderBy('product_post.created_at', params.sortDirection?.toLowerCase())
-      .limit(limit + 1)
-      .offset(offset);
+      .limit(params.pageRequest.getLimit() + 1)
+      .offset(params.pageRequest.getOffset());
 
-    const hasNext = results.length > limit;
+    const hasNext = results.length > params.pageRequest.getLimit();
     const posts = hasNext ? results.slice(0, -1) : results;
 
     // ProductPostWithRelations DTO로 변환
@@ -346,14 +340,12 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @returns Slice<ProductPostWithRelations>
    */
   async findPagedSales(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     userId: number;
     tradeStatus?: TradeStatus[];
     isHidden?: boolean;
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
-    const offset = (params.page - 1) * params.limit;
 
     const query = knex
       .select([
@@ -383,10 +375,10 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
     const results = await query
       .orderBy('product_post.created_at', 'desc')
-      .limit(params.limit + 1)
-      .offset(offset);
+      .limit(params.pageRequest.getLimit() + 1)
+      .offset(params.pageRequest.getOffset());
 
-    const hasNext = results.length > params.limit;
+    const hasNext = results.length > params.pageRequest.getLimit();
     const posts = hasNext ? results.slice(0, -1) : results;
 
     // ProductPostWithRelations DTO로 변환
@@ -429,12 +421,10 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @returns 페이지네이션된 내가 좋아요한 상품게시글 목록과 다음 페이지 존재 여부
    */
   async findPagedLikes(params: {
-    page: number;
-    limit: number;
+    pageRequest: PageRequest;
     userId: number;
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
-    const offset = (params.page - 1) * params.limit;
 
     const query = knex
       .select([
@@ -456,10 +446,10 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
     const results = await query
       .orderBy('product_post.created_at', 'desc')
-      .limit(params.limit + 1)
-      .offset(offset);
+      .limit(params.pageRequest.getLimit() + 1)
+      .offset(params.pageRequest.getOffset());
 
-    const hasNext = results.length > params.limit;
+    const hasNext = results.length > params.pageRequest.getLimit();
     const posts = hasNext ? results.slice(0, -1) : results;
 
     // ProductPostWithRelations DTO로 변환

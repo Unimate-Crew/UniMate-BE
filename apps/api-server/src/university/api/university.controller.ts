@@ -9,6 +9,7 @@ import { UniversityService } from '../application/university.service';
 import { SearchUniversitiesRequestDto } from './dto/search-universities.request.dto';
 import { SearchUniversitiesResponseDto } from './dto/search-universities.response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PageRequest } from '@app/common';
 
 @ApiTags('대학교')
 @ApiBearerAuth('accessToken')
@@ -30,12 +31,9 @@ export class UniversityController {
   async searchUniversities(
     @Query() query: SearchUniversitiesRequestDto,
   ): Promise<SearchUniversitiesResponseDto> {
-    const { name, pageNumber = 1, pageSize = 10 } = query;
-
     const universitySlice = await this.universityService.searchUniversities({
-      name,
-      pageNumber,
-      pageSize,
+      name: query.name,
+      pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
     });
 
     return SearchUniversitiesResponseDto.of(
