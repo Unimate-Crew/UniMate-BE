@@ -1,33 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsOptional } from 'class-validator';
 import { UserSalesFilter } from '@app/database/common/enums';
+import { PageRequest } from '@app/common';
 
-export class FindUserSalesRequestDto {
-  @ApiProperty({
-    description: '페이지 번호',
-    example: 1,
-    required: false,
-    default: 1,
-  })
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  @Type(() => Number)
-  pageNumber?: number = 1;
-
-  @ApiProperty({
-    description: '페이지 크기 (한 페이지에 포함되는 아이템 수)',
-    example: 10,
-    required: false,
-    default: 10,
-  })
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  @Type(() => Number)
-  pageSize?: number = 10;
-
+export class FindUserSalesRequestDto extends PageRequest {
   @ApiProperty({
     description: '판매내역 필터',
     enum: UserSalesFilter,
