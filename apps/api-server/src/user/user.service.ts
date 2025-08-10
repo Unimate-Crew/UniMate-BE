@@ -237,6 +237,51 @@ export class UserService {
     this.interestRegionRepository.persist(targetInterestRegion);
   }
 
+  async setOnboardingInterestRegion(
+    userId: number,
+    regionId: string,
+  ): Promise<void> {
+    // 유저가 존재하는지 확인
+    const user: User | null = await this.userRepository.findOne(userId);
+
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '존재하지 않는 유저입니다.',
+      });
+    }
+
+    // 지역 ID가 유효한지 확인
+    const region: Region | null = await this.regionRepository.findOne(regionId);
+
+    if (!region) {
+      throw new NotFoundException({
+        code: ErrorCode.REGION_NOT_FOUND,
+        message: '존재하지 않는 지역입니다.',
+      });
+    }
+
+    // 현재 관심지역이 이미 존재하는지 확인
+    const currentInterestRegions: InterestRegion[] =
+      await this.interestRegionRepository.findByUserId(userId);
+
+    if (currentInterestRegions.length > 0) {
+      throw new NotFoundException({
+        code: ErrorCode.INTEREST_REGION_ALREADY_EXISTS,
+        message:
+          '이미 관심지역이 존재합니다. 온보딩 API는 첫 번째 관심지역 설정에만 사용할 수 있습니다.',
+      });
+    }
+
+    // 온보딩용 관심지역 생성 (기본 관심지역으로 설정)
+    this.interestRegionRepository.create({
+      user: userId,
+      region: regionId,
+      isPrimary: true,
+    });
+    await this.interestRegionRepository.flush();
+  }
+
   async saveInterestRegion(userId: number, regionId: string): Promise<void> {
     // 지역 ID가 유효한지 확인
     const region: Region | null = await this.regionRepository.findOne(regionId);
