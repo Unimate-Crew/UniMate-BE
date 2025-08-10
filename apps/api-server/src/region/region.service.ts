@@ -12,12 +12,17 @@ export class RegionService {
   async searchRegions(
     searchRegionDto: SearchRegionDto,
   ): Promise<RegionListResponse> {
-    const { name, countryCode, page = 1, limit = 20 } = searchRegionDto;
+    const {
+      name,
+      countryCode,
+      pageNumber = 1,
+      pageSize = 20,
+    } = searchRegionDto;
 
     const result: PagedResult<Region> =
       await this.regionRepository.findByNameAndCountryCodeLike(
-        page,
-        limit,
+        pageNumber,
+        pageSize,
         name,
         countryCode,
       );

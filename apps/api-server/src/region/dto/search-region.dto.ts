@@ -24,7 +24,7 @@ export class SearchRegionDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  pageNumber?: number = 1;
 
   @ApiProperty({
     description: '페이지당 항목 수',
@@ -35,5 +35,5 @@ export class SearchRegionDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  limit?: number = 20;
+  pageSize?: number = 20;
 }

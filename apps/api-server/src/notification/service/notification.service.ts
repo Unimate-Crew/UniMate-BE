@@ -19,8 +19,8 @@ export class NotificationService {
     const notifications: PagedResult<Notification> =
       await this.notificationRepository.findByUserId(
         params.userId,
-        params.page,
-        params.limit,
+        params.pageNumber,
+        params.pageSize,
       );
 
     return GetNotificationsResultDto.fromPagedResult(notifications);

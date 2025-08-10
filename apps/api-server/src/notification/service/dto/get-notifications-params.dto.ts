@@ -1,21 +1,21 @@
 export class GetNotificationsParamsDto {
   userId: number;
 
-  page: number;
+  pageNumber: number;
 
-  limit: number;
+  pageSize: number;
 
-  private constructor(userId: number, page: number, limit: number) {
+  private constructor(userId: number, pageNumber: number, pageSize: number) {
     this.userId = userId;
-    this.page = page;
-    this.limit = limit;
+    this.pageNumber = pageNumber;
+    this.pageSize = pageSize;
   }
 
   static of(
     userId: number,
-    page: number,
-    limit: number,
+    pageNumber: number,
+    pageSize: number,
   ): GetNotificationsParamsDto {
-    return new GetNotificationsParamsDto(userId, page, limit);
+    return new GetNotificationsParamsDto(userId, pageNumber, pageSize);
   }
 }
