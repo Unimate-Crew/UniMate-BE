@@ -7,6 +7,7 @@ export enum ErrorCode {
   // 유저
   USER_NOT_FOUND = 'U001',
   SNS_USER_INFO_MISMATCH = 'U002',
+  NICKNAME_ALREADY_EXISTS = 'U003',
 
   // 서버 오류
   INTERNAL_SERVER_ERROR = 'G001',
