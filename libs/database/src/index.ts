@@ -17,3 +17,6 @@ export * from './entites/interest-region/interest-region.repository';
 export * from './entites/notification/notification.entity';
 export * from './entites/university/university.entity';
 export * from './entites/university/university.repository';
+export * from './entites/review/review.entity';
+export * from './entites/review/review.repository';
+export * from './common/enums';

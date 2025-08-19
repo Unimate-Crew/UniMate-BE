@@ -161,4 +161,8 @@ export class ProductPost extends BaseEntity {
   public isReserved(): boolean {
     return this.tradeStatus === TradeStatus.RESERVED;
   }
+
+  public isCompleted(): boolean {
+    return this.tradeStatus === TradeStatus.COMPLETED;
+  }
 }
