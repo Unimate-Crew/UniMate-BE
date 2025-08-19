@@ -377,6 +377,58 @@ export class ProductPostController {
     });
   }
 
+  @Delete('/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 삭제 API',
+    description: '상품 게시글을 삭제합니다.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '상품 게시글 삭제 성공',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (본인이 작성한 게시글만 삭제 가능)',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'PP003', description: '에러 코드' },
+        message: {
+          type: 'string',
+          example: '본인이 작성한 상품 게시글만 삭제할 수 있습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '상품 게시글을 찾을 수 없음',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'PP001', description: '에러 코드' },
+        message: {
+          type: 'string',
+          example: '상품 게시글을 찾을 수 없습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async deleteProductPost(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.deleteProductPost({
+      productPostId,
+      userId: userTokenInfo.userId,
+    });
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('accessToken')
