@@ -15,5 +15,6 @@ export * from './entites/product-post/product-image.repository';
 export * from './entites/interest-region/interest-region.entity';
 export * from './entites/interest-region/interest-region.repository';
 export * from './entites/notification/notification.entity';
+export * from './entites/notification/notification.repository';
 export * from './entites/university/university.entity';
 export * from './entites/university/university.repository';
