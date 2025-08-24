@@ -10,6 +10,7 @@ import { RegionModule } from './region/region.module';
 import { ProductPostModule } from './product-post/product-post.module';
 import { UniversityModule } from './university/university.module';
 import { NotificationModule } from './notification/notification.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NotificationModule } from './notification/notification.module';
     ProductPostModule,
     UniversityModule,
     NotificationModule,
+    ReviewModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],
