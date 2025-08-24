@@ -800,4 +800,41 @@ export class ProductPostService {
     productPost.setIsHidden(false);
     await this.productPostRepository.persistAndFlush(productPost);
   }
+
+  /**
+   * 상품 게시글을 삭제합니다.
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @param params.userId 현재 로그인한 유저 ID
+   */
+  @Transactional()
+  async deleteProductPost(params: {
+    productPostId: number;
+    userId: number;
+  }): Promise<void> {
+    const productPost: ProductPost | null =
+      await this.productPostRepository.findById(params.productPostId);
+
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    if (!productPost.isOwner(params.userId)) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '본인이 작성한 상품 게시글만 삭제할 수 있습니다.',
+      });
+    }
+
+    await this.productImageRepository.softDeleteByProductId(
+      productPost.getId(),
+    );
+
+    // 5. 게시글 소프트 삭제
+    productPost.delete();
+    await this.productPostRepository.persistAndFlush(productPost);
+  }
 }
