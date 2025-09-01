@@ -1,1 +1,1 @@
-web: node dist/apps/api-server/main.js
+web: bash -lc 'node dist/apps/${APP_NAME}/main.js'
