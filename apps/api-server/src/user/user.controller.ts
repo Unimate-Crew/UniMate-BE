@@ -40,6 +40,9 @@ import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decor
 import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
 import { GetMyProfileResponseDto } from './dto/get-my-profile.response.dto';
 import { GetUserProfileResponseDto } from './dto/get-user-profile.response.dto';
+import { UpdateUserProfileRequestDto } from './dto/update-user-profile.request.dto';
+import { UpdateUserProfileResponseDto } from './dto/update-user-profile.response.dto';
+import { UpdateUserProfileResultDto } from './dto/update-user-profile-result.dto';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -372,6 +375,46 @@ export class UserController {
       userProfile.university,
       interestRegions,
     );
+  }
+
+  @Patch('/me')
+  @ApiOperation({
+    summary: '내 프로필 수정',
+    description: '자기 자신의 닉네임과 프로필 이미지를 수정합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '프로필 수정 성공',
+    type: UpdateUserProfileResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    type: ErrorResponse,
+    description: '닉네임 중복 또는 잘못된 요청',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음)',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  async updateMyProfile(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Body() updateUserProfileDto: UpdateUserProfileRequestDto,
+  ): Promise<UpdateUserProfileResponseDto> {
+    const updateUserProfileResult: UpdateUserProfileResultDto =
+      await this.userService.updateUserProfile({
+        userId: userTokenInfo.userId,
+        nickname: updateUserProfileDto.nickname,
+        profileImageKey: updateUserProfileDto.profileImageKey,
+      });
+
+    return UpdateUserProfileResponseDto.from(updateUserProfileResult);
   }
 
   @Get('/:userId')

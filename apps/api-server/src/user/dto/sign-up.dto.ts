@@ -1,6 +1,13 @@
 import { OAuthProvider } from '@app/database';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
+import { IsValidNickname } from '../../common/decorators/nickname.decorator';
 
 export class SignUpDto {
   @ApiProperty({
@@ -38,6 +45,8 @@ export class SignUpDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(10)
+  @IsValidNickname()
   nickname!: string;
 
   @ApiProperty({

@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Transactional } from '@mikro-orm/core';
 import {
@@ -23,6 +24,7 @@ import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { GetUserProfileResultDto } from './dto/get-user-profile-result.dto';
 import { UniversityInfoDto } from './dto/university-info.dto';
+import { UpdateUserProfileResultDto } from './dto/update-user-profile-result.dto';
 
 const INTEREST_REGIONS_MAX_COUNT = 3;
 
@@ -361,5 +363,46 @@ export class UserService {
       isPrimary: false,
     });
     await this.interestRegionRepository.flush();
+  }
+
+  async updateUserProfile(params: {
+    userId: number;
+    nickname?: string;
+    profileImageKey?: string;
+  }): Promise<UpdateUserProfileResultDto> {
+    const { userId, nickname, profileImageKey } = params;
+
+    const user = await this.userRepository.findOne(userId);
+
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '유저가 존재하지 않습니다.',
+      });
+    }
+
+    // 닉네임 중복 검사 (닉네임이 변경되는 경우에만)
+    if (nickname && nickname !== user.getNickname()) {
+      const existingUser = await this.userRepository.findByNickname(nickname);
+      if (existingUser && existingUser.getId() !== userId) {
+        throw new BadRequestException({
+          code: ErrorCode.NICKNAME_ALREADY_EXISTS,
+          message: '이미 사용 중인 닉네임입니다.',
+        });
+      }
+    }
+
+    // 유저 정보 업데이트
+    if (nickname) {
+      user.setNickname(nickname);
+    }
+    if (profileImageKey) {
+      user.setProfileImageKey(profileImageKey);
+    }
+
+    this.userRepository.persist(user);
+    await this.userRepository.flush();
+
+    return UpdateUserProfileResultDto.from(user);
   }
 }
