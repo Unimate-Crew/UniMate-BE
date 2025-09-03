@@ -5,6 +5,7 @@ import {
   UseGuards,
   Delete,
   Body,
+  Put,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -17,6 +18,9 @@ import { GetNotificationsRequestDto } from './dto/get-notifications-request.dto'
 import { GetNotificationsResponseDto } from './dto/get-notifications-response.dto';
 import { DeleteNotificationsRequestDto } from './dto/delete-notifications-request.dto';
 import { DeleteNotificationsResponseDto } from './dto/delete-notifications-response.dto';
+import { GetNotificationSettingsResponseDto } from './dto/get-notification-settings-response.dto';
+import { UpdateNotificationSettingsRequestDto } from './dto/update-notification-settings-request.dto';
+import { UpdateNotificationSettingsResponseDto } from './dto/update-notification-settings-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
@@ -24,6 +28,8 @@ import { GetNotificationsParamsDto } from '../service/dto/get-notifications-para
 import { GetNotificationsResultDto } from '../service/dto/get-notifications-result.dto';
 import { DeleteNotificationsParamsDto } from '../service/dto/delete-notifications-params.dto';
 import { DeleteNotificationsResultDto } from '../service/dto/delete-notifications-result.dto';
+import { GetNotificationSettingsResultDto } from '../service/dto/get-notification-settings-result.dto';
+import { UpdateNotificationSettingsResultDto } from '../service/dto/update-notification-settings-result.dto';
 
 @ApiTags('알림')
 @ApiBearerAuth('accessToken')
@@ -102,5 +108,53 @@ export class NotificationController {
       );
 
     return DeleteNotificationsResponseDto.fromResult(result);
+  }
+
+  @Get('settings')
+  @ApiOperation({
+    summary: '알림 설정 조회',
+    description: '사용자의 알림 설정을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '알림 설정 조회 성공',
+    type: GetNotificationSettingsResponseDto,
+  })
+  async getNotificationSettings(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+  ): Promise<GetNotificationSettingsResponseDto> {
+    const result: GetNotificationSettingsResultDto =
+      await this.notificationService.getNotificationSettings(
+        userTokenInfo.userId,
+      );
+
+    return GetNotificationSettingsResponseDto.from(result);
+  }
+
+  @Put('settings')
+  @ApiOperation({
+    summary: '알림 설정 업데이트',
+    description: '사용자의 알림 설정을 업데이트합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '알림 설정 업데이트 성공',
+    type: UpdateNotificationSettingsResponseDto,
+  })
+  async updateNotificationSettings(
+    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @Body() requestDto: UpdateNotificationSettingsRequestDto,
+  ): Promise<UpdateNotificationSettingsResponseDto> {
+    const { priceChangedNotificationEnabled, saleEndedNotificationEnabled } =
+      requestDto;
+
+    const result: UpdateNotificationSettingsResultDto =
+      await this.notificationService.updateNotificationSettings({
+        userId: userTokenInfo.userId,
+        priceChangedNotificationEnabled,
+        saleEndedNotificationEnabled,
+      });
+
+    return UpdateNotificationSettingsResponseDto.from(result);
   }
 }

@@ -34,6 +34,12 @@ export class User extends BaseEntity {
   @Property({ nullable: true })
   universityId?: number;
 
+  @Property({ default: true })
+  priceChangedNotificationEnabled: boolean = true;
+
+  @Property({ default: true })
+  saleEndedNotificationEnabled: boolean = true;
+
   public getId(): number {
     return this.id;
   }
@@ -84,5 +90,34 @@ export class User extends BaseEntity {
 
   public isUserDeleted(): boolean {
     return this.isDeleted;
+  }
+
+  public isPriceChangedNotificationEnabled(): boolean {
+    return this.priceChangedNotificationEnabled;
+  }
+
+  public setPriceChangedNotificationEnabled(enabled: boolean): void {
+    this.priceChangedNotificationEnabled = enabled;
+  }
+
+  public isSaleEndedNotificationEnabled(): boolean {
+    return this.saleEndedNotificationEnabled;
+  }
+
+  public setSaleEndedNotificationEnabled(enabled: boolean): void {
+    this.saleEndedNotificationEnabled = enabled;
+  }
+
+  public updateNotificationSettings(settings: {
+    priceChangedNotificationEnabled?: boolean;
+    saleEndedNotificationEnabled?: boolean;
+  }): void {
+    if (settings.priceChangedNotificationEnabled) {
+      this.priceChangedNotificationEnabled =
+        settings.priceChangedNotificationEnabled;
+    }
+    if (settings.saleEndedNotificationEnabled) {
+      this.saleEndedNotificationEnabled = settings.saleEndedNotificationEnabled;
+    }
   }
 }
