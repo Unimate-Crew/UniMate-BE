@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from '@app/logger';
 import { DatabaseModule } from '@app/database';
+import { RedisModule } from '@app/redis';
 import { ApiServerService } from './api-server.service';
 import { ApiServerController } from './api-server.controller';
 import { UserModule } from './user/user.module';
@@ -18,6 +19,7 @@ import { ReviewModule } from './review/review.module';
     LoggerModule,
     UserModule,
     DatabaseModule,
+    RedisModule,
     AuthModule,
     RegionModule,
     ProductPostModule,
