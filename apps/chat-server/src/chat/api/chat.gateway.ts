@@ -6,21 +6,15 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
-  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
-import { createAdapter } from '@socket.io/redis-adapter';
-import { RedisClient } from '@app/redis';
 import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
 import { AuthenticateUserRequestDto } from './dto/authenticate-user.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
-import {
-  WebSocketSuccessResponseDto,
-  WebSocketErrorResponseDto,
-} from './dto/websocket-response.dto';
+import { WebSocketSuccessResponseDto } from './dto/websocket-response.dto';
 
 @Injectable()
 @WebSocketGateway({
@@ -29,52 +23,19 @@ import {
     methods: ['GET', 'POST'],
   },
 })
-export class ChatGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
-{
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
 
-  constructor(
-    private readonly chatService: ChatService,
-    private readonly redisClient: RedisClient,
-  ) {}
+  constructor(private readonly chatService: ChatService) {}
 
-  async afterInit(server: Server): Promise<void> {
-    try {
-      const pubClient = this.redisClient.getClient();
-      const subClient = pubClient.duplicate();
-
-      // Redis 연결 대기
-      if (pubClient.status !== 'ready') {
-        await new Promise((resolve) => {
-          pubClient.once('ready', resolve);
-        });
-      }
-
-      // subClient가 이미 연결되어 있지 않은 경우에만 연결
-      if (subClient.status !== 'ready' && subClient.status !== 'connecting') {
-        await subClient.connect();
-      }
-
-      server.adapter(createAdapter(pubClient, subClient));
-      this.logger.log('Socket.IO Redis adapter configured successfully');
-    } catch (error) {
-      this.logger.error('Failed to configure Redis adapter:', error);
-      // Redis adapter 설정이 실패해도 서버는 계속 실행되도록 함
-      this.logger.warn(
-        'Continuing without Redis adapter (single instance mode)',
-      );
-    }
-  }
-
-  async handleConnection(client: Socket) {
+  async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`Client connected: ${client.id}`);
   }
 
-  async handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket): Promise<void> {
     this.logger.log(`Client disconnected: ${client.id}`);
 
     // 사용자 ID 조회 후 사용자별 방에서 나가기
@@ -92,206 +53,140 @@ export class ChatGateway
   async handleAuthenticate(
     @MessageBody() data: AuthenticateUserRequestDto,
     @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      await this.chatService.authenticateUser({
-        userId: data.userId,
-        socketId: client.id,
-      });
+  ): Promise<void> {
+    await this.chatService.authenticateUser({
+      userId: data.userId,
+      socketId: client.id,
+    });
 
-      // 사용자별 방에 조인하여 인스턴스 간 메시지 전송 가능하게 함
-      client.join(`user_${data.userId}`);
+    // 사용자별 방에 조인하여 인스턴스 간 메시지 전송 가능하게 함
+    client.join(`user_${data.userId}`);
 
-      client.emit(
-        'authenticated',
-        WebSocketSuccessResponseDto.of({
-          message: 'Authentication successful',
-        }),
-      );
-    } catch (error) {
-      this.logger.error('Failed to authenticate user:', error);
-      client.emit(
-        'authenticated',
-        WebSocketErrorResponseDto.of('Authentication failed', 'AUTH001'),
-      );
-    }
+    client.emit(
+      'authenticated',
+      WebSocketSuccessResponseDto.of({
+        message: 'Authentication successful',
+      }),
+    );
   }
 
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
     @MessageBody() data: JoinRoomRequestDto,
     @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      const userId = await this.chatService.getUserIdBySocketId({
-        socketId: client.id,
-      });
+  ): Promise<void> {
+    const userId = await this.chatService.getUserIdBySocketId({
+      socketId: client.id,
+    });
 
-      if (!userId) {
-        client.emit(
-          'joinedRoom',
-          WebSocketErrorResponseDto.of('User not authenticated', 'AUTH002'),
-        );
-        return;
-      }
-
-      const roomName = `conversation_${data.conversationId}`;
-      client.join(roomName);
-
-      // Redis에 온라인 사용자 추가
-      await this.chatService.addUserToOnlineRoom({
-        conversationId: data.conversationId,
-        userId,
-      });
-
-      this.logger.log(`Client ${client.id} joined room ${roomName}`);
-      client.emit(
-        'joinedRoom',
-        WebSocketSuccessResponseDto.of({ conversationId: data.conversationId }),
-      );
-    } catch (error) {
-      this.logger.error('Failed to join room:', error);
-      client.emit(
-        'joinedRoom',
-        WebSocketErrorResponseDto.of('Failed to join room', 'ROOM001'),
-      );
+    if (!userId) {
+      throw new Error('User not authenticated');
     }
+
+    const roomName = `conversation_${data.conversationId}`;
+    client.join(roomName);
+
+    // Redis에 온라인 사용자 추가
+    await this.chatService.addUserToOnlineRoom({
+      conversationId: data.conversationId,
+      userId,
+    });
+
+    this.logger.log(`Client ${client.id} joined room ${roomName}`);
+    client.emit(
+      'joinedRoom',
+      WebSocketSuccessResponseDto.of({ conversationId: data.conversationId }),
+    );
   }
 
   @SubscribeMessage('leaveRoom')
   async handleLeaveRoom(
     @MessageBody() data: JoinRoomRequestDto,
     @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      const userId = await this.chatService.getUserIdBySocketId({
-        socketId: client.id,
-      });
+  ): Promise<void> {
+    const userId = await this.chatService.getUserIdBySocketId({
+      socketId: client.id,
+    });
 
-      if (!userId) {
-        client.emit(
-          'leftRoom',
-          WebSocketErrorResponseDto.of('User not authenticated', 'AUTH002'),
-        );
-        return;
-      }
-
-      const roomName = `conversation_${data.conversationId}`;
-      client.leave(roomName);
-
-      // Redis에서 온라인 사용자 제거
-      await this.chatService.removeUserFromOnlineRoom({
-        conversationId: data.conversationId,
-        userId,
-      });
-
-      this.logger.log(`Client ${client.id} left room ${roomName}`);
-      client.emit(
-        'leftRoom',
-        WebSocketSuccessResponseDto.of({ conversationId: data.conversationId }),
-      );
-    } catch (error) {
-      this.logger.error('Failed to leave room:', error);
-      client.emit(
-        'leftRoom',
-        WebSocketErrorResponseDto.of('Failed to leave room', 'ROOM002'),
-      );
+    if (!userId) {
+      throw new Error('User not authenticated');
     }
+
+    const roomName = `conversation_${data.conversationId}`;
+    client.leave(roomName);
+
+    // Redis에서 온라인 사용자 제거
+    await this.chatService.removeUserFromOnlineRoom({
+      conversationId: data.conversationId,
+      userId,
+    });
+
+    this.logger.log(`Client ${client.id} left room ${roomName}`);
+    client.emit(
+      'leftRoom',
+      WebSocketSuccessResponseDto.of({ conversationId: data.conversationId }),
+    );
   }
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @MessageBody() data: SendMessageRequestDto,
     @ConnectedSocket() client: Socket,
-  ) {
+  ): Promise<void> {
     const userId = await this.chatService.getUserIdBySocketId({
       socketId: client.id,
     });
     if (!userId) {
-      client.emit(
-        'messageSent',
-        WebSocketErrorResponseDto.of('User not authenticated', 'AUTH002'),
-      );
-      return;
+      throw new Error('User not authenticated');
     }
 
-    try {
-      const result = await this.chatService.sendMessage({
-        conversationId: data.conversationId,
-        senderId: userId,
-        content: data.content,
-      });
+    const result = await this.chatService.sendMessage({
+      conversationId: data.conversationId,
+      senderId: userId,
+      content: data.content,
+    });
 
-      // WebSocket 이벤트 전송 처리
-      result.emissions.forEach((emission) => {
-        this.emitToUser(emission.userId, emission.event, emission.data);
-      });
+    // WebSocket 이벤트 전송 처리
+    result.emissions.forEach((emission) => {
+      this.emitToUser(emission.userId, emission.event, emission.data);
+    });
 
-      client.emit(
-        'messageSent',
-        WebSocketSuccessResponseDto.of(result.message),
-      );
-    } catch (error) {
-      this.logger.error('Failed to send message:', error);
-      client.emit(
-        'messageSent',
-        WebSocketErrorResponseDto.of('Failed to send message', 'MSG001'),
-      );
-    }
+    client.emit('messageSent', WebSocketSuccessResponseDto.of(result.message));
   }
 
   @SubscribeMessage('markMessagesAsRead')
   async handleMarkMessagesAsRead(
     @MessageBody() data: MarkMessagesAsReadRequestDto,
     @ConnectedSocket() client: Socket,
-  ) {
+  ): Promise<void> {
     const userId = await this.chatService.getUserIdBySocketId({
       socketId: client.id,
     });
     if (!userId) {
-      client.emit(
-        'messagesMarkedAsRead',
-        WebSocketErrorResponseDto.of('User not authenticated', 'AUTH002'),
-      );
-      return;
+      throw new Error('User not authenticated');
     }
 
-    try {
-      const result = await this.chatService.markMessagesAsRead({
-        userId,
+    const result = await this.chatService.markMessagesAsRead({
+      userId,
+      conversationId: data.conversationId,
+      lastReadMessageNumber: data.lastReadMessageNumber,
+    });
+
+    // WebSocket 이벤트 전송 처리
+    result.emissions.forEach((emission) => {
+      this.emitToUser(emission.userId, emission.event, emission.data);
+    });
+
+    client.emit(
+      'messagesMarkedAsRead',
+      WebSocketSuccessResponseDto.of({
         conversationId: data.conversationId,
         lastReadMessageNumber: data.lastReadMessageNumber,
-      });
-
-      // WebSocket 이벤트 전송 처리
-      result.emissions.forEach((emission) => {
-        this.emitToUser(emission.userId, emission.event, emission.data);
-      });
-
-      client.emit(
-        'messagesMarkedAsRead',
-        WebSocketSuccessResponseDto.of({
-          conversationId: data.conversationId,
-          lastReadMessageNumber: data.lastReadMessageNumber,
-        }),
-      );
-    } catch (error) {
-      this.logger.error('Failed to mark messages as read:', error);
-      client.emit(
-        'messagesMarkedAsRead',
-        WebSocketErrorResponseDto.of(
-          'Failed to mark messages as read',
-          'MSG002',
-        ),
-      );
-    }
+      }),
+    );
   }
 
-  emitToUser(userId: number, event: string, data: any): void {
+  emitToUser(userId: number, event: string, data: unknown): void {
     this.server.to(`user_${userId}`).emit(event, data);
-  }
-
-  emitToRoom(roomName: string, event: string, data: any): void {
-    this.server.to(roomName).emit(event, data);
   }
 }
