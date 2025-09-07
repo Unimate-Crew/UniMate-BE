@@ -11,7 +11,6 @@ import {
 } from '@app/database';
 import { RedisClient } from '@app/redis';
 import { MessageResultDto } from './dto/message.result.dto';
-import { ConversationListResultDto } from './dto/conversation-list.result.dto';
 import {
   MessageEmissionResultDto,
   ReadEmissionResultDto,
@@ -51,9 +50,6 @@ export class ChatService {
       params.userId.toString(),
     );
 
-    // 2. 사용자 상태를 채팅 목록으로 초기화
-    await this.redisClient.set(`user:${params.userId}:status`, 'chat_list');
-
     this.logger.log(
       `User ${params.userId} authenticated with socket ${params.socketId}`,
     );
@@ -71,9 +67,13 @@ export class ChatService {
     );
 
     if (userId) {
-      // 2. 모든 관련 Redis 키 삭제
+      const userIdNum = parseInt(userId, 10);
+
+      // 2. 모든 채팅방에서 사용자 제거
+      await this.removeUserFromAllOnlineRooms({ userId: userIdNum });
+
+      // 3. 모든 관련 Redis 키 삭제
       await this.redisClient.del(`user:${userId}:socketId`);
-      await this.redisClient.del(`user:${userId}:status`);
       await this.redisClient.del(`socket:${params.socketId}:userId`);
 
       this.logger.log(`User ${userId} disconnected`);
@@ -81,25 +81,23 @@ export class ChatService {
   }
 
   /**
-   * 사용자의 현재 상태를 업데이트합니다.
+   * 사용자를 모든 온라인 채팅방에서 제거합니다.
    *
-   * @param params.socketId WebSocket 소켓 ID
-   * @param params.status 새로운 상태 값
+   * @param params.userId 사용자 ID
    */
-  async updateUserStatus(params: {
-    socketId: string;
-    status: string;
+  async removeUserFromAllOnlineRooms(params: {
+    userId: number;
   }): Promise<void> {
-    // 1. 소켓 ID로 사용자 ID 조회
-    const userId = await this.redisClient.get(
-      `socket:${params.socketId}:userId`,
+    const client = this.redisClient.getClient();
+
+    // room:*:online 패턴의 모든 키를 찾고 해당 사용자를 제거
+    const keys = await client.keys('room:*:online');
+
+    await Promise.all(
+      keys.map((key) => client.srem(key, params.userId.toString())),
     );
 
-    if (userId) {
-      // 2. Redis에 새로운 상태 저장
-      await this.redisClient.set(`user:${userId}:status`, params.status);
-      this.logger.log(`User ${userId} status updated to: ${params.status}`);
-    }
+    this.logger.log(`User ${params.userId} removed from all online rooms`);
   }
 
   /**
@@ -118,23 +116,146 @@ export class ChatService {
   }
 
   /**
-   * 사용자 ID로 소켓 ID를 조회합니다.
+   * 채팅방에 온라인 사용자를 추가합니다.
    *
+   * @param params.conversationId 대화방 ID
    * @param params.userId 사용자 ID
-   * @returns 소켓 ID (없으면 null)
    */
-  async getUserSocketId(params: { userId: number }): Promise<string | null> {
-    return this.redisClient.get(`user:${params.userId}:socketId`);
+  async addUserToOnlineRoom(params: {
+    conversationId: number;
+    userId: number;
+  }): Promise<void> {
+    const client = this.redisClient.getClient();
+    await client.sadd(
+      `room:${params.conversationId}:online`,
+      params.userId.toString(),
+    );
+    this.logger.log(
+      `User ${params.userId} added to online room ${params.conversationId}`,
+    );
   }
 
   /**
-   * 사용자의 현재 상태를 조회합니다.
+   * 채팅방에서 온라인 사용자를 제거합니다.
    *
+   * @param params.conversationId 대화방 ID
    * @param params.userId 사용자 ID
-   * @returns 현재 상태 (없으면 null)
    */
-  async getUserStatus(params: { userId: number }): Promise<string | null> {
-    return this.redisClient.get(`user:${params.userId}:status`);
+  async removeUserFromOnlineRoom(params: {
+    conversationId: number;
+    userId: number;
+  }): Promise<void> {
+    const client = this.redisClient.getClient();
+    await client.srem(
+      `room:${params.conversationId}:online`,
+      params.userId.toString(),
+    );
+    this.logger.log(
+      `User ${params.userId} removed from online room ${params.conversationId}`,
+    );
+  }
+
+  /**
+   * 채팅방의 온라인 사용자 목록을 조회합니다.
+   *
+   * @param params.conversationId 대화방 ID
+   * @returns 온라인 사용자 ID 목록
+   */
+  async getOnlineUsersInRoom(params: {
+    conversationId: number;
+  }): Promise<number[]> {
+    const client = this.redisClient.getClient();
+    const userIds = await client.smembers(
+      `room:${params.conversationId}:online`,
+    );
+    return userIds.map((id: string) => parseInt(id, 10));
+  }
+
+  /**
+   * 채팅방 참여자 정보를 캐시에 저장합니다.
+   *
+   * @param params.conversationId 대화방 ID
+   * @param params.participants 참여자 정보 목록
+   */
+  async cacheRoomParticipants(params: {
+    conversationId: number;
+    participants: Array<{
+      userId: number;
+      lastReadMessageNumber?: number;
+      status: string;
+    }>;
+  }): Promise<void> {
+    const key = `room:${params.conversationId}:participants`;
+    const participantData: Record<string, string> = {};
+
+    params.participants.forEach((participant) => {
+      participantData[participant.userId.toString()] = JSON.stringify({
+        userId: participant.userId,
+        lastReadMessageNumber: participant.lastReadMessageNumber || 0,
+        status: participant.status,
+      });
+    });
+
+    const client = this.redisClient.getClient();
+    await client.hset(key, participantData);
+    // 24시간 TTL 설정
+    await client.expire(key, 86400);
+
+    this.logger.log(
+      `Cached ${params.participants.length} participants for room ${params.conversationId}`,
+    );
+  }
+
+  /**
+   * 캐시에서 채팅방 참여자 정보를 조회합니다.
+   *
+   * @param params.conversationId 대화방 ID
+   * @returns 참여자 정보 목록
+   */
+  async getCachedRoomParticipants(params: {
+    conversationId: number;
+  }): Promise<Array<{
+    userId: number;
+    lastReadMessageNumber: number;
+    status: string;
+  }> | null> {
+    const key = `room:${params.conversationId}:participants`;
+    const client = this.redisClient.getClient();
+    const participantData = await client.hgetall(key);
+
+    if (!participantData || Object.keys(participantData).length === 0) {
+      return null;
+    }
+
+    return Object.values(participantData).map((data) => JSON.parse(data));
+  }
+
+  /**
+   * 캐시에서 특정 참여자의 정보를 업데이트합니다.
+   *
+   * @param params.conversationId 대화방 ID
+   * @param params.userId 사용자 ID
+   * @param params.lastReadMessageNumber 마지막으로 읽은 메시지 번호
+   */
+  async updateCachedParticipantReadStatus(params: {
+    conversationId: number;
+    userId: number;
+    lastReadMessageNumber: number;
+  }): Promise<void> {
+    const key = `room:${params.conversationId}:participants`;
+    const client = this.redisClient.getClient();
+    const existingData = await client.hget(key, params.userId.toString());
+
+    if (existingData) {
+      const participantInfo = JSON.parse(existingData);
+      participantInfo.lastReadMessageNumber = params.lastReadMessageNumber;
+
+      await client.hset(
+        key,
+        params.userId.toString(),
+        JSON.stringify(participantInfo),
+      );
+    }
   }
 
   /**
@@ -179,54 +300,76 @@ export class ChatService {
     await this.conversationRepository.persistAndFlush(conversation);
 
     // 6. 대화 참여자들에게 전송할 WebSocket 이벤트 목록 생성
-    const participants = await this.participantRepository.find({
+    // 먼저 캐시에서 참여자 정보 조회, 없으면 DB에서 조회 후 캐시
+    let participants = await this.getCachedRoomParticipants({
       conversationId: params.conversationId,
-      isDeleted: false,
     });
 
-    const emissions = await Promise.all(
-      participants
-        .filter((participant) => participant.getUserId() !== params.senderId)
-        .map(async (participant) => {
-          const status = await this.getUserStatus({
-            userId: participant.getUserId(),
-          });
+    if (!participants) {
+      // DB에서 참여자 정보 조회
+      const dbParticipants = await this.participantRepository.find({
+        conversationId: params.conversationId,
+        isDeleted: false,
+      });
 
-          if (status === `chat_room:${params.conversationId}`) {
-            // 같은 채팅방에 있는 사용자에게 실시간 메시지 전송
-            return {
-              userId: participant.getUserId(),
-              event: 'newMessage',
-              data: {
-                id: message.getId(),
-                conversationId: params.conversationId,
-                senderId: params.senderId,
-                content: params.content,
-                messageNumber: nextMessageNumber,
-                createdAt: message.createdAt,
-                type: ConversationMessageType.TEXT,
-              },
-            };
-          }
-          if (status === 'chat_list') {
-            // 채팅 목록에 있는 사용자에게 대화방 업데이트 알림
-            const conversationData = await this.getConversationListData({
+      // 캐시에 저장
+      await this.cacheRoomParticipants({
+        conversationId: params.conversationId,
+        participants: dbParticipants.map((p) => ({
+          userId: p.getUserId(),
+          lastReadMessageNumber: p.getLastReadMessageNumber(),
+          status: p.getStatus(),
+        })),
+      });
+
+      participants = dbParticipants.map((p) => ({
+        userId: p.getUserId(),
+        lastReadMessageNumber: p.getLastReadMessageNumber() || 0,
+        status: p.getStatus(),
+      }));
+    }
+
+    // 온라인 사용자 목록 조회
+    const onlineUsers = await this.getOnlineUsersInRoom({
+      conversationId: params.conversationId,
+    });
+
+    const emissions = participants
+      .filter((participant) => participant.userId !== params.senderId)
+      .map((participant) => {
+        if (onlineUsers.includes(participant.userId)) {
+          // 온라인 사용자에게 실시간 메시지 전송
+          return {
+            userId: participant.userId,
+            event: 'newMessage',
+            data: {
+              id: message.getId(),
               conversationId: params.conversationId,
-              userId: participant.getUserId(),
-            });
-            return {
-              userId: participant.getUserId(),
-              event: 'chatRoomUpdated',
-              data: conversationData,
-            };
-          }
-          // 오프라인 사용자는 푸시 알림 대상 (TODO: SQS 구현 대기)
-          this.logger.log(
-            `User ${participant.getUserId()} is offline - TODO: Queue push notification`,
-          );
-          return null;
-        }),
-    );
+              senderId: params.senderId,
+              content: params.content,
+              messageNumber: nextMessageNumber,
+              createdAt: message.createdAt,
+              type: ConversationMessageType.TEXT,
+            },
+          };
+        }
+
+        // 오프라인 사용자에게 채팅방 업데이트 알림 + 푸시 알림
+        return {
+          userId: participant.userId,
+          event: 'chatRoomUpdated',
+          data: {
+            conversationId: params.conversationId,
+            lastMessage: params.content,
+            lastSentAt: new Date(),
+            unreadCount: Math.max(
+              0,
+              nextMessageNumber - (participant.lastReadMessageNumber || 0),
+            ),
+            lastMessageNumber: nextMessageNumber,
+          },
+        };
+      });
 
     this.logger.log(
       `Message sent in conversation ${params.conversationId} by user ${params.senderId}`,
@@ -234,7 +377,7 @@ export class ChatService {
 
     return {
       message: MessageResultDto.from(message),
-      emissions: emissions.filter((emission) => emission !== null),
+      emissions,
     };
   }
 
@@ -262,95 +405,40 @@ export class ChatService {
       throw new Error('Participant not found in conversation');
     }
 
-    // 2. 읽음 처리 정보 업데이트
+    // 2. 읽음 처리 정보 업데이트 (DB + 캐시)
     participant.setLastReadMessageNumber(params.lastReadMessageNumber);
     await this.participantRepository.persistAndFlush(participant);
 
-    // 3. 다른 참여자들에게 전송할 읽음 알림 목록 생성
-    const otherParticipants = await this.participantRepository.find({
+    // 캐시도 업데이트
+    await this.updateCachedParticipantReadStatus({
       conversationId: params.conversationId,
-      userId: { $ne: params.userId },
-      isDeleted: false,
+      userId: params.userId,
+      lastReadMessageNumber: params.lastReadMessageNumber,
     });
 
-    const emissions = await Promise.all(
-      otherParticipants.map(async (otherParticipant) => {
-        const status = await this.getUserStatus({
-          userId: otherParticipant.getUserId(),
-        });
+    // 3. 같은 채팅방에 온라인으로 있는 다른 참여자들에게만 읽음 알림 전송
+    const onlineUsers = await this.getOnlineUsersInRoom({
+      conversationId: params.conversationId,
+    });
 
-        if (status === `chat_room:${params.conversationId}`) {
-          return {
-            userId: otherParticipant.getUserId(),
-            event: 'messageRead',
-            data: {
-              conversationId: params.conversationId,
-              userId: params.userId,
-              lastReadMessageNumber: params.lastReadMessageNumber,
-            },
-          };
-        }
-        return null;
-      }),
-    );
+    const emissions = onlineUsers
+      .filter((userId) => userId !== params.userId)
+      .map((userId) => ({
+        userId,
+        event: 'messageRead',
+        data: {
+          conversationId: params.conversationId,
+          userId: params.userId,
+          lastReadMessageNumber: params.lastReadMessageNumber,
+        },
+      }));
 
     this.logger.log(
       `User ${params.userId} marked messages as read up to ${params.lastReadMessageNumber} in conversation ${params.conversationId}`,
     );
 
     return {
-      emissions: emissions.filter((emission) => emission !== null),
+      emissions,
     };
-  }
-
-  /**
-   * 채팅 목록용 대화방 데이터를 조회합니다.
-   *
-   * @param params.conversationId 대화방 ID
-   * @param params.userId 사용자 ID
-   * @returns 대화방 목록 데이터
-   * @private
-   */
-  private async getConversationListData(params: {
-    conversationId: number;
-    userId: number;
-  }): Promise<ConversationListResultDto | null> {
-    // 1. 대화방 및 참여자 정보 조회
-    const conversation = await this.conversationRepository.findById(
-      params.conversationId,
-    );
-    const participant = await this.participantRepository.findOne({
-      conversationId: params.conversationId,
-      userId: params.userId,
-      isDeleted: false,
-    });
-
-    if (!conversation || !participant) {
-      return null;
-    }
-
-    // 2. 마지막 메시지 조회
-    const lastMessage = await this.messageRepository.findOne(
-      { conversationId: params.conversationId },
-      { orderBy: { messageNumber: 'DESC' } },
-    );
-
-    // 3. 읽지 않은 메시지 수 계산
-    const unreadCount =
-      lastMessage && participant.getLastReadMessageNumber()
-        ? Math.max(
-            0,
-            lastMessage.getMessageNumber() -
-              (participant.getLastReadMessageNumber() || 0),
-          )
-        : 0;
-
-    return ConversationListResultDto.of({
-      conversationId: params.conversationId,
-      lastMessage: lastMessage?.getContent() || null,
-      lastSentAt: conversation.getLastSentAt(),
-      unreadCount,
-      lastMessageNumber: conversation.getLastMessageNumber(),
-    });
   }
 }

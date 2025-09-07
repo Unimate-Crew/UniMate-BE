@@ -17,7 +17,6 @@ import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
 import { AuthenticateUserRequestDto } from './dto/authenticate-user.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
-import { UpdateUserStatusRequestDto } from './dto/update-user-status.request.dto';
 import {
   WebSocketSuccessResponseDto,
   WebSocketErrorResponseDto,
@@ -55,13 +54,19 @@ export class ChatGateway
         });
       }
 
-      await subClient.connect();
+      // subClient가 이미 연결되어 있지 않은 경우에만 연결
+      if (subClient.status !== 'ready' && subClient.status !== 'connecting') {
+        await subClient.connect();
+      }
 
       server.adapter(createAdapter(pubClient, subClient));
       this.logger.log('Socket.IO Redis adapter configured successfully');
     } catch (error) {
       this.logger.error('Failed to configure Redis adapter:', error);
-      throw error;
+      // Redis adapter 설정이 실패해도 서버는 계속 실행되도록 함
+      this.logger.warn(
+        'Continuing without Redis adapter (single instance mode)',
+      );
     }
   }
 
@@ -112,29 +117,33 @@ export class ChatGateway
     }
   }
 
-  @SubscribeMessage('updateStatus')
-  async handleUpdateStatus(
-    @MessageBody() data: UpdateUserStatusRequestDto,
-    @ConnectedSocket() client: Socket,
-  ) {
-    await this.chatService.updateUserStatus({
-      socketId: client.id,
-      status: data.status,
-    });
-  }
-
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
     @MessageBody() data: JoinRoomRequestDto,
     @ConnectedSocket() client: Socket,
   ) {
     try {
+      const userId = await this.chatService.getUserIdBySocketId({
+        socketId: client.id,
+      });
+
+      if (!userId) {
+        client.emit(
+          'joinedRoom',
+          WebSocketErrorResponseDto.of('User not authenticated', 'AUTH002'),
+        );
+        return;
+      }
+
       const roomName = `conversation_${data.conversationId}`;
       client.join(roomName);
-      await this.chatService.updateUserStatus({
-        socketId: client.id,
-        status: `chat_room:${data.conversationId}`,
+
+      // Redis에 온라인 사용자 추가
+      await this.chatService.addUserToOnlineRoom({
+        conversationId: data.conversationId,
+        userId,
       });
+
       this.logger.log(`Client ${client.id} joined room ${roomName}`);
       client.emit(
         'joinedRoom',
@@ -155,12 +164,27 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
   ) {
     try {
+      const userId = await this.chatService.getUserIdBySocketId({
+        socketId: client.id,
+      });
+
+      if (!userId) {
+        client.emit(
+          'leftRoom',
+          WebSocketErrorResponseDto.of('User not authenticated', 'AUTH002'),
+        );
+        return;
+      }
+
       const roomName = `conversation_${data.conversationId}`;
       client.leave(roomName);
-      await this.chatService.updateUserStatus({
-        socketId: client.id,
-        status: 'chat_list',
+
+      // Redis에서 온라인 사용자 제거
+      await this.chatService.removeUserFromOnlineRoom({
+        conversationId: data.conversationId,
+        userId,
       });
+
       this.logger.log(`Client ${client.id} left room ${roomName}`);
       client.emit(
         'leftRoom',
