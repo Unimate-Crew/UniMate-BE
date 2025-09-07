@@ -61,3 +61,17 @@ export enum UserSalesFilter {
 export enum CountryCode {
   US = 'US', // 미국
 }
+
+export enum ConversationParticipantStatus {
+  JOIN = 'JOIN',
+  PRES = 'PRES',
+  BLOCK = 'BLOCK',
+  MUTE = 'MUTE',
+}
+
+export enum ConversationMessageType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  SYSTEM = 'SYSTEM',
+}
