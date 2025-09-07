@@ -3,31 +3,38 @@ export class WebSocketSuccessResponseDto<T = any> {
 
   data: T;
 
-  constructor(data: T) {
+  requestId?: string;
+
+  constructor(data: T, requestId?: string) {
     this.data = data;
+    this.requestId = requestId;
   }
 
-  static of<T>(data: T): WebSocketSuccessResponseDto<T> {
-    return new WebSocketSuccessResponseDto(data);
+  static of<T>(data: T, requestId?: string): WebSocketSuccessResponseDto<T> {
+    return new WebSocketSuccessResponseDto(data, requestId);
   }
 }
 
 export class WebSocketErrorResponseDto {
   success: boolean = false;
 
-  error: {
-    code?: string;
-    message: string;
-  };
+  errorCode: string;
 
-  constructor(message: string, code?: string) {
-    this.error = {
-      code,
-      message,
-    };
+  errorMessage: string;
+
+  requestId?: string;
+
+  constructor(errorMessage: string, errorCode: string, requestId?: string) {
+    this.errorCode = errorCode;
+    this.errorMessage = errorMessage;
+    this.requestId = requestId;
   }
 
-  static of(message: string, code?: string): WebSocketErrorResponseDto {
-    return new WebSocketErrorResponseDto(message, code);
+  static of(
+    errorMessage: string,
+    errorCode: string,
+    requestId?: string,
+  ): WebSocketErrorResponseDto {
+    return new WebSocketErrorResponseDto(errorMessage, errorCode, requestId);
   }
 }

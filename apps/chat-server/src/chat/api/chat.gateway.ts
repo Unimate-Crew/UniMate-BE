@@ -9,12 +9,11 @@ import {
   OnGatewayInit,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Injectable, Logger, UseGuards } from '@nestjs/common';
+import { Injectable, Logger, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
-import { WebSocketSuccessResponseDto } from './dto/websocket-response.dto';
 import { WebSocketEventData } from '../application/dto/websocket-emission.result.dto';
 import { WebSocketJwtGuard } from '../../common/guards/websocket-jwt.guard';
 import {
@@ -22,8 +21,10 @@ import {
   WebSocketUser,
 } from '../../common/decorators/websocket-user.decorator';
 import { WebSocketAuthMiddleware } from '../../common/middleware/websocket-auth.middleware';
+import { WebSocketSuccessResponseInterceptor } from '../../common/interceptors/websocket-success-response.interceptor';
 
 @Injectable()
+@UseInterceptors(WebSocketSuccessResponseInterceptor)
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -95,10 +96,6 @@ export class ChatGateway
     });
 
     this.logger.log(`Client ${client.id} joined room ${roomName}`);
-    client.emit(
-      'joinedRoom',
-      WebSocketSuccessResponseDto.of({ conversationId: data.conversationId }),
-    );
   }
 
   @UseGuards(WebSocketJwtGuard)
@@ -118,10 +115,6 @@ export class ChatGateway
     });
 
     this.logger.log(`Client ${client.id} left room ${roomName}`);
-    client.emit(
-      'leftRoom',
-      WebSocketSuccessResponseDto.of({ conversationId: data.conversationId }),
-    );
   }
 
   @UseGuards(WebSocketJwtGuard)
@@ -129,7 +122,6 @@ export class ChatGateway
   async handleSendMessage(
     @MessageBody() data: SendMessageRequestDto,
     @WsUser() user: WebSocketUser,
-    @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const result = await this.chatService.sendMessage({
       conversationId: data.conversationId,
@@ -141,8 +133,6 @@ export class ChatGateway
     result.emissions.forEach((emission) => {
       this.emitToUser(emission.userId, emission.event, emission.data);
     });
-
-    client.emit('messageSent', WebSocketSuccessResponseDto.of(result.message));
   }
 
   @UseGuards(WebSocketJwtGuard)
@@ -150,7 +140,6 @@ export class ChatGateway
   async handleMarkMessagesAsRead(
     @MessageBody() data: MarkMessagesAsReadRequestDto,
     @WsUser() user: WebSocketUser,
-    @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const result = await this.chatService.markMessagesAsRead({
       userId: user.userId,
@@ -162,14 +151,6 @@ export class ChatGateway
     result.emissions.forEach((emission) => {
       this.emitToUser(emission.userId, emission.event, emission.data);
     });
-
-    client.emit(
-      'messagesMarkedAsRead',
-      WebSocketSuccessResponseDto.of({
-        conversationId: data.conversationId,
-        lastReadMessageNumber: data.lastReadMessageNumber,
-      }),
-    );
   }
 
   emitToUser(userId: number, event: string, data: WebSocketEventData): void {

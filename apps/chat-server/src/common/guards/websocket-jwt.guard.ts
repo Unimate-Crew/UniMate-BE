@@ -39,11 +39,10 @@ export class WebSocketJwtGuard implements CanActivate {
                 `Token re-verification successful for user ${existingUser.userId}`,
               );
               return true;
-            } else {
-              this.logger.warn(
-                `User ID mismatch: token=${payload.userId}, existing=${existingUser.userId}`,
-              );
             }
+            this.logger.warn(
+              `User ID mismatch: token=${payload.userId}, existing=${existingUser.userId}`,
+            );
           } catch (tokenError) {
             this.logger.warn(
               `Token re-verification failed: ${tokenError.message}`,

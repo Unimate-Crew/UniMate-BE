@@ -14,6 +14,7 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
   catch(exception: any, host: ArgumentsHost): void {
     const client = host.switchToWs().getClient<Socket>();
     const data = host.switchToWs().getData();
+    const requestId = data?.requestId;
 
     let errorCode: string;
     let errorMessage: string;
@@ -65,7 +66,7 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
 
     client.emit(
       responseEvent,
-      WebSocketErrorResponseDto.of(errorMessage, errorCode),
+      WebSocketErrorResponseDto.of(errorMessage, errorCode, requestId),
     );
   }
 

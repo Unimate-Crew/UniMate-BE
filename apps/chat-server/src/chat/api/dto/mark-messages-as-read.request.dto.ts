@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class MarkMessagesAsReadRequestDto {
@@ -11,4 +11,8 @@ export class MarkMessagesAsReadRequestDto {
   @IsNotEmpty()
   @Type(() => Number)
   lastReadMessageNumber: number;
+
+  @IsString()
+  @IsOptional()
+  requestId?: string;
 }
