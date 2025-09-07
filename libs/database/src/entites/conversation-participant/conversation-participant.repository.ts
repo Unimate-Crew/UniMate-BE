@@ -1,7 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
 import type { ConversationParticipant } from './conversation-participant.entity';
-import type { ConversationParticipantStatus } from '../../common/enums';
 
 @Injectable()
 export class ConversationParticipantRepository extends EntityRepository<ConversationParticipant> {
@@ -16,7 +15,9 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
     return this.findOne({ conversationId, userId, isDeleted: false });
   }
 
-  async findByConversationId(conversationId: number): Promise<ConversationParticipant[]> {
+  async findByConversationId(
+    conversationId: number,
+  ): Promise<ConversationParticipant[]> {
     return this.find({ conversationId, isDeleted: false });
   }
 
@@ -24,9 +25,11 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
     return this.find({ userId, isDeleted: false });
   }
 
-  async findActiveParticipants(conversationId: number): Promise<ConversationParticipant[]> {
-    return this.find({ 
-      conversationId, 
+  async findActiveParticipants(
+    conversationId: number,
+  ): Promise<ConversationParticipant[]> {
+    return this.find({
+      conversationId,
       isDeleted: false,
       leftAt: null,
     });

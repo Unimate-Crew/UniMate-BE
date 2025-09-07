@@ -1,7 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
 import type { ConversationMessage } from './conversation-message.entity';
-import type { ConversationMessageType } from '../../common/enums';
 
 @Injectable()
 export class ConversationMessageRepository extends EntityRepository<ConversationMessage> {
@@ -49,7 +48,9 @@ export class ConversationMessageRepository extends EntityRepository<Conversation
     );
   }
 
-  async findLatestMessage(conversationId: number): Promise<ConversationMessage | null> {
+  async findLatestMessage(
+    conversationId: number,
+  ): Promise<ConversationMessage | null> {
     return this.findOne(
       { conversationId, isDeleted: false },
       { orderBy: { messageNumber: 'DESC' } },
