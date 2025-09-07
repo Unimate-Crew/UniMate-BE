@@ -10,6 +10,7 @@ import {
 import { RedisModule } from '@app/redis';
 import { ChatGateway } from './api/chat.gateway';
 import { ChatService } from './application/chat.service';
+import { WebSocketAuthMiddleware } from '../common/middleware/websocket-auth.middleware';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { ChatService } from './application/chat.service';
       }),
     }),
   ],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, WebSocketAuthMiddleware],
   exports: [ChatService],
 })
 export class ChatModule {}

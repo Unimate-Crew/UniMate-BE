@@ -6,15 +6,13 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { Injectable, Logger, UseGuards } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
-import { AuthenticateTokenRequestDto } from './dto/authenticate-token.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
 import { WebSocketSuccessResponseDto } from './dto/websocket-response.dto';
 import { WebSocketEventData } from '../application/dto/websocket-emission.result.dto';
@@ -23,6 +21,7 @@ import {
   WsUser,
   WebSocketUser,
 } from '../../common/decorators/websocket-user.decorator';
+import { WebSocketAuthMiddleware } from '../../common/middleware/websocket-auth.middleware';
 
 @Injectable()
 @WebSocketGateway({
@@ -31,7 +30,9 @@ import {
     methods: ['GET', 'POST'],
   },
 })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
   @WebSocketServer()
   server: Server;
 
@@ -39,12 +40,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly chatService: ChatService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly authMiddleware: WebSocketAuthMiddleware,
   ) {}
 
+  afterInit(server: Server): void {
+    // Set up authentication middleware for all connections
+    server.use(this.authMiddleware.createMiddleware());
+    this.logger.log('WebSocket authentication middleware configured');
+  }
+
   async handleConnection(client: Socket): Promise<void> {
-    this.logger.log(`Client connected: ${client.id}`);
+    // User is already authenticated at this point via middleware
+    const user = (client as any).user as WebSocketUser;
+
+    await this.chatService.authenticateUser({
+      userId: user.userId,
+      socketId: client.id,
+    });
+
+    // Join user-specific room for cross-instance messaging
+    client.join(`user_${user.userId}`);
+
+    this.logger.log(`User ${user.userId} connected with socket ${client.id}`);
   }
 
   async handleDisconnect(client: Socket): Promise<void> {
@@ -59,43 +76,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     await this.chatService.handleUserDisconnect({ socketId: client.id });
-  }
-
-  @SubscribeMessage('authenticate')
-  async handleAuthenticate(
-    @MessageBody() data: AuthenticateTokenRequestDto,
-    @ConnectedSocket() client: Socket,
-  ): Promise<void> {
-    // JWT 토큰 수동 검증 (가드는 이벤트 핸들러에서만 작동하므로)
-    const guard = new WebSocketJwtGuard(this.jwtService, this.configService);
-    const mockContext = {
-      switchToWs: () => ({
-        getClient: () => client,
-        getData: () => data,
-      }),
-    } as any;
-
-    const isValid = guard.canActivate(mockContext);
-    if (!isValid) {
-      return;
-    }
-
-    const user = (client as any).user as WebSocketUser;
-
-    await this.chatService.authenticateUser({
-      userId: user.userId,
-      socketId: client.id,
-    });
-
-    // 사용자별 방에 조인하여 인스턴스 간 메시지 전송 가능하게 함
-    client.join(`user_${user.userId}`);
-
-    client.emit(
-      'authenticated',
-      WebSocketSuccessResponseDto.of({
-        message: 'Authentication successful',
-      }),
-    );
   }
 
   @UseGuards(WebSocketJwtGuard)
