@@ -11,6 +11,10 @@ export enum WebSocketErrorCode {
   MSG001 = 'MSG001',
   MSG002 = 'MSG002',
 
+  // 대화방 관련 에러
+  CONV001 = 'CONV001',
+  CONV002 = 'CONV002',
+
   // 일반적인 에러
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
@@ -23,6 +27,8 @@ export const WebSocketErrorMessage = {
   [WebSocketErrorCode.ROOM002]: 'Failed to leave room',
   [WebSocketErrorCode.MSG001]: 'Failed to send message',
   [WebSocketErrorCode.MSG002]: 'Failed to mark messages as read',
+  [WebSocketErrorCode.CONV001]: 'Conversation not found',
+  [WebSocketErrorCode.CONV002]: 'Participant not found in conversation',
   [WebSocketErrorCode.INTERNAL_ERROR]: 'Internal server error occurred',
   [WebSocketErrorCode.VALIDATION_ERROR]: 'Invalid request data',
 } as const;

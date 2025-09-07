@@ -6,6 +6,7 @@ import {
   WebSocketErrorCode,
   WebSocketErrorMessage,
 } from './websocket-error-codes';
+import { WebSocketChatException } from './exceptions/websocket-chat.exception';
 
 @Catch()
 export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
@@ -19,7 +20,16 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
     let errorCode: string;
     let errorMessage: string;
 
-    if (exception instanceof WsException) {
+    if (exception instanceof WebSocketChatException) {
+      // 커스텀 채팅 예외 - 에러코드 직접 접근
+      errorCode = exception.errorCode;
+      const error = exception.getError();
+      errorMessage =
+        (typeof error === 'object' && error !== null && 'message' in error
+          ? (error as any).message
+          : WebSocketErrorMessage[errorCode]) ||
+        WebSocketErrorMessage[errorCode];
+    } else if (exception instanceof WsException) {
       const error = exception.getError();
       if (typeof error === 'string') {
         errorCode = WebSocketErrorCode.INTERNAL_ERROR;
@@ -32,12 +42,6 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
         errorCode = WebSocketErrorCode.INTERNAL_ERROR;
         errorMessage = WebSocketErrorMessage[WebSocketErrorCode.INTERNAL_ERROR];
       }
-    } else if (exception.message?.includes('not found')) {
-      errorCode = WebSocketErrorCode.VALIDATION_ERROR;
-      errorMessage = exception.message;
-    } else if (exception.message?.includes('not authenticated')) {
-      errorCode = WebSocketErrorCode.AUTH002;
-      errorMessage = WebSocketErrorMessage[WebSocketErrorCode.AUTH002];
     } else {
       errorCode = WebSocketErrorCode.INTERNAL_ERROR;
       errorMessage = WebSocketErrorMessage[WebSocketErrorCode.INTERNAL_ERROR];
@@ -82,13 +86,12 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
       'handleMarkMessagesAsRead',
     ];
 
-    for (let i = 0; i < handleMethods.length; i++) {
-      if (stack.includes(handleMethods[i])) {
-        // handleAuthenticate -> authenticate
-        return handleMethods[i]
-          .replace('handle', '')
-          .replace(/^./, (str) => str.toLowerCase());
-      }
+    const foundMethod = handleMethods.find((method) => stack.includes(method));
+    if (foundMethod) {
+      // handleAuthenticate -> authenticate
+      return foundMethod
+        .replace('handle', '')
+        .replace(/^./, (str) => str.toLowerCase());
     }
 
     return '';

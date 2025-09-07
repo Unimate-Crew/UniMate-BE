@@ -10,6 +10,8 @@ import {
   ConversationMessageRepository,
 } from '@app/database';
 import { RedisClient } from '@app/redis';
+import { WebSocketChatException } from '../../common/exceptions/websocket-chat.exception';
+import { WebSocketErrorCode } from '../../common/websocket-error-codes';
 import { MessageResultDto } from './dto/message.result.dto';
 import {
   MessageEmissionResultDto,
@@ -276,7 +278,7 @@ export class ChatService {
       params.conversationId,
     );
     if (!conversation) {
-      throw new Error('Conversation not found');
+      throw WebSocketChatException.withCode(WebSocketErrorCode.CONV001);
     }
 
     // 2. 다음 메시지 번호 계산
@@ -402,7 +404,7 @@ export class ChatService {
     });
 
     if (!participant) {
-      throw new Error('Participant not found in conversation');
+      throw WebSocketChatException.withCode(WebSocketErrorCode.CONV002);
     }
 
     // 2. 읽음 처리 정보 업데이트 (DB + 캐시)
