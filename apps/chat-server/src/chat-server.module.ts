@@ -5,9 +5,8 @@ import { RedisModule } from '@app/redis';
 import { DatabaseModule } from '@app/database';
 import { ChatServerController } from './chat-server.controller';
 import { ChatServerService } from './chat-server.service';
-import { ChatGateway } from './chat/api/chat.gateway';
-import { ChatService } from './chat/application/chat.service';
-import { WebSocketRedisAdapterService } from './websocket/websocket-redis-adapter.service';
+import { ChatModule } from './chat/chat.module';
+import { WebSocketRedisAdapterConfig } from './common/config/websocket-redis-adapter.config';
 import { WebSocketExceptionFilter } from './common/websocket-exception.filter';
 
 @Module({
@@ -18,13 +17,12 @@ import { WebSocketExceptionFilter } from './common/websocket-exception.filter';
     }),
     DatabaseModule,
     RedisModule,
+    ChatModule,
   ],
   controllers: [ChatServerController],
   providers: [
     ChatServerService,
-    ChatGateway,
-    ChatService,
-    WebSocketRedisAdapterService,
+    WebSocketRedisAdapterConfig,
     {
       provide: APP_FILTER,
       useClass: WebSocketExceptionFilter,

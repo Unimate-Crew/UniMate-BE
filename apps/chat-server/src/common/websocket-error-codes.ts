@@ -1,23 +1,20 @@
-export const WebSocketErrorCode = {
+export enum WebSocketErrorCode {
   // 인증 관련 에러
-  AUTH001: 'AUTH001',
-  AUTH002: 'AUTH002',
+  AUTH001 = 'AUTH001',
+  AUTH002 = 'AUTH002',
 
   // 채팅방 관련 에러
-  ROOM001: 'ROOM001',
-  ROOM002: 'ROOM002',
+  ROOM001 = 'ROOM001',
+  ROOM002 = 'ROOM002',
 
   // 메시지 관련 에러
-  MSG001: 'MSG001',
-  MSG002: 'MSG002',
+  MSG001 = 'MSG001',
+  MSG002 = 'MSG002',
 
   // 일반적인 에러
-  INTERNAL_ERROR: 'INTERNAL_ERROR',
-  VALIDATION_ERROR: 'VALIDATION_ERROR',
-} as const;
-
-export type WebSocketErrorCodeType =
-  (typeof WebSocketErrorCode)[keyof typeof WebSocketErrorCode];
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+}
 
 export const WebSocketErrorMessage = {
   [WebSocketErrorCode.AUTH001]: 'Authentication failed',

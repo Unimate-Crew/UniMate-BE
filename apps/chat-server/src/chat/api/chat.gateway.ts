@@ -8,13 +8,21 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UseGuards } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
-import { AuthenticateUserRequestDto } from './dto/authenticate-user.request.dto';
+import { AuthenticateTokenRequestDto } from './dto/authenticate-token.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
 import { WebSocketSuccessResponseDto } from './dto/websocket-response.dto';
+import { WebSocketEventData } from '../application/dto/websocket-emission.result.dto';
+import { WebSocketJwtGuard } from '../../common/guards/websocket-jwt.guard';
+import {
+  WsUser,
+  WebSocketUser,
+} from '../../common/decorators/websocket-user.decorator';
 
 @Injectable()
 @WebSocketGateway({
@@ -29,7 +37,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`Client connected: ${client.id}`);
@@ -51,16 +63,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('authenticate')
   async handleAuthenticate(
-    @MessageBody() data: AuthenticateUserRequestDto,
+    @MessageBody() data: AuthenticateTokenRequestDto,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
+    // JWT 토큰 수동 검증 (가드는 이벤트 핸들러에서만 작동하므로)
+    const guard = new WebSocketJwtGuard(this.jwtService, this.configService);
+    const mockContext = {
+      switchToWs: () => ({
+        getClient: () => client,
+        getData: () => data,
+      }),
+    } as any;
+
+    const isValid = guard.canActivate(mockContext);
+    if (!isValid) {
+      return;
+    }
+
+    const user = (client as any).user as WebSocketUser;
+
     await this.chatService.authenticateUser({
-      userId: data.userId,
+      userId: user.userId,
       socketId: client.id,
     });
 
     // 사용자별 방에 조인하여 인스턴스 간 메시지 전송 가능하게 함
-    client.join(`user_${data.userId}`);
+    client.join(`user_${user.userId}`);
 
     client.emit(
       'authenticated',
@@ -70,26 +98,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
+  @UseGuards(WebSocketJwtGuard)
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
     @MessageBody() data: JoinRoomRequestDto,
+    @WsUser() user: WebSocketUser,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const userId = await this.chatService.getUserIdBySocketId({
-      socketId: client.id,
-    });
-
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
     const roomName = `conversation_${data.conversationId}`;
     client.join(roomName);
 
     // Redis에 온라인 사용자 추가
     await this.chatService.addUserToOnlineRoom({
       conversationId: data.conversationId,
-      userId,
+      userId: user.userId,
     });
 
     this.logger.log(`Client ${client.id} joined room ${roomName}`);
@@ -99,26 +121,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
+  @UseGuards(WebSocketJwtGuard)
   @SubscribeMessage('leaveRoom')
   async handleLeaveRoom(
     @MessageBody() data: JoinRoomRequestDto,
+    @WsUser() user: WebSocketUser,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const userId = await this.chatService.getUserIdBySocketId({
-      socketId: client.id,
-    });
-
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
     const roomName = `conversation_${data.conversationId}`;
     client.leave(roomName);
 
     // Redis에서 온라인 사용자 제거
     await this.chatService.removeUserFromOnlineRoom({
       conversationId: data.conversationId,
-      userId,
+      userId: user.userId,
     });
 
     this.logger.log(`Client ${client.id} left room ${roomName}`);
@@ -128,21 +144,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
+  @UseGuards(WebSocketJwtGuard)
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @MessageBody() data: SendMessageRequestDto,
+    @WsUser() user: WebSocketUser,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const userId = await this.chatService.getUserIdBySocketId({
-      socketId: client.id,
-    });
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
     const result = await this.chatService.sendMessage({
       conversationId: data.conversationId,
-      senderId: userId,
+      senderId: user.userId,
       content: data.content,
     });
 
@@ -154,20 +165,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('messageSent', WebSocketSuccessResponseDto.of(result.message));
   }
 
+  @UseGuards(WebSocketJwtGuard)
   @SubscribeMessage('markMessagesAsRead')
   async handleMarkMessagesAsRead(
     @MessageBody() data: MarkMessagesAsReadRequestDto,
+    @WsUser() user: WebSocketUser,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const userId = await this.chatService.getUserIdBySocketId({
-      socketId: client.id,
-    });
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
     const result = await this.chatService.markMessagesAsRead({
-      userId,
+      userId: user.userId,
       conversationId: data.conversationId,
       lastReadMessageNumber: data.lastReadMessageNumber,
     });
@@ -186,7 +192,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
-  emitToUser(userId: number, event: string, data: unknown): void {
+  emitToUser(userId: number, event: string, data: WebSocketEventData): void {
     this.server.to(`user_${userId}`).emit(event, data);
   }
 }

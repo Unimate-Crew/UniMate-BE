@@ -4,8 +4,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { RedisClient } from '@app/redis';
 
 @Injectable()
-export class WebSocketRedisAdapterService {
-  private readonly logger = new Logger(WebSocketRedisAdapterService.name);
+export class WebSocketRedisAdapterConfig {
+  private readonly logger = new Logger(WebSocketRedisAdapterConfig.name);
 
   constructor(private readonly redisClient: RedisClient) {}
 
