@@ -14,7 +14,7 @@ import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
-import { WebSocketEventData } from '../application/dto/websocket-emission.result.dto';
+import { ReadEmissionResultDto } from '../application/dto/websocket-emission.result.dto';
 import { WebSocketJwtGuard } from '../../common/guards/websocket-jwt.guard';
 import {
   WsUser,
@@ -131,7 +131,9 @@ export class ChatGateway
 
     // WebSocket 이벤트 전송 처리
     result.emissions.forEach((emission) => {
-      this.emitToUser(emission.userId, emission.event, emission.data);
+      this.server
+        .to(`user_${emission.userId}`)
+        .emit(emission.event, emission.data);
     });
   }
 
@@ -141,19 +143,18 @@ export class ChatGateway
     @MessageBody() data: MarkMessagesAsReadRequestDto,
     @WsUser() user: WebSocketUser,
   ): Promise<void> {
-    const result = await this.chatService.markMessagesAsRead({
-      userId: user.userId,
-      conversationId: data.conversationId,
-      lastReadMessageNumber: data.lastReadMessageNumber,
-    });
+    const result: ReadEmissionResultDto =
+      await this.chatService.markMessagesAsRead({
+        userId: user.userId,
+        conversationId: data.conversationId,
+        lastReadMessageNumber: data.lastReadMessageNumber,
+      });
 
     // WebSocket 이벤트 전송 처리
     result.emissions.forEach((emission) => {
-      this.emitToUser(emission.userId, emission.event, emission.data);
+      this.server
+        .to(`user_${emission.userId}`)
+        .emit(emission.event, emission.data);
     });
-  }
-
-  emitToUser(userId: number, event: string, data: WebSocketEventData): void {
-    this.server.to(`user_${userId}`).emit(event, data);
   }
 }

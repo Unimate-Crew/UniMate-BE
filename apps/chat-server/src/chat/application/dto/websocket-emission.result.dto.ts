@@ -1,41 +1,50 @@
-export interface NewMessageEventDto {
+/* eslint-disable max-classes-per-file */
+export class NewMessageEventDto {
   id: number;
+
   conversationId: number;
+
   senderId: number;
+
   content?: string;
+
   messageNumber: number;
+
   createdAt: Date;
+
   type: string;
 }
 
-export interface ChatRoomUpdatedEventDto {
+export class ChatRoomUpdatedEventDto {
   conversationId: number;
+
   lastMessage: string;
+
   lastSentAt: Date;
 }
 
-export interface MessageReadEventDto {
+export class MessageReadEventDto {
   conversationId: number;
+
   userId: number;
+
   lastReadMessageNumber: number;
 }
 
-export type WebSocketEventData =
-  | NewMessageEventDto
-  | ChatRoomUpdatedEventDto
-  | MessageReadEventDto;
-
-export interface WebSocketEmissionTarget {
+export class WebSocketEmissionTarget {
   userId: number;
+
   event: string;
-  data: WebSocketEventData;
+
+  data: NewMessageEventDto | ChatRoomUpdatedEventDto | MessageReadEventDto;
 }
 
-export interface MessageEmissionResultDto {
+export class MessageEmissionResultDto {
   message: NewMessageEventDto;
+
   emissions: WebSocketEmissionTarget[];
 }
 
-export interface ReadEmissionResultDto {
+export class ReadEmissionResultDto {
   emissions: WebSocketEmissionTarget[];
 }
