@@ -7,7 +7,6 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Socket } from 'socket.io';
-import { WebSocketSuccessResponseDto } from '../../chat/api/dto/websocket-response.dto';
 
 @Injectable()
 export class WebSocketSuccessResponseInterceptor implements NestInterceptor {
@@ -43,7 +42,7 @@ export class WebSocketSuccessResponseInterceptor implements NestInterceptor {
         const requestId = data?.requestId;
 
         const successResponse = {
-          success: true,
+          isSuccess: true,
           ...(requestId && { requestId }),
         };
 

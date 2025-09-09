@@ -21,6 +21,10 @@ export class ChatRoomUpdatedEventDto {
   lastMessage: string;
 
   lastSentAt: Date;
+
+  unreadCount: number;
+
+  lastMessageNumber: number;
 }
 
 export class MessageReadEventDto {

@@ -1,7 +1,7 @@
 import { Catch, ArgumentsHost, Logger } from '@nestjs/common';
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { WebSocketErrorResponseDto } from '../chat/api/dto/websocket-response.dto';
+import { WebSocketErrorResponseDto } from './dto';
 import {
   WebSocketErrorCode,
   WebSocketErrorMessage,

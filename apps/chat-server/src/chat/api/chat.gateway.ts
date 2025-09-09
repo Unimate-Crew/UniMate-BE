@@ -54,7 +54,7 @@ export class ChatGateway
     // User is already authenticated at this point via middleware
     const user = (client as any).user as WebSocketUser;
 
-    await this.chatService.authenticateUser({
+    await this.chatService.registerUserSession({
       userId: user.userId,
       socketId: client.id,
     });
@@ -90,7 +90,7 @@ export class ChatGateway
     client.join(roomName);
 
     // Redis에 온라인 사용자 추가
-    await this.chatService.addUserToOnlineRoom({
+    await this.chatService.addUserToOnlineConversation({
       conversationId: data.conversationId,
       userId: user.userId,
     });
@@ -109,7 +109,7 @@ export class ChatGateway
     client.leave(roomName);
 
     // Redis에서 온라인 사용자 제거
-    await this.chatService.removeUserFromOnlineRoom({
+    await this.chatService.removeUserFromOnlineConversation({
       conversationId: data.conversationId,
       userId: user.userId,
     });
