@@ -14,7 +14,10 @@ import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
 import { JoinRoomRequestDto } from './dto/join-room.request.dto';
-import { ReadEmissionResultDto } from '../application/dto/websocket-emission.result.dto';
+import {
+  MessageEmissionResultDto,
+  ReadEmissionResultDto,
+} from '../application/dto/websocket-emission.result.dto';
 import { WebSocketJwtGuard } from '../../common/guards/websocket-jwt.guard';
 import {
   WsUser,
@@ -69,7 +72,7 @@ export class ChatGateway
     this.logger.log(`Client disconnected: ${client.id}`);
 
     // 사용자 ID 조회 후 사용자별 방에서 나가기
-    const userId = await this.chatService.getUserIdBySocketId({
+    const userId: number | null = await this.chatService.getUserIdBySocketId({
       socketId: client.id,
     });
     if (userId) {
@@ -123,11 +126,13 @@ export class ChatGateway
     @MessageBody() data: SendMessageRequestDto,
     @WsUser() user: WebSocketUser,
   ): Promise<void> {
-    const result = await this.chatService.sendMessage({
-      conversationId: data.conversationId,
-      senderId: user.userId,
-      content: data.content,
-    });
+    const result: MessageEmissionResultDto = await this.chatService.sendMessage(
+      {
+        conversationId: data.conversationId,
+        senderId: user.userId,
+        content: data.content,
+      },
+    );
 
     // WebSocket 이벤트 전송 처리
     result.emissions.forEach((emission) => {

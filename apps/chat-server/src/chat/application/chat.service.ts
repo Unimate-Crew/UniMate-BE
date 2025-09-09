@@ -65,7 +65,7 @@ export class ChatService {
    */
   async handleUserDisconnect(params: { socketId: string }): Promise<void> {
     // 1. Redis에서 사용자 ID 조회
-    const userId = await this.redisClient.get(
+    const userId: string | null = await this.redisClient.get(
       `socket:${params.socketId}:userId`,
     );
 
@@ -94,7 +94,7 @@ export class ChatService {
     const client = this.redisClient.getClient();
 
     // room:*:online 패턴의 모든 키를 찾고 해당 사용자를 제거
-    const keys = await client.keys('room:*:online');
+    const keys: string[] = await client.keys('room:*:online');
 
     await Promise.all(
       keys.map((key) => client.srem(key, params.userId.toString())),
@@ -114,7 +114,7 @@ export class ChatService {
   async getUserIdBySocketId(params: {
     socketId: string;
   }): Promise<number | null> {
-    const userId = await this.redisClient.get(
+    const userId: string | null = await this.redisClient.get(
       `socket:${params.socketId}:userId`,
     );
     return userId ? parseInt(userId, 10) : null;
@@ -170,7 +170,7 @@ export class ChatService {
     conversationId: number;
   }): Promise<number[]> {
     const client = this.redisClient.getClient();
-    const userIds = await client.smembers(
+    const userIds: string[] = await client.smembers(
       `room:${params.conversationId}:online`,
     );
     return userIds.map((id: string) => parseInt(id, 10));
@@ -216,7 +216,7 @@ export class ChatService {
   }): Promise<CachedConversationParticipantDto[] | null> {
     const key = `room:${params.conversationId}:participants`;
     const client = this.redisClient.getClient();
-    const participantData = await client.hgetall(key);
+    const participantData: Record<string, string> = await client.hgetall(key);
 
     if (!participantData || Object.keys(participantData).length === 0) {
       return null;
@@ -242,7 +242,10 @@ export class ChatService {
   }): Promise<void> {
     const key = `room:${params.conversationId}:participants`;
     const client = this.redisClient.getClient();
-    const existingData = await client.hget(key, params.userId.toString());
+    const existingData: string | null = await client.hget(
+      key,
+      params.userId.toString(),
+    );
 
     if (existingData) {
       const participantInfo = JSON.parse(existingData);
@@ -270,9 +273,8 @@ export class ChatService {
     content: string;
   }): Promise<MessageEmissionResultDto> {
     // 1. 대화방 존재 확인
-    const conversation = await this.conversationRepository.findById(
-      params.conversationId,
-    );
+    const conversation: Conversation | null =
+      await this.conversationRepository.findById(params.conversationId);
     if (!conversation) {
       throw WebSocketChatException.withCode(WebSocketErrorCode.CONV001);
     }
@@ -299,16 +301,18 @@ export class ChatService {
 
     // 6. 대화 참여자들에게 전송할 WebSocket 이벤트 목록 생성
     // 먼저 캐시에서 참여자 정보 조회, 없으면 DB에서 조회 후 캐시
-    let participants = await this.getCachedConversationParticipants({
-      conversationId: params.conversationId,
-    });
+    let participants: CachedConversationParticipantDto[] | null =
+      await this.getCachedConversationParticipants({
+        conversationId: params.conversationId,
+      });
 
     if (!participants) {
       // DB에서 참여자 정보 조회
-      const dbParticipants = await this.participantRepository.find({
-        conversationId: params.conversationId,
-        isDeleted: false,
-      });
+      const dbParticipants: ConversationParticipant[] =
+        await this.participantRepository.find({
+          conversationId: params.conversationId,
+          isDeleted: false,
+        });
 
       // 캐시에 저장
       const cachedParticipants = dbParticipants.map((p) =>
@@ -328,7 +332,7 @@ export class ChatService {
     }
 
     // 온라인 사용자 목록 조회
-    const onlineUsers = await this.getOnlineUsersInConversation({
+    const onlineUsers: number[] = await this.getOnlineUsersInConversation({
       conversationId: params.conversationId,
     });
 
@@ -393,11 +397,12 @@ export class ChatService {
     lastReadMessageNumber: number;
   }): Promise<ReadEmissionResultDto> {
     // 1. 참여자 정보 확인
-    const participant = await this.participantRepository.findOne({
-      conversationId: params.conversationId,
-      userId: params.userId,
-      isDeleted: false,
-    });
+    const participant: ConversationParticipant | null =
+      await this.participantRepository.findOne({
+        conversationId: params.conversationId,
+        userId: params.userId,
+        isDeleted: false,
+      });
 
     if (!participant) {
       throw WebSocketChatException.withCode(WebSocketErrorCode.CONV002);
@@ -415,7 +420,7 @@ export class ChatService {
     });
 
     // 3. 같은 채팅방에 온라인으로 있는 다른 참여자들에게만 읽음 알림 전송
-    const onlineUsers = await this.getOnlineUsersInConversation({
+    const onlineUsers: number[] = await this.getOnlineUsersInConversation({
       conversationId: params.conversationId,
     });
 
