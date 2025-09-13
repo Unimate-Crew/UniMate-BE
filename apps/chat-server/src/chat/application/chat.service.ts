@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   Conversation,
   ConversationParticipant,
@@ -24,11 +23,8 @@ export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
   constructor(
-    @InjectRepository(Conversation)
     private readonly conversationRepository: ConversationRepository,
-    @InjectRepository(ConversationParticipant)
     private readonly participantRepository: ConversationParticipantRepository,
-    @InjectRepository(ConversationMessage)
     private readonly messageRepository: ConversationMessageRepository,
     private readonly redisClient: RedisClient,
   ) {}
@@ -272,115 +268,120 @@ export class ChatService {
     senderId: number;
     content: string;
   }): Promise<MessageEmissionResultDto> {
-    // 1. 대화방 존재 확인
-    const conversation: Conversation | null =
-      await this.conversationRepository.findById(params.conversationId);
-    if (!conversation) {
-      throw WebSocketChatException.withCode(WebSocketErrorCode.CONV001);
-    }
-
-    // 2. 다음 메시지 번호 계산
-    const nextMessageNumber = (conversation.getLastMessageNumber() || 0) + 1;
-
-    // 3. 새 메시지 엔티티 생성
-    const message = this.messageRepository.create({
-      conversationId: params.conversationId,
-      senderId: params.senderId,
-      content: params.content,
-      messageNumber: nextMessageNumber,
-      type: ConversationMessageType.TEXT,
-    });
-
-    // 4. 대화방 정보 업데이트
-    conversation.setLastMessageNumber(nextMessageNumber);
-    conversation.setLastSentAt(new Date());
-
-    // 5. 데이터베이스에 저장
-    await this.messageRepository.persistAndFlush(message);
-    await this.conversationRepository.persistAndFlush(conversation);
-
-    // 6. 대화 참여자들에게 전송할 WebSocket 이벤트 목록 생성
-    // 먼저 캐시에서 참여자 정보 조회, 없으면 DB에서 조회 후 캐시
-    let participants: CachedConversationParticipantDto[] | null =
-      await this.getCachedConversationParticipants({
-        conversationId: params.conversationId,
-      });
-
-    if (!participants) {
-      // DB에서 참여자 정보 조회
-      const dbParticipants: ConversationParticipant[] =
-        await this.participantRepository.find({
-          conversationId: params.conversationId,
-          isDeleted: false,
-        });
-
-      // 캐시에 저장
-      const cachedParticipants = dbParticipants.map((p) =>
-        CachedConversationParticipantDto.from({
-          userId: p.getUserId(),
-          lastReadMessageNumber: p.getLastReadMessageNumber(),
-          status: p.getStatus(),
-        }),
-      );
-
-      await this.cacheConversationParticipants({
-        conversationId: params.conversationId,
-        participants: cachedParticipants,
-      });
-
-      participants = cachedParticipants;
-    }
-
-    // 온라인 사용자 목록 조회
-    const onlineUsers: number[] = await this.getOnlineUsersInConversation({
-      conversationId: params.conversationId,
-    });
-
-    const emissions = participants
-      .filter((participant) => participant.userId !== params.senderId)
-      .map((participant) => {
-        if (onlineUsers.includes(participant.userId)) {
-          // 온라인 사용자에게 실시간 메시지 전송
-          return {
-            userId: participant.userId,
-            event: 'newMessage',
-            data: {
-              id: message.getId(),
-              conversationId: params.conversationId,
-              senderId: params.senderId,
-              content: params.content,
-              messageNumber: nextMessageNumber,
-              createdAt: message.createdAt,
-              type: ConversationMessageType.TEXT,
-            },
-          };
+    return this.conversationRepository
+      .getEntityManager()
+      .transactional(async () => {
+        // 1. 대화방 존재 확인
+        const conversation: Conversation | null =
+          await this.conversationRepository.findById(params.conversationId);
+        if (!conversation) {
+          throw WebSocketChatException.withCode(WebSocketErrorCode.CONV001);
         }
 
-        // 오프라인 사용자에게 채팅방 업데이트 알림 + 푸시 알림
-        return {
-          userId: participant.userId,
-          event: 'chatRoomUpdated',
-          data: {
+        // 2. 다음 메시지 번호 계산
+        const nextMessageNumber: number =
+          (conversation.getLastMessageNumber() || 0) + 1;
+
+        // 3. 새 메시지 엔티티 생성
+        const message: ConversationMessage = this.messageRepository.create({
+          conversationId: params.conversationId,
+          senderId: params.senderId,
+          content: params.content,
+          messageNumber: nextMessageNumber,
+          type: ConversationMessageType.TEXT,
+        });
+
+        // 4. 대화방 정보 업데이트
+        conversation.setLastMessageNumber(nextMessageNumber);
+        conversation.setLastSentAt(new Date());
+
+        // 5. 데이터베이스에 저장
+        await this.messageRepository.persistAndFlush(message);
+        await this.conversationRepository.persistAndFlush(conversation);
+
+        // 6. 대화 참여자들에게 전송할 WebSocket 이벤트 목록 생성
+        let participants: CachedConversationParticipantDto[] | null =
+          await this.getCachedConversationParticipants({
             conversationId: params.conversationId,
-            lastMessage: params.content,
-            lastSentAt: new Date(),
-            unreadCount: Math.max(
-              0,
-              nextMessageNumber - (participant.lastReadMessageNumber || 0),
-            ),
-            lastMessageNumber: nextMessageNumber,
-          },
+          });
+
+        if (!participants) {
+          // 7. DB에서 참여자 정보 조회 후 캐시에 저장
+          const dbParticipants: ConversationParticipant[] =
+            await this.participantRepository.find({
+              conversationId: params.conversationId,
+              isDeleted: false,
+            });
+
+          const cachedParticipants: CachedConversationParticipantDto[] =
+            dbParticipants.map((p) =>
+              CachedConversationParticipantDto.from({
+                userId: p.getUserId(),
+                lastReadMessageNumber: p.getLastReadMessageNumber(),
+                status: p.getStatus(),
+              }),
+            );
+
+          await this.cacheConversationParticipants({
+            conversationId: params.conversationId,
+            participants: cachedParticipants,
+          });
+
+          participants = cachedParticipants;
+        }
+
+        // 8. 온라인 사용자 목록 조회
+        const onlineUsers: number[] = await this.getOnlineUsersInConversation({
+          conversationId: params.conversationId,
+        });
+
+        // 9. WebSocket 이벤트 전송 대상 목록 생성
+        const emissions = participants
+          .filter((participant) => participant.userId !== params.senderId)
+          .map((participant) => {
+            if (onlineUsers.includes(participant.userId)) {
+              // 온라인 사용자에게 실시간 메시지 전송
+              return {
+                userId: participant.userId,
+                event: 'newMessage',
+                data: {
+                  id: message.getId(),
+                  conversationId: params.conversationId,
+                  senderId: params.senderId,
+                  content: params.content,
+                  messageNumber: nextMessageNumber,
+                  createdAt: message.createdAt,
+                  type: ConversationMessageType.TEXT,
+                },
+              };
+            }
+
+            // 오프라인 사용자에게 채팅방 업데이트 알림
+            return {
+              userId: participant.userId,
+              event: 'chatRoomUpdated',
+              data: {
+                conversationId: params.conversationId,
+                lastMessage: params.content,
+                lastSentAt: new Date(),
+                unreadCount: Math.max(
+                  0,
+                  nextMessageNumber - (participant.lastReadMessageNumber || 0),
+                ),
+                lastMessageNumber: nextMessageNumber,
+              },
+            };
+          });
+
+        this.logger.log(
+          `Message sent in conversation ${params.conversationId} by user ${params.senderId}`,
+        );
+
+        return {
+          message: MessageResultDto.from(message),
+          emissions,
         };
       });
-
-    this.logger.log(
-      `Message sent in conversation ${params.conversationId} by user ${params.senderId}`,
-    );
-
-    return {
-      message: MessageResultDto.from(message),
-      emissions,
-    };
   }
 
   /**
@@ -396,52 +397,57 @@ export class ChatService {
     conversationId: number;
     lastReadMessageNumber: number;
   }): Promise<ReadEmissionResultDto> {
-    // 1. 참여자 정보 확인
-    const participant: ConversationParticipant | null =
-      await this.participantRepository.findOne({
-        conversationId: params.conversationId,
-        userId: params.userId,
-        isDeleted: false,
-      });
+    return this.participantRepository
+      .getEntityManager()
+      .transactional(async () => {
+        // 1. 참여자 정보 확인
+        const participant: ConversationParticipant | null =
+          await this.participantRepository.findOne({
+            conversationId: params.conversationId,
+            userId: params.userId,
+            isDeleted: false,
+          });
 
-    if (!participant) {
-      throw WebSocketChatException.withCode(WebSocketErrorCode.CONV002);
-    }
+        if (!participant) {
+          throw WebSocketChatException.withCode(WebSocketErrorCode.CONV002);
+        }
 
-    // 2. 읽음 처리 정보 업데이트 (DB + 캐시)
-    participant.setLastReadMessageNumber(params.lastReadMessageNumber);
-    await this.participantRepository.persistAndFlush(participant);
+        // 2. 읽음 처리 정보 업데이트 (데이터베이스)
+        participant.setLastReadMessageNumber(params.lastReadMessageNumber);
+        await this.participantRepository.persistAndFlush(participant);
 
-    // 캐시도 업데이트
-    await this.updateCachedParticipantLastReadMessage({
-      conversationId: params.conversationId,
-      userId: params.userId,
-      lastReadMessageNumber: params.lastReadMessageNumber,
-    });
-
-    // 3. 같은 채팅방에 온라인으로 있는 다른 참여자들에게만 읽음 알림 전송
-    const onlineUsers: number[] = await this.getOnlineUsersInConversation({
-      conversationId: params.conversationId,
-    });
-
-    const emissions = onlineUsers
-      .filter((userId) => userId !== params.userId)
-      .map((userId) => ({
-        userId,
-        event: 'messageRead',
-        data: {
+        // 3. 캐시 정보 업데이트
+        await this.updateCachedParticipantLastReadMessage({
           conversationId: params.conversationId,
           userId: params.userId,
           lastReadMessageNumber: params.lastReadMessageNumber,
-        },
-      }));
+        });
 
-    this.logger.log(
-      `User ${params.userId} marked messages as read up to ${params.lastReadMessageNumber} in conversation ${params.conversationId}`,
-    );
+        // 4. 온라인 사용자 목록 조회
+        const onlineUsers: number[] = await this.getOnlineUsersInConversation({
+          conversationId: params.conversationId,
+        });
 
-    return {
-      emissions,
-    };
+        // 5. 같은 채팅방에 있는 다른 참여자들에게 읽음 알림 전송
+        const emissions = onlineUsers
+          .filter((userId) => userId !== params.userId)
+          .map((userId) => ({
+            userId,
+            event: 'messageRead',
+            data: {
+              conversationId: params.conversationId,
+              userId: params.userId,
+              lastReadMessageNumber: params.lastReadMessageNumber,
+            },
+          }));
+
+        this.logger.log(
+          `User ${params.userId} marked messages as read up to ${params.lastReadMessageNumber} in conversation ${params.conversationId}`,
+        );
+
+        return {
+          emissions,
+        };
+      });
   }
 }
