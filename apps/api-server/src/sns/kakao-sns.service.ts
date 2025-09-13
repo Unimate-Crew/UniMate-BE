@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { SnsService, SnsUserInfo } from './sns.service.interface';
-import { ErrorCode } from '../common/error-code';
+import { ErrorCode } from '@app/common';
 
 @Injectable()
 export class KakaoSnsService implements SnsService {

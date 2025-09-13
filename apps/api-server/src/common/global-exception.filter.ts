@@ -9,7 +9,7 @@ import {
 import { Request, Response } from 'express';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Logger } from 'winston';
-import { ErrorCode } from './error-code';
+import { ErrorCode } from '@app/common';
 
 @Catch()
 export class GlobalExceptionFilter extends BaseExceptionFilter {

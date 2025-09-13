@@ -8,7 +8,7 @@ import {
   ProductPostRepository,
   ProductPost,
 } from '@app/database';
-import { ErrorCode } from '../../common/error-code';
+import { ErrorCode } from '@app/common';
 
 @Injectable()
 export class ReviewService {

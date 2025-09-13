@@ -10,7 +10,7 @@ import { DeleteNotificationsParamsDto } from './dto/delete-notifications-params.
 import { DeleteNotificationsResultDto } from './dto/delete-notifications-result.dto';
 import { GetNotificationSettingsResultDto } from './dto/get-notification-settings-result.dto';
 import { UpdateNotificationSettingsResultDto } from './dto/update-notification-settings-result.dto';
-import { ErrorCode } from '../../common/error-code';
+import { ErrorCode } from '@app/common';
 
 @Injectable()
 export class NotificationService {

@@ -4,7 +4,6 @@ import { MySalesFilter } from '@app/database/common/enums';
 import { PageRequest } from '@app/common';
 
 export class FindMySalesRequestDto extends PageRequest {
-
   @ApiProperty({
     description: '판매내역 필터',
     enum: MySalesFilter,
