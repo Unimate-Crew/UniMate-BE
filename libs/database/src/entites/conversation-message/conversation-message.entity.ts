@@ -8,7 +8,7 @@ export class ConversationMessage extends BaseEntity {
   @PrimaryKey({ type: 'bigint' })
   id!: number;
 
-  @Property()
+  @Property({ type: 'bigint' })
   conversationId!: number;
 
   @Property()

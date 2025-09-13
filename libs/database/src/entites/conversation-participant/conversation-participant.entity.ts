@@ -8,13 +8,13 @@ export class ConversationParticipant extends BaseEntity {
   @PrimaryKey({ type: 'bigint' })
   id!: number;
 
-  @Property()
+  @Property({ type: 'bigint' })
   conversationId!: number;
 
   @Property()
   userId!: number;
 
-  @Property({ nullable: true })
+  @Property({ nullable: true, type: 'bigint' })
   lastReadMessageNumber?: number;
 
   @Property({ nullable: true })
