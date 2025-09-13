@@ -11,6 +11,7 @@ export enum ErrorCode {
 
   // 서버 오류
   INTERNAL_SERVER_ERROR = 'G001',
+  VALIDATION_ERROR = 'G002',
 
   // 지역
   REGION_NOT_FOUND = 'R001',
@@ -39,4 +40,25 @@ export enum ErrorCode {
   REVIEWEE_NOT_FOUND = 'RV003',
   REVIEW_ALREADY_EXISTS = 'RV004',
   REVIEW_NOT_ALLOWED_TRADE_NOT_COMPLETED = 'RV005',
+
+  // 대화방
+  CONVERSATION_NOT_FOUND = 'CV001',
+
+  // 참가자
+  PARTICIPANT_NOT_FOUND = 'PT001',
+
+  // 채팅 고유 기능
+  JOIN_ROOM_FAILED = 'CH001',
+  LEAVE_ROOM_FAILED = 'CH002',
+  SEND_MESSAGE_FAILED = 'CH003',
+  MARK_READ_FAILED = 'CH004',
 }
+
+export const ErrorMessage = {
+  [ErrorCode.CONVERSATION_NOT_FOUND]: 'Conversation not found',
+  [ErrorCode.PARTICIPANT_NOT_FOUND]: 'Participant not found in conversation',
+  [ErrorCode.JOIN_ROOM_FAILED]: 'Failed to join room',
+  [ErrorCode.LEAVE_ROOM_FAILED]: 'Failed to leave room',
+  [ErrorCode.SEND_MESSAGE_FAILED]: 'Failed to send message',
+  [ErrorCode.MARK_READ_FAILED]: 'Failed to mark messages as read',
+} as const;

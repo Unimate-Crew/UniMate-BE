@@ -1,8 +1,5 @@
 import { WsException } from '@nestjs/websockets';
-import {
-  WebSocketErrorCode,
-  WebSocketErrorMessage,
-} from '../websocket-error-codes';
+import { ErrorCode, ErrorMessage } from '@app/common';
 
 /**
  * 채팅 관련 WebSocket 예외를 위한 커스텀 예외 클래스
@@ -10,13 +7,13 @@ import {
  */
 export class WebSocketChatException extends WsException {
   constructor(
-    public readonly errorCode: WebSocketErrorCode,
+    public readonly errorCode: ErrorCode,
     message?: string,
     public readonly requestId?: string,
   ) {
     super({
       code: errorCode,
-      message: message || WebSocketErrorMessage[errorCode],
+      message: message || ErrorMessage[errorCode],
       requestId,
     });
   }
@@ -25,7 +22,7 @@ export class WebSocketChatException extends WsException {
    * 에러 코드와 기본 메시지로 예외를 생성하는 정적 메서드
    */
   static withCode(
-    errorCode: WebSocketErrorCode,
+    errorCode: ErrorCode,
     requestId?: string,
   ): WebSocketChatException {
     return new WebSocketChatException(errorCode, undefined, requestId);
@@ -35,7 +32,7 @@ export class WebSocketChatException extends WsException {
    * 에러 코드와 커스텀 메시지로 예외를 생성하는 정적 메서드
    */
   static withMessage(
-    errorCode: WebSocketErrorCode,
+    errorCode: ErrorCode,
     message: string,
     requestId?: string,
   ): WebSocketChatException {

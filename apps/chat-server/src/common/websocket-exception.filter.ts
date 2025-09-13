@@ -1,11 +1,8 @@
 import { Catch, ArgumentsHost, Logger } from '@nestjs/common';
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
+import { ErrorCode, ErrorMessage } from '@app/common';
 import { WebSocketErrorResponseDto } from './dto';
-import {
-  WebSocketErrorCode,
-  WebSocketErrorMessage,
-} from './websocket-error-codes';
 import { WebSocketChatException } from './exceptions/websocket-chat.exception';
 
 @Catch()
@@ -55,7 +52,7 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
     const errorMessage =
       (typeof error === 'object' && error !== null && 'message' in error
         ? (error as any).message
-        : WebSocketErrorMessage[errorCode]) || WebSocketErrorMessage[errorCode];
+        : ErrorMessage[errorCode]) || ErrorMessage[errorCode];
 
     return { errorCode, errorMessage };
   }
@@ -68,25 +65,24 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
 
     if (typeof error === 'string') {
       return {
-        errorCode: WebSocketErrorCode.INTERNAL_ERROR,
+        errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
         errorMessage: error,
       };
     }
 
     if (typeof error === 'object' && error !== null) {
       return {
-        errorCode: (error as any).code || WebSocketErrorCode.INTERNAL_ERROR,
+        errorCode: (error as any).code || ErrorCode.INTERNAL_SERVER_ERROR,
         errorMessage:
           (error as any).message ||
-          WebSocketErrorMessage[
-            (error as any).code || WebSocketErrorCode.INTERNAL_ERROR
-          ],
+          ErrorMessage[(error as any).code] ||
+          'Internal server error occurred',
       };
     }
 
     return {
-      errorCode: WebSocketErrorCode.INTERNAL_ERROR,
-      errorMessage: WebSocketErrorMessage[WebSocketErrorCode.INTERNAL_ERROR],
+      errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
+      errorMessage: 'Internal server error occurred',
     };
   }
 
@@ -103,8 +99,8 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
     });
 
     return {
-      errorCode: WebSocketErrorCode.INTERNAL_ERROR,
-      errorMessage: WebSocketErrorMessage[WebSocketErrorCode.INTERNAL_ERROR],
+      errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
+      errorMessage: 'Internal server error occurred',
     };
   }
 

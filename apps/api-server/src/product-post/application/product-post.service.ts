@@ -28,7 +28,7 @@ import { UserBlockRepository } from '@app/database/entites/user-block/user-block
 import { CategoryCountDto } from '@app/database/entites/product-post/dto/category-count.dto';
 import { Like } from '@app/database/entites/like/like.entity';
 import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
-import { ErrorCode } from '../../common/error-code';
+import { ErrorCode } from '@app/common';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';

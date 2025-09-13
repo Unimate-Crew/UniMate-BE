@@ -9,8 +9,8 @@ import {
   ConversationMessageRepository,
 } from '@app/database';
 import { RedisClient } from '@app/redis';
+import { ErrorCode } from '@app/common';
 import { WebSocketChatException } from '../../common/exceptions/websocket-chat.exception';
-import { WebSocketErrorCode } from '../../common/websocket-error-codes';
 import { MessageResultDto } from './dto/message.result.dto';
 import {
   MessageEmissionResultDto,
@@ -277,7 +277,9 @@ export class ChatService {
         const conversation: Conversation | null =
           await this.conversationRepository.findById(params.conversationId);
         if (!conversation) {
-          throw WebSocketChatException.withCode(WebSocketErrorCode.CONV001);
+          throw WebSocketChatException.withCode(
+            ErrorCode.CONVERSATION_NOT_FOUND,
+          );
         }
 
         // 2. 다음 메시지 번호 계산
@@ -415,7 +417,9 @@ export class ChatService {
           });
 
         if (!participant) {
-          throw WebSocketChatException.withCode(WebSocketErrorCode.CONV002);
+          throw WebSocketChatException.withCode(
+            ErrorCode.PARTICIPANT_NOT_FOUND,
+          );
         }
 
         // 2. 읽음 처리 정보 업데이트 (데이터베이스)
