@@ -1,4 +1,6 @@
 /* eslint-disable max-classes-per-file */
+import { ConversationMessageType } from '@app/database/common/enums';
+
 export class NewMessageEventDto {
   id: number;
 
@@ -12,7 +14,7 @@ export class NewMessageEventDto {
 
   createdAt: Date;
 
-  type: string;
+  type: ConversationMessageType;
 }
 
 export class ChatRoomUpdatedEventDto {

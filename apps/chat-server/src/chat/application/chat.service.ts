@@ -261,12 +261,14 @@ export class ChatService {
    * @param params.conversationId 대화방 ID
    * @param params.senderId 발신자 ID
    * @param params.content 메시지 내용
+   * @param params.type 메시지 타입
    * @returns 전송된 메시지 정보와 WebSocket 전송 대상 목록
    */
   async sendMessage(params: {
     conversationId: number;
     senderId: number;
     content: string;
+    type: ConversationMessageType;
   }): Promise<MessageEmissionResultDto> {
     return this.conversationRepository
       .getEntityManager()
@@ -288,7 +290,7 @@ export class ChatService {
           senderId: params.senderId,
           content: params.content,
           messageNumber: nextMessageNumber,
-          type: ConversationMessageType.TEXT,
+          type: params.type,
         });
 
         // 4. 대화방 정보 업데이트
@@ -337,7 +339,6 @@ export class ChatService {
 
         // 9. WebSocket 이벤트 전송 대상 목록 생성
         const emissions = participants
-          .filter((participant) => participant.userId !== params.senderId)
           .map((participant) => {
             if (onlineUsers.includes(participant.userId)) {
               // 온라인 사용자에게 실시간 메시지 전송
@@ -351,12 +352,16 @@ export class ChatService {
                   content: params.content,
                   messageNumber: nextMessageNumber,
                   createdAt: message.createdAt,
-                  type: ConversationMessageType.TEXT,
+                  type: message.getType(),
                 },
               };
             }
 
-            // 오프라인 사용자에게 채팅방 업데이트 알림
+            // 오프라인 사용자에게는 발송자 제외하고 채팅방 업데이트 알림
+            if (participant.userId === params.senderId) {
+              return null;
+            }
+
             return {
               userId: participant.userId,
               event: 'chatRoomUpdated',
@@ -371,7 +376,8 @@ export class ChatService {
                 lastMessageNumber: nextMessageNumber,
               },
             };
-          });
+          })
+          .filter((emission) => emission !== null);
 
         this.logger.log(
           `Message sent in conversation ${params.conversationId} by user ${params.senderId}`,
