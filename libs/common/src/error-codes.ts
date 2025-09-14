@@ -52,6 +52,11 @@ export enum ErrorCode {
   LEAVE_ROOM_FAILED = 'CH002',
   SEND_MESSAGE_FAILED = 'CH003',
   MARK_READ_FAILED = 'CH004',
+
+  // 유저 차단
+  USER_BLOCK_SELF_NOT_ALLOWED = 'UB001',
+  USER_ALREADY_BLOCKED = 'UB002',
+  USER_NOT_BLOCKED = 'UB003',
 }
 
 export const ErrorMessage = {

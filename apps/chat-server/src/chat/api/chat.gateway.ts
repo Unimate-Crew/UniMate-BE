@@ -132,6 +132,7 @@ export class ChatGateway
         senderId: user.userId,
         content: data.content,
         type: data.type,
+        requestId: data.requestId,
       },
     );
 
