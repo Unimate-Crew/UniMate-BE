@@ -12,6 +12,7 @@ import { ProductPostModule } from './product-post/product-post.module';
 import { UniversityModule } from './university/university.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReviewModule } from './review/review.module';
+import { UserBlockModule } from './user-block/user-block.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ReviewModule } from './review/review.module';
     UniversityModule,
     NotificationModule,
     ReviewModule,
+    UserBlockModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],
