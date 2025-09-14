@@ -269,6 +269,7 @@ export class ChatService {
     senderId: number;
     content: string;
     type: ConversationMessageType;
+    requestId?: string;
   }): Promise<MessageEmissionResultDto> {
     return this.conversationRepository
       .getEntityManager()
@@ -355,6 +356,7 @@ export class ChatService {
                   messageNumber: nextMessageNumber,
                   createdAt: message.createdAt,
                   type: message.getType(),
+                  requestId: params.requestId,
                 },
               };
             }

@@ -15,6 +15,8 @@ export class NewMessageEventDto {
   createdAt: Date;
 
   type: ConversationMessageType;
+
+  requestId?: string;
 }
 
 export class ChatRoomUpdatedEventDto {
