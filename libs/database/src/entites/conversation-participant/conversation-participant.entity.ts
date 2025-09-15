@@ -83,6 +83,10 @@ export class ConversationParticipant extends BaseEntity {
     return this.status === ConversationParticipantStatus.MUTE;
   }
 
+  public isLeft(): boolean {
+    return this.status === ConversationParticipantStatus.LEFT;
+  }
+
   public leaveConversation(): void {
     this.leftAt = new Date();
   }
