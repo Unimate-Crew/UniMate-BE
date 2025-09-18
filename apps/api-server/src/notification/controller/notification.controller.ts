@@ -13,6 +13,7 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
 import { NotificationService } from '../service/notification.service';
 import { GetNotificationsRequestDto } from './dto/get-notifications-request.dto';
 import { GetNotificationsResponseDto } from './dto/get-notifications-response.dto';
@@ -21,9 +22,6 @@ import { DeleteNotificationsResponseDto } from './dto/delete-notifications-respo
 import { GetNotificationSettingsResponseDto } from './dto/get-notification-settings-response.dto';
 import { UpdateNotificationSettingsRequestDto } from './dto/update-notification-settings-request.dto';
 import { UpdateNotificationSettingsResponseDto } from './dto/update-notification-settings-response.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { UserTokenInfo } from '../../common/types/user-token-info';
-import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
 import { GetNotificationsParamsDto } from '../service/dto/get-notifications-params.dto';
 import { GetNotificationsResultDto } from '../service/dto/get-notifications-result.dto';
 import { DeleteNotificationsParamsDto } from '../service/dto/delete-notifications-params.dto';
@@ -49,7 +47,7 @@ export class NotificationController {
     type: GetNotificationsResponseDto,
   })
   async getNotifications(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Query() requestDto: GetNotificationsRequestDto,
   ): Promise<GetNotificationsResponseDto> {
     const params: GetNotificationsParamsDto = GetNotificationsParamsDto.of(
@@ -74,7 +72,7 @@ export class NotificationController {
     type: DeleteNotificationsResponseDto,
   })
   async deleteNotifications(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() requestDto: DeleteNotificationsRequestDto,
   ): Promise<DeleteNotificationsResponseDto> {
     const params: DeleteNotificationsParamsDto =
@@ -100,7 +98,7 @@ export class NotificationController {
     type: DeleteNotificationsResponseDto,
   })
   async deleteAllNotifications(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<DeleteNotificationsResponseDto> {
     const result: DeleteNotificationsResultDto =
       await this.notificationService.deleteAllNotifications(
@@ -121,7 +119,7 @@ export class NotificationController {
     type: GetNotificationSettingsResponseDto,
   })
   async getNotificationSettings(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<GetNotificationSettingsResponseDto> {
     const result: GetNotificationSettingsResultDto =
       await this.notificationService.getNotificationSettings(
@@ -142,7 +140,7 @@ export class NotificationController {
     type: UpdateNotificationSettingsResponseDto,
   })
   async updateNotificationSettings(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() requestDto: UpdateNotificationSettingsRequestDto,
   ): Promise<UpdateNotificationSettingsResponseDto> {
     const { priceChangedNotificationEnabled, saleEndedNotificationEnabled } =
