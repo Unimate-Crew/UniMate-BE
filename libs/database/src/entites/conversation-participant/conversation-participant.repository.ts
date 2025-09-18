@@ -8,11 +8,27 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
     return this.findOne({ id, isDeleted: false });
   }
 
-  async findByConversationIdAndUserId(
-    conversationId: number,
-    userId: number,
-  ): Promise<ConversationParticipant | null> {
-    return this.findOne({ conversationId, userId, isDeleted: false });
+  async findByConversationIdAndUserId(params: {
+    conversationId: number;
+    userId: number;
+  }): Promise<ConversationParticipant | null> {
+    return this.findOne({
+      conversationId: params.conversationId,
+      userId: params.userId,
+      isDeleted: false,
+    });
+  }
+
+  async findByUserIdAndConversationIdsIn(params: {
+    userId: number;
+    conversationIds: number[];
+  }): Promise<ConversationParticipant[]> {
+    return this.find({
+      conversationId: { $in: params.conversationIds },
+      userId: params.userId,
+      isDeleted: false,
+      // todo: status 추가
+    });
   }
 
   async findByConversationId(

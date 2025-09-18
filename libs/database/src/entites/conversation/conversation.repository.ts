@@ -8,10 +8,8 @@ export class ConversationRepository extends EntityRepository<Conversation> {
     return this.findOne({ id, isDeleted: false });
   }
 
-  async findByProductPostId(
-    productPostId: number,
-  ): Promise<Conversation | null> {
-    return this.findOne({ productPostId, isDeleted: false });
+  async findAllByProductPostId(productPostId: number): Promise<Conversation[]> {
+    return this.find({ productPostId, isDeleted: false });
   }
 
   async persist(conversation: Conversation): Promise<void> {
