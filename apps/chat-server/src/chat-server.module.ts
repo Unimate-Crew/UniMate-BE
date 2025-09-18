@@ -18,7 +18,6 @@ import { WebSocketExceptionFilter } from './common/websocket-exception.filter';
     }),
     DatabaseModule,
     RedisModule,
-    DatabaseModule,
     ConversationModule,
     ChatModule,
   ],
