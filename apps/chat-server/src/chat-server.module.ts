@@ -12,7 +12,7 @@ import { ConversationModule } from './conversation/conversation.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    // RedisModule,
+    RedisModule,
     DatabaseModule,
     ConversationModule,
   ],
