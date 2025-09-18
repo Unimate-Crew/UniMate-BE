@@ -1,11 +1,19 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { CurrentUser, JwtAuthGuard, UserTokenInfo } from '@app/auth';
 import { ConversationService } from '../application/conversation.service';
 import { CreateConversationRequestDto } from './dto/create-conversation-request.dto';
 import { CreateConversationResponseDto } from './dto/create-conversation-response.dto';
 
 @ApiTags('채팅방')
+@ApiBearerAuth('accessToken')
 @Controller({ path: 'conversations' })
+@UseGuards(JwtAuthGuard)
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
 
@@ -20,9 +28,10 @@ export class ConversationController {
   @Post()
   async createConversation(
     @Body() createConversationDto: CreateConversationRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<CreateConversationResponseDto> {
     const result = await this.conversationService.createConversation({
-      userId: 20,
+      userId: userTokenInfo.userId,
       productPostId: createConversationDto.productPostId,
     });
 
