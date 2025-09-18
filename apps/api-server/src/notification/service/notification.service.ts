@@ -4,13 +4,13 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { PagedResult } from '@app/common/utils/pagination';
 import { Notification } from '@app/database/entites/notification/notification.entity';
 import { User } from '@app/database';
+import { ErrorCode } from '@app/common';
 import { GetNotificationsParamsDto } from './dto/get-notifications-params.dto';
 import { GetNotificationsResultDto } from './dto/get-notifications-result.dto';
 import { DeleteNotificationsParamsDto } from './dto/delete-notifications-params.dto';
 import { DeleteNotificationsResultDto } from './dto/delete-notifications-result.dto';
 import { GetNotificationSettingsResultDto } from './dto/get-notification-settings-result.dto';
 import { UpdateNotificationSettingsResultDto } from './dto/update-notification-settings-result.dto';
-import { ErrorCode } from '../../common/error-code';
 
 @Injectable()
 export class NotificationService {

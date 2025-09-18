@@ -15,10 +15,10 @@ import {
   RegionRepository,
   UniversityRepository,
 } from '@app/database';
+import { ErrorCode } from '@app/common';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
 import { SignInDto } from './dto/sign-in.dto';
-import { ErrorCode } from '../common/error-code';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
