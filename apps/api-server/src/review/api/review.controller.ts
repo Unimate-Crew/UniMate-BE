@@ -5,10 +5,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
 import { ErrorResponse } from '../../common/error-response';
-import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
-import { UserTokenInfo } from '../../common/types/user-token-info';
 import { CreateReviewRequestDto } from './dto/create-review.request.dto';
 import { ReviewService } from '../application/review.service';
 import { CreateReviewResponseDto } from './dto/create-review.response.dto';
@@ -31,7 +29,7 @@ export class ReviewController {
   @ApiResponse({ status: 401, description: '인증 실패', type: ErrorResponse })
   async createReview(
     @Body() dto: CreateReviewRequestDto,
-    @GetUserTokenInfo() user: UserTokenInfo,
+    @CurrentUser() user: UserTokenInfo,
   ): Promise<CreateReviewResponseDto> {
     const reviewId = await this.reviewService.createReview({
       productPostId: dto.productPostId,

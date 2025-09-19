@@ -25,7 +25,9 @@
       "@app/common": ["libs/common/src"],
       "@app/common/*": ["libs/common/src/*"],
       "@app/redis": ["libs/redis/src"],
-      "@app/redis/*": ["libs/redis/src/*"]
+      "@app/redis/*": ["libs/redis/src/*"],
+      "@app/auth": ["libs/auth/src"],
+      "@app/auth/*": ["libs/auth/src/*"]
     }
   }
 }

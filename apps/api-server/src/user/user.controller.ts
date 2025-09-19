@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { S3Service } from '@app/common/s3/s3.service';
+import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../auth/auth.service';
@@ -27,7 +28,6 @@ import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../common/error-response';
 import { SaveInterestRegionsDto } from './dto/save-Interest-Regions.dto';
 import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
@@ -35,8 +35,6 @@ import { CheckNicknameExistsDto } from './dto/check-nickname-exists.dto';
 import { CheckNicknameExistsResponseDto } from './dto/check-nickname-exists-response.dto';
 import { GeneratePresignedUrlRequestDto } from './dto/generate-presigned-url-request.dto';
 import { GeneratePresignedUrlResponseDto } from './dto/generate-presigned-url-response.dto';
-import { UserTokenInfo } from '../common/types/user-token-info';
-import { GetUserTokenInfo } from '../common/decorators/get-user-token-info.decorator';
 import { SaveInterestRegionDto } from './dto/save-interest-region.dto';
 import { GetMyProfileResponseDto } from './dto/get-my-profile.response.dto';
 import { GetUserProfileResponseDto } from './dto/get-user-profile.response.dto';
@@ -163,7 +161,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async saveInterestRegions(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() saveInterestRegionsDto: SaveInterestRegionsDto,
   ): Promise<void> {
     await this.userService.saveInterestRegions(
@@ -201,7 +199,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(201)
   async setOnboardingInterestRegion(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() saveInterestRegionDto: SaveInterestRegionDto,
   ): Promise<void> {
     await this.userService.setOnboardingInterestRegion(
@@ -230,7 +228,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(201)
   async saveInterestRegion(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() saveInterestRegionDto: SaveInterestRegionDto,
   ): Promise<void> {
     await this.userService.saveInterestRegion(
@@ -260,7 +258,7 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   async findInterestRegions(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<InterestRegionInfosDto> {
     return this.userService.getInterestRegions(userTokenInfo.userId);
   }
@@ -285,7 +283,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async setPrimaryInterestRegion(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Param('regionId') regionId: string,
   ): Promise<void> {
     await this.userService.setPrimaryInterestRegion(
@@ -314,7 +312,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   async deleteInterestRegion(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Param('regionId') regionId: string,
   ): Promise<void> {
     await this.userService.deleteInterestRegion(userTokenInfo.userId, regionId);
@@ -360,7 +358,7 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   async getMyProfile(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<GetMyProfileResponseDto> {
     const userProfile = await this.userService.getUserProfile(
       userTokenInfo.userId,
@@ -404,7 +402,7 @@ export class UserController {
   @ApiBearerAuth('accessToken')
   @UseGuards(JwtAuthGuard)
   async updateMyProfile(
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() updateUserProfileDto: UpdateUserProfileRequestDto,
   ): Promise<UpdateUserProfileResponseDto> {
     const updateUserProfileResult: UpdateUserProfileResultDto =

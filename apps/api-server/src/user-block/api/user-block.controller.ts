@@ -13,11 +13,9 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
 import { UserBlockService } from '../application/user-block.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../../common/error-response';
-import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
-import { UserTokenInfo } from '../../common/types/user-token-info';
 
 @ApiTags('유저 차단')
 @Controller({ path: 'user-blocks' })
@@ -101,7 +99,7 @@ export class UserBlockController {
   })
   async blockUser(
     @Param('userId', ParseIntPipe) userId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.userBlockService.blockUser({
       blockerId: userTokenInfo.userId,
@@ -147,7 +145,7 @@ export class UserBlockController {
   })
   async unblockUser(
     @Param('userId', ParseIntPipe) userId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.userBlockService.unblockUser({
       blockerId: userTokenInfo.userId,
