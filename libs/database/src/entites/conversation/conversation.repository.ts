@@ -20,6 +20,10 @@ export class ConversationRepository extends EntityRepository<Conversation> {
     return this.findOne({ productPostId, isDeleted: false });
   }
 
+  async findAllByProductPostId(productPostId: number): Promise<Conversation[]> {
+    return this.find({ productPostId, isDeleted: false });
+  }
+
   /**
    * 대화방을 생성합니다.
    *

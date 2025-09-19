@@ -19,15 +19,13 @@ import {
 } from '@nestjs/swagger';
 import { SortDirection } from '@app/database/common/enums';
 import { Slice, PageRequest } from '@app/common';
+import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
 import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts.request.dto';
 import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts.response.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ErrorResponse } from '../../common/error-response';
 import { SearchProductPostsRequestDto } from './dto/search-product-posts.request.dto';
 import { CreateProductPostRequestDto } from './dto/create-product-post.request.dto';
-import { GetUserTokenInfo } from '../../common/decorators/get-user-token-info.decorator';
-import { UserTokenInfo } from '../../common/types/user-token-info';
 import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list.request.dto';
 import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list.response.dto';
 import { ProductPostResultDto } from '../application/dto/product-post.result.dto';
@@ -68,7 +66,7 @@ export class ProductPostController {
   })
   async findPagedProductPosts(
     @Query() query: FindPagedProductPostsRequestDto,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<FindPagedProductPostsResponseDto> {
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findPagedProductPosts({
@@ -100,7 +98,7 @@ export class ProductPostController {
   })
   async searchProductPosts(
     @Query() query: SearchProductPostsRequestDto,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<FindPagedProductPostsResponseDto> {
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.searchProductPosts({
@@ -141,7 +139,7 @@ export class ProductPostController {
   })
   async findMySales(
     @Query() query: FindMySalesRequestDto,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<FindMySalesResponseDto> {
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findMySales({
@@ -212,7 +210,7 @@ export class ProductPostController {
   })
   async findMyLikes(
     @Query() query: FindMyLikesRequestDto,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<FindMyLikesResponseDto> {
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findMyLikes({
@@ -281,7 +279,7 @@ export class ProductPostController {
   })
   async hideProductPost(
     @Param('id', ParseIntPipe) productPostId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.productPostService.hideProductPost({
       productPostId,
@@ -369,7 +367,7 @@ export class ProductPostController {
   })
   async unhideProductPost(
     @Param('id', ParseIntPipe) productPostId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.productPostService.unhideProductPost({
       productPostId,
@@ -421,7 +419,7 @@ export class ProductPostController {
   })
   async deleteProductPost(
     @Param('id', ParseIntPipe) productPostId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.productPostService.deleteProductPost({
       productPostId,
@@ -450,7 +448,7 @@ export class ProductPostController {
   })
   async createProductPost(
     @Body() createProductPostDto: CreateProductPostRequestDto,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<CreateProductPostResponseDto> {
     const productPostId: number =
       await this.productPostService.createProductPost({
@@ -577,7 +575,7 @@ export class ProductPostController {
   async updateProductPost(
     @Param('id') productPostId: number,
     @Body() updateProductPostRequestDto: UpdateProductPostRequestDto,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<UpdateProductPostResponseDto> {
     const updatedProductPostId: number =
       await this.productPostService.updateProductPost({
@@ -658,7 +656,7 @@ export class ProductPostController {
   })
   async likeProductPost(
     @Param('id', ParseIntPipe) productPostId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.productPostService.likeProductPost({
       productPostId,
@@ -680,7 +678,7 @@ export class ProductPostController {
   })
   async unlikeProductPost(
     @Param('id', ParseIntPipe) productPostId: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<void> {
     await this.productPostService.unlikeProductPost({
       productPostId,
@@ -709,7 +707,7 @@ export class ProductPostController {
   })
   async findProductPostDetail(
     @Param('id', ParseIntPipe) id: number,
-    @GetUserTokenInfo() userTokenInfo: UserTokenInfo,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<FindProductPostDetailResponseDto> {
     const productPostDetail: ProductPostDetailResultDto =
       await this.productPostService.findProductPostDetail({

@@ -14,8 +14,8 @@ export class ConversationParticipant extends BaseEntity {
   @Property()
   userId!: number;
 
-  @Property({ nullable: true, type: 'bigint' })
-  lastReadMessageNumber?: number;
+  @Property({ type: 'bigint' })
+  lastReadMessageNumber: number = 0;
 
   @Property({ nullable: true })
   leftAt?: Date;

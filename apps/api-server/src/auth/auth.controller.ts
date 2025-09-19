@@ -1,9 +1,9 @@
 import { Controller, Req, UseGuards, Post } from '@nestjs/common';
 import { Request } from 'express';
 import { User } from '@app/database';
+import { JwtRefreshGuard } from '@app/auth';
 import { AuthService } from './auth.service';
 import { TokensDto } from './dto/tokens.dto';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
 @Controller('auth')
 export class AuthController {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OAuthProvider, User, UserRepository } from '@app/database';
-import { TokenPayloadDto, TokenType } from './dto/token-payload.dto';
+import { TokenPayloadDto, TokenType } from '@app/auth';
 import { TokensDto } from './dto/tokens.dto';
 
 @Injectable()

@@ -21,7 +21,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: TokenPayloadDto) {
+  async validate(payload: TokenPayloadDto): Promise<User> {
     // 토큰 타입 검증
     if (payload.type !== TokenType.REFRESH) {
       throw new UnauthorizedException('Invalid token type');

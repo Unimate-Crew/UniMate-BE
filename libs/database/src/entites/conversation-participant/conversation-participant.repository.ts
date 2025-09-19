@@ -9,18 +9,27 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
     return this.findOne({ id, isDeleted: false });
   }
 
-  /**
-   * 대화방과 사용자 ID로 참여자를 조회합니다.
-   *
-   * @param conversationId 대화방 ID
-   * @param userId 사용자 ID
-   * @returns 참여자 엔티티
-   */
-  async findByConversationIdAndUserId(
-    conversationId: number,
-    userId: number,
-  ): Promise<ConversationParticipant | null> {
-    return this.findOne({ conversationId, userId, isDeleted: false });
+  async findByConversationIdAndUserId(params: {
+    conversationId: number;
+    userId: number;
+  }): Promise<ConversationParticipant | null> {
+    return this.findOne({
+      conversationId: params.conversationId,
+      userId: params.userId,
+      isDeleted: false,
+    });
+  }
+
+  async findByUserIdAndConversationIdsIn(params: {
+    userId: number;
+    conversationIds: number[];
+  }): Promise<ConversationParticipant[]> {
+    return this.find({
+      conversationId: { $in: params.conversationIds },
+      userId: params.userId,
+      isDeleted: false,
+      // todo: status 추가
+    });
   }
 
   /**

@@ -10,8 +10,8 @@ export class Conversation extends BaseEntity {
   @Property()
   productPostId!: number;
 
-  @Property({ nullable: true, type: 'bigint' })
-  lastMessageNumber?: number;
+  @Property({ type: 'bigint' })
+  lastMessageNumber: number = 0;
 
   @Property({ nullable: true })
   lastSentAt?: Date;
