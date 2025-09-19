@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ConversationRepository } from '@app/database/entites/conversation/conversation.repository';
 import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
@@ -132,5 +133,81 @@ export class ConversationService {
     }
 
     return existingConversations[0];
+  }
+
+  async muteConversation(params: {
+    userId: number;
+    conversationId: number;
+  }): Promise<void> {
+    const { userId, conversationId } = params;
+
+    const conversation: Conversation | null =
+      await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+    }
+
+    const participant: ConversationParticipant | null =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId,
+        },
+      );
+
+    if (!participant) {
+      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+    }
+
+    if (!participant.isLeft()) {
+      throw new ForbiddenException('채팅방을 나간 사용자입니다.');
+    }
+
+    if (participant.isMuted()) {
+      throw new BadRequestException('이미 알림이 꺼진 채팅방입니다.');
+    }
+
+    participant.addStatus(ConversationParticipantStatus.MUTE);
+
+    await this.conversationParticipantRepository.persistAndFlush(participant);
+  }
+
+  async unmuteConversation(params: {
+    userId: number;
+    conversationId: number;
+  }): Promise<void> {
+    const { userId, conversationId } = params;
+
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+    }
+
+    const participant =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId,
+        },
+      );
+
+    if (!participant) {
+      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+    }
+
+    if (!participant.isLeft()) {
+      throw new ForbiddenException('채팅방을 나간 사용자입니다.');
+    }
+
+    if (!participant.isMuted()) {
+      throw new BadRequestException('이미 알림이 켜진 채팅방입니다.');
+    }
+
+    participant.removeStatus(ConversationParticipantStatus.MUTE);
+
+    await this.conversationParticipantRepository.persistAndFlush(participant);
   }
 }
