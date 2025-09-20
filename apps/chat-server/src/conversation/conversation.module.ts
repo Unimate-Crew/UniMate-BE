@@ -6,6 +6,7 @@ import {
   ProductPost,
   User,
 } from '@app/database';
+import { ChatModule } from '../chat/chat.module';
 import { ConversationController } from './api/conversation.controller';
 import { ConversationService } from './application/conversation.service';
 
@@ -17,6 +18,7 @@ import { ConversationService } from './application/conversation.service';
       ProductPost,
       User,
     ]),
+    ChatModule,
   ],
   controllers: [ConversationController],
   providers: [ConversationService],

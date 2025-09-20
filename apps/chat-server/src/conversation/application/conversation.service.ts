@@ -15,6 +15,8 @@ import {
   ConversationParticipantStatus,
 } from '@app/database/common/enums';
 import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
+import { ChatService } from '../../chat/application/chat.service';
+import { CachedConversationParticipantDto } from '../../chat/application/dto/cached-conversation-participant.dto';
 
 @Injectable()
 export class ConversationService {
@@ -23,6 +25,7 @@ export class ConversationService {
     private readonly conversationParticipantRepository: ConversationParticipantRepository,
     private readonly productPostRepository: ProductPostRepository,
     private readonly userRepository: UserRepository,
+    private readonly chatService: ChatService,
   ) {}
 
   async createConversation(params: {
@@ -160,7 +163,7 @@ export class ConversationService {
       throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
     }
 
-    if (!participant.isLeft()) {
+    if (participant.isLeft()) {
       throw new ForbiddenException('채팅방을 나간 사용자입니다.');
     }
 
@@ -198,7 +201,7 @@ export class ConversationService {
       throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
     }
 
-    if (!participant.isLeft()) {
+    if (participant.isLeft()) {
       throw new ForbiddenException('채팅방을 나간 사용자입니다.');
     }
 
@@ -209,5 +212,71 @@ export class ConversationService {
     participant.removeStatus(ConversationParticipantStatus.MUTE);
 
     await this.conversationParticipantRepository.persistAndFlush(participant);
+  }
+
+  async leaveConversation(params: {
+    userId: number;
+    conversationId: number;
+  }): Promise<void> {
+    const { userId, conversationId } = params;
+
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+    }
+
+    const participant =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId,
+        },
+      );
+
+    if (!participant) {
+      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+    }
+
+    if (!participant.isJoined()) {
+      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+    }
+
+    if (participant.isLeft()) {
+      throw new BadRequestException('이미 나간 채팅방입니다.');
+    }
+
+    participant.leaveConversation();
+
+    await this.conversationParticipantRepository
+      .getEntityManager()
+      .transactional(async (em) => {
+        await em.persistAndFlush(participant);
+
+        await this.chatService.removeUserFromOnlineConversation({
+          conversationId,
+          userId,
+        });
+
+        const updatedParticipants =
+          await this.conversationParticipantRepository.find({
+            conversationId,
+            isDeleted: false,
+          });
+
+        const cachedParticipants = updatedParticipants.map((p) => ({
+          userId: p.getUserId(),
+          lastReadMessageNumber: p.getLastReadMessageNumber(),
+          status: p.getStatus(),
+        }));
+
+        await this.chatService.cacheConversationParticipants({
+          conversationId,
+          participants: cachedParticipants.map((p) =>
+            CachedConversationParticipantDto.from(p),
+          ),
+        });
+      });
   }
 }

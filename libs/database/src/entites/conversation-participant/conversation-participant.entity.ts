@@ -104,6 +104,8 @@ export class ConversationParticipant extends BaseEntity {
   }
 
   public leaveConversation(): void {
+    this.removeStatus(ConversationParticipantStatus.JOIN);
+    this.addStatus(ConversationParticipantStatus.LEFT);
     this.leftAt = new Date();
   }
 }
