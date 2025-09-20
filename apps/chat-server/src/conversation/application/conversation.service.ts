@@ -15,8 +15,11 @@ import {
   ConversationParticipantStatus,
 } from '@app/database/common/enums';
 import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
-import { ChatService } from '../../chat/application/chat.service';
-import { CachedConversationParticipantDto } from '../../chat/application/dto/cached-conversation-participant.dto';
+import {
+  RoomOnlineCacheRepository,
+  ParticipantCacheRepository,
+  ConversationParticipantCache,
+} from '@app/redis';
 
 @Injectable()
 export class ConversationService {
@@ -25,7 +28,8 @@ export class ConversationService {
     private readonly conversationParticipantRepository: ConversationParticipantRepository,
     private readonly productPostRepository: ProductPostRepository,
     private readonly userRepository: UserRepository,
-    private readonly chatService: ChatService,
+    private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
+    private readonly participantCacheRepository: ParticipantCacheRepository,
   ) {}
 
   async createConversation(params: {
@@ -254,10 +258,10 @@ export class ConversationService {
       .transactional(async (em) => {
         await em.persistAndFlush(participant);
 
-        await this.chatService.removeUserFromOnlineConversation({
+        await this.roomOnlineCacheRepository.removeUserFromRoom(
           conversationId,
           userId,
-        });
+        );
 
         const updatedParticipants =
           await this.conversationParticipantRepository.find({
@@ -271,12 +275,18 @@ export class ConversationService {
           status: p.getStatus(),
         }));
 
-        await this.chatService.cacheConversationParticipants({
+        const participantCaches = cachedParticipants.map((p) =>
+          ConversationParticipantCache.from({
+            userId: p.userId,
+            lastReadMessageNumber: p.lastReadMessageNumber,
+            status: p.status,
+          }),
+        );
+
+        await this.participantCacheRepository.setParticipants(
           conversationId,
-          participants: cachedParticipants.map((p) =>
-            CachedConversationParticipantDto.from(p),
-          ),
-        });
+          participantCaches,
+        );
       });
   }
 }

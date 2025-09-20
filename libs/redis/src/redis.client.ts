@@ -46,40 +46,33 @@ export class RedisClient implements OnApplicationShutdown {
     return this.client.expire(key, seconds);
   }
 
-  async hset(key: string, field: string, value: string): Promise<number> {
-    return this.client.hset(key, field, value);
+  // Set operations
+  async addToSet(key: string, ...members: string[]): Promise<number> {
+    return this.client.sadd(key, ...members);
   }
 
-  async hget(key: string, field: string): Promise<string | null> {
-    return this.client.hget(key, field);
+  async removeFromSet(key: string, ...members: string[]): Promise<number> {
+    return this.client.srem(key, ...members);
   }
 
-  async hgetall(key: string): Promise<Record<string, string>> {
-    return this.client.hgetall(key);
+  async getSetMembers(key: string): Promise<string[]> {
+    return this.client.smembers(key);
   }
 
-  async hdel(key: string, field: string): Promise<number> {
-    return this.client.hdel(key, field);
+  async isSetMember(key: string, member: string): Promise<number> {
+    return this.client.sismember(key, member);
   }
 
-  async lpush(key: string, value: string): Promise<number> {
-    return this.client.lpush(key, value);
+  async getSetSize(key: string): Promise<number> {
+    return this.client.scard(key);
   }
 
-  async rpush(key: string, value: string): Promise<number> {
-    return this.client.rpush(key, value);
+  async keys(pattern: string): Promise<string[]> {
+    return this.client.keys(pattern);
   }
 
-  async lpop(key: string): Promise<string | null> {
-    return this.client.lpop(key);
-  }
-
-  async rpop(key: string): Promise<string | null> {
-    return this.client.rpop(key);
-  }
-
-  async lrange(key: string, start: number, stop: number): Promise<string[]> {
-    return this.client.lrange(key, start, stop);
+  pipeline() {
+    return this.client.pipeline();
   }
 
   getClient(): Redis {
