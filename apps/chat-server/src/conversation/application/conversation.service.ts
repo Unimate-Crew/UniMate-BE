@@ -119,11 +119,10 @@ export class ConversationService {
         conversationId: row.conversationId,
         productPostId: row.productPostId,
         productTitle: row.productTitle || null,
-        productThumbnailUrl:
-          row.productImageUrl || row.productThumbnailUrl || null,
+        productThumbnailKey: row.productThumbnailKey || null,
         otherUserId: row.otherUserId,
         otherUserNickname: row.otherUserNickname || null,
-        otherUserProfileImageUrl: row.otherUserProfileImageUrl || null,
+        otherUserProfileImageKey: row.otherUserProfileImageKey || null,
         lastMessageContent: row.lastMessageContent || null,
         lastMessageSenderId: row.lastMessageSenderId || null,
         lastSentAt: row.lastSentAt || null,

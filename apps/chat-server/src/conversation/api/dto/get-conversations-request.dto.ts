@@ -1,7 +1,7 @@
 import { IsNumber, IsOptional, IsPositive } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { PageRequest } from '@app/common/dto/page-request.dto';
+import { PageRequest } from '@app/common';
 
 export class GetConversationsRequestDto extends PageRequest {
   @ApiPropertyOptional({

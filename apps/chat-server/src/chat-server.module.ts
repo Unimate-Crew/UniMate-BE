@@ -27,10 +27,10 @@ import { WebSocketExceptionFilter } from './common/websocket-exception.filter';
     ChatServerService,
     WebSocketRedisAdapterConfig,
     JwtAccessStrategy,
-    {
-      provide: APP_FILTER,
-      useClass: WebSocketExceptionFilter,
-    },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: WebSocketExceptionFilter,
+    // },
   ],
 })
 export class ChatServerModule {}

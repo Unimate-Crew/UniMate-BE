@@ -1,10 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ValidationPipe } from '@nestjs/common';
 import { ChatServerModule } from './chat-server.module';
 import { WebSocketRedisAdapterConfig } from './common/config/websocket-redis-adapter.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(ChatServerModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // WebSocket Redis 어댑터 설정
   const redisAdapterConfig = app.get(WebSocketRedisAdapterConfig);

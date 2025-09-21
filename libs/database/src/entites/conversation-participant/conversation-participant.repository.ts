@@ -132,11 +132,10 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
         c.product_post_id as productPostId,
         c.last_message_number as lastMessageNumber,
         pp.title as productTitle,
-        pp.thumbnail_url as productThumbnailUrl,
-        pi.image_url as productImageUrl,
+        pi.image_key as productThumbnailKey,
         other_user.id as otherUserId,
         other_user.nickname as otherUserNickname,
-        other_user.profile_image_url as otherUserProfileImageUrl,
+        other_user.profile_image_key as otherUserProfileImageKey,
         cm.content as lastMessageContent,
         cm.sender_id as lastMessageSenderId,
         c.last_sent_at as lastSentAt,
@@ -147,8 +146,8 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
         AND other_cp.user_id != ? AND other_cp.is_deleted = false
       LEFT JOIN user other_user ON other_user.id = other_cp.user_id
       LEFT JOIN product_post pp ON pp.id = c.product_post_id
-      LEFT JOIN product_image pi ON pi.product_post_id = pp.id
-        AND pi.is_deleted = false AND pi.sequence = 1
+      LEFT JOIN product_image pi ON pi.product_id = pp.id
+        AND pi.is_deleted = false AND pi.is_thumbnail = true
       LEFT JOIN conversation_message cm ON cm.conversation_id = c.id
         AND cm.message_number = c.last_message_number
       WHERE cp.user_id = ?
