@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { ConversationRepository } from '@app/database/entites/conversation/conversation.repository';
 import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
@@ -14,12 +15,13 @@ import {
   TradeStatus,
   ConversationParticipantStatus,
 } from '@app/database/common/enums';
-import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
+import { ErrorCode } from '@app/common';
 import {
   RoomOnlineCacheRepository,
   ParticipantCacheRepository,
   ConversationParticipantCache,
 } from '@app/redis';
+import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
 
 @Injectable()
 export class ConversationService {
@@ -42,25 +44,40 @@ export class ConversationService {
       await this.productPostRepository.findById(productPostId);
 
     if (!productPost) {
-      throw new NotFoundException('상품 게시글을 찾을 수 없습니다.');
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
     }
 
     if (productPost.getIsHidden()) {
-      throw new BadRequestException('숨겨진 게시글입니다.');
+      throw new BadRequestException({
+        code: ErrorCode.PRODUCT_POST_HIDDEN,
+        message: '숨겨진 게시글입니다.',
+      });
     }
 
     if (productPost.getTradeStatus() !== TradeStatus.FOR_SALE) {
-      throw new BadRequestException('판매 중인 상품만 채팅할 수 있습니다.');
+      throw new BadRequestException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOR_SALE,
+        message: '판매 중인 상품만 채팅할 수 있습니다.',
+      });
     }
 
     const seller = await this.userRepository.findById(productPost.getUserId());
 
     if (!seller || seller.isUserDeleted()) {
-      throw new BadRequestException('탈퇴한 판매자의 게시글입니다.');
+      throw new BadRequestException({
+        code: ErrorCode.CONVERSATION_SELLER_DELETED,
+        message: '탈퇴한 판매자의 게시글입니다.',
+      });
     }
 
     if (productPost.isOwner(userId)) {
-      throw new BadRequestException('본인의 게시글에는 채팅할 수 없습니다.');
+      throw new BadRequestException({
+        code: ErrorCode.CONVERSATION_OWN_POST_NOT_ALLOWED,
+        message: '본인의 게시글에는 채팅할 수 없습니다.',
+      });
     }
 
     const existingConversation = await this.findExistingConversation({
@@ -152,7 +169,10 @@ export class ConversationService {
       await this.conversationRepository.findById(conversationId);
 
     if (!conversation) {
-      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+      throw new NotFoundException({
+        code: ErrorCode.CONVERSATION_NOT_FOUND,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
     }
 
     const participant: ConversationParticipant | null =
@@ -164,15 +184,24 @@ export class ConversationService {
       );
 
     if (!participant) {
-      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+      throw new ForbiddenException({
+        code: ErrorCode.PARTICIPANT_NOT_FOUND,
+        message: '채팅방에 참가하지 않은 사용자입니다.',
+      });
     }
 
     if (participant.isLeft()) {
-      throw new ForbiddenException('채팅방을 나간 사용자입니다.');
+      throw new ForbiddenException({
+        code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
+        message: '이미 나간 채팅방입니다.',
+      });
     }
 
     if (participant.isMuted()) {
-      throw new BadRequestException('이미 알림이 꺼진 채팅방입니다.');
+      throw new ConflictException({
+        code: ErrorCode.CONVERSATION_ALREADY_MUTED,
+        message: '이미 알림이 꺼진 채팅방입니다.',
+      });
     }
 
     participant.addStatus(ConversationParticipantStatus.MUTE);
@@ -190,7 +219,10 @@ export class ConversationService {
       await this.conversationRepository.findById(conversationId);
 
     if (!conversation) {
-      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+      throw new NotFoundException({
+        code: ErrorCode.CONVERSATION_NOT_FOUND,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
     }
 
     const participant =
@@ -202,15 +234,24 @@ export class ConversationService {
       );
 
     if (!participant) {
-      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+      throw new ForbiddenException({
+        code: ErrorCode.PARTICIPANT_NOT_FOUND,
+        message: '채팅방에 참가하지 않은 사용자입니다.',
+      });
     }
 
     if (participant.isLeft()) {
-      throw new ForbiddenException('채팅방을 나간 사용자입니다.');
+      throw new ForbiddenException({
+        code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
+        message: '이미 나간 채팅방입니다.',
+      });
     }
 
     if (!participant.isMuted()) {
-      throw new BadRequestException('이미 알림이 켜진 채팅방입니다.');
+      throw new ConflictException({
+        code: ErrorCode.CONVERSATION_ALREADY_UNMUTED,
+        message: '이미 알림이 켜진 채팅방입니다.',
+      });
     }
 
     participant.removeStatus(ConversationParticipantStatus.MUTE);
@@ -228,7 +269,10 @@ export class ConversationService {
       await this.conversationRepository.findById(conversationId);
 
     if (!conversation) {
-      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+      throw new NotFoundException({
+        code: ErrorCode.CONVERSATION_NOT_FOUND,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
     }
 
     const participant =
@@ -240,15 +284,24 @@ export class ConversationService {
       );
 
     if (!participant) {
-      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+      throw new ForbiddenException({
+        code: ErrorCode.PARTICIPANT_NOT_FOUND,
+        message: '채팅방에 참가하지 않은 사용자입니다.',
+      });
     }
 
     if (!participant.isJoined()) {
-      throw new ForbiddenException('채팅방에 참가하지 않은 사용자입니다.');
+      throw new ForbiddenException({
+        code: ErrorCode.PARTICIPANT_NOT_FOUND,
+        message: '채팅방에 참가하지 않은 사용자입니다.',
+      });
     }
 
     if (participant.isLeft()) {
-      throw new BadRequestException('이미 나간 채팅방입니다.');
+      throw new ConflictException({
+        code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
+        message: '이미 나간 채팅방입니다.',
+      });
     }
 
     participant.leaveConversation();

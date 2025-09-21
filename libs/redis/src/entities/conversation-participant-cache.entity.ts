@@ -2,7 +2,9 @@ import { ConversationParticipantStatus } from '@app/database';
 
 export class ConversationParticipantCache {
   private userId: number;
+
   private lastReadMessageNumber: number;
+
   private status: ConversationParticipantStatus[];
 
   constructor(
