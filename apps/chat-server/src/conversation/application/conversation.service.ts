@@ -13,7 +13,9 @@ import {
   TradeStatus,
   ConversationParticipantStatus,
 } from '@app/database/common/enums';
+import { Slice, PageRequest } from '@app/common';
 import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
+import { GetConversationsResultDto } from './dto/get-conversations-result.dto';
 
 @Injectable()
 export class ConversationService {
@@ -94,6 +96,42 @@ export class ConversationService {
       });
 
     return CreateConversationResultDto.from(conversation);
+  }
+
+  async getConversations(params: {
+    userId: number;
+    pageRequest: PageRequest;
+    productPostId?: number;
+  }): Promise<Slice<GetConversationsResultDto>> {
+    const { userId, pageRequest, productPostId } = params;
+
+    const rawSlice =
+      await this.conversationParticipantRepository.findConversationsByUserId({
+        userId,
+        productPostId,
+        pageRequest,
+      });
+
+    const resultDtos = rawSlice.contents.map((row) => {
+      const unreadCount = row.lastMessageNumber - row.lastReadMessageNumber;
+
+      return GetConversationsResultDto.of({
+        conversationId: row.conversationId,
+        productPostId: row.productPostId,
+        productTitle: row.productTitle || null,
+        productThumbnailUrl:
+          row.productImageUrl || row.productThumbnailUrl || null,
+        otherUserId: row.otherUserId,
+        otherUserNickname: row.otherUserNickname || null,
+        otherUserProfileImageUrl: row.otherUserProfileImageUrl || null,
+        lastMessageContent: row.lastMessageContent || null,
+        lastMessageSenderId: row.lastMessageSenderId || null,
+        lastSentAt: row.lastSentAt || null,
+        unreadCount,
+      });
+    });
+
+    return Slice.of(resultDtos, rawSlice.hasNext);
   }
 
   private async findExistingConversation(params: {

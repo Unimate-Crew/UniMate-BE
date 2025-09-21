@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -6,9 +6,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CurrentUser, JwtAuthGuard, UserTokenInfo } from '@app/auth';
+import { PageRequest } from '@app/common';
 import { ConversationService } from '../application/conversation.service';
 import { CreateConversationRequestDto } from './dto/create-conversation-request.dto';
 import { CreateConversationResponseDto } from './dto/create-conversation-response.dto';
+import { GetConversationsRequestDto } from './dto/get-conversations-request.dto';
+import { GetConversationsResponseDto } from './dto/get-conversations-response.dto';
 
 @ApiTags('채팅방')
 @ApiBearerAuth('accessToken')
@@ -36,5 +39,37 @@ export class ConversationController {
     });
 
     return CreateConversationResponseDto.from(result);
+  }
+
+  @ApiOperation({
+    summary: '채팅방 리스트 조회',
+    description:
+      '사용자가 참여한 채팅방 목록을 페이지네이션으로 조회합니다. productPostId가 제공되면 해당 상품의 채팅방만 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '채팅방 리스트 조회 성공',
+    type: GetConversationsResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+  })
+  @ApiResponse({ status: 401, description: '인증 토큰이 유효하지 않음' })
+  @Get()
+  async getConversations(
+    @Query() getConversationsDto: GetConversationsRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetConversationsResponseDto> {
+    const result = await this.conversationService.getConversations({
+      userId: userTokenInfo.userId,
+      pageRequest: PageRequest.of(
+        getConversationsDto.getPageNumber(),
+        getConversationsDto.getPageSize(),
+      ),
+      productPostId: getConversationsDto.productPostId,
+    });
+
+    return GetConversationsResponseDto.from(result);
   }
 }
