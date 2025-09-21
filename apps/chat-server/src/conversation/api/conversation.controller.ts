@@ -1,4 +1,13 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Param,
+  Patch,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,6 +18,9 @@ import { CurrentUser, JwtAuthGuard, UserTokenInfo } from '@app/auth';
 import { ConversationService } from '../application/conversation.service';
 import { CreateConversationRequestDto } from './dto/create-conversation-request.dto';
 import { CreateConversationResponseDto } from './dto/create-conversation-response.dto';
+import { MuteConversationRequestDto } from './dto/mute-conversation-request.dto';
+import { UnmuteConversationRequestDto } from './dto/unmute-conversation-request.dto';
+import { LeaveConversationRequestDto } from './dto/leave-conversation-request.dto';
 
 @ApiTags('채팅방')
 @ApiBearerAuth('accessToken')
@@ -36,5 +48,65 @@ export class ConversationController {
     });
 
     return CreateConversationResponseDto.from(result);
+  }
+
+  @ApiOperation({ summary: '채팅방 알림 끄기' })
+  @ApiResponse({
+    status: 204,
+    description: '채팅방 알림 끄기 성공',
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '채팅방을 찾을 수 없음' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Patch(':conversationId/mute')
+  async muteConversation(
+    @Param() muteConversationDto: MuteConversationRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.conversationService.muteConversation({
+      userId: userTokenInfo.userId,
+      conversationId: Number(muteConversationDto.conversationId),
+    });
+  }
+
+  @ApiOperation({ summary: '채팅방 알림 켜기' })
+  @ApiResponse({
+    status: 204,
+    description: '채팅방 알림 켜기 성공',
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '채팅방을 찾을 수 없음' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Patch(':conversationId/unmute')
+  async unmuteConversation(
+    @Param() unmuteConversationDto: UnmuteConversationRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.conversationService.unmuteConversation({
+      userId: userTokenInfo.userId,
+      conversationId: Number(unmuteConversationDto.conversationId),
+    });
+  }
+
+  @ApiOperation({ summary: '채팅방 나가기' })
+  @ApiResponse({
+    status: 204,
+    description: '채팅방 나가기 성공',
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '채팅방을 찾을 수 없음' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Patch(':conversationId/leave')
+  async leaveConversation(
+    @Param() leaveConversationDto: LeaveConversationRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.conversationService.leaveConversation({
+      userId: userTokenInfo.userId,
+      conversationId: Number(leaveConversationDto.conversationId),
+    });
   }
 }

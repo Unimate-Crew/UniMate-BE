@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
 import { RedisModule } from '@app/redis';
 import { DatabaseModule } from '@app/database';
 import { JwtAccessStrategy } from '@app/auth';
@@ -9,7 +8,6 @@ import { ChatServerService } from './chat-server.service';
 import { ConversationModule } from './conversation/conversation.module';
 import { ChatModule } from './chat/chat.module';
 import { WebSocketRedisAdapterConfig } from './common/config/websocket-redis-adapter.config';
-import { WebSocketExceptionFilter } from './common/websocket-exception.filter';
 
 @Module({
   imports: [
@@ -27,10 +25,6 @@ import { WebSocketExceptionFilter } from './common/websocket-exception.filter';
     ChatServerService,
     WebSocketRedisAdapterConfig,
     JwtAccessStrategy,
-    {
-      provide: APP_FILTER,
-      useClass: WebSocketExceptionFilter,
-    },
   ],
 })
 export class ChatServerModule {}

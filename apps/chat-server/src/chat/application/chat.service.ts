@@ -8,7 +8,12 @@ import {
   ConversationParticipantRepository,
   ConversationMessageRepository,
 } from '@app/database';
-import { RedisClient } from '@app/redis';
+import {
+  SessionCacheRepository,
+  RoomOnlineCacheRepository,
+  ParticipantCacheRepository,
+  ConversationParticipantCache,
+} from '@app/redis';
 import { ErrorCode } from '@app/common';
 import { WebSocketChatException } from '../../common/exceptions/websocket-chat.exception';
 import { MessageResultDto } from './dto/message.result.dto';
@@ -26,7 +31,9 @@ export class ChatService {
     private readonly conversationRepository: ConversationRepository,
     private readonly participantRepository: ConversationParticipantRepository,
     private readonly messageRepository: ConversationMessageRepository,
-    private readonly redisClient: RedisClient,
+    private readonly sessionCacheRepository: SessionCacheRepository,
+    private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
+    private readonly participantCacheRepository: ParticipantCacheRepository,
   ) {}
 
   /**
@@ -39,14 +46,9 @@ export class ChatService {
     userId: number;
     socketId: string;
   }): Promise<void> {
-    // 1. Redis에 사용자-소켓 매핑 저장
-    await this.redisClient.set(
-      `user:${params.userId}:socketId`,
+    await this.sessionCacheRepository.setUserSocket(
+      params.userId,
       params.socketId,
-    );
-    await this.redisClient.set(
-      `socket:${params.socketId}:userId`,
-      params.userId.toString(),
     );
 
     this.logger.log(
@@ -61,21 +63,21 @@ export class ChatService {
    */
   async handleUserDisconnect(params: { socketId: string }): Promise<void> {
     // 1. Redis에서 사용자 ID 조회
-    const userId: string | null = await this.redisClient.get(
-      `socket:${params.socketId}:userId`,
+    const userIdNum = await this.sessionCacheRepository.getSocketUser(
+      params.socketId,
     );
 
-    if (userId) {
-      const userIdNum = parseInt(userId, 10);
-
+    if (userIdNum) {
       // 2. 모든 채팅방에서 사용자 제거
       await this.removeUserFromAllOnlineConversations({ userId: userIdNum });
 
       // 3. 모든 관련 Redis 키 삭제
-      await this.redisClient.del(`user:${userId}:socketId`);
-      await this.redisClient.del(`socket:${params.socketId}:userId`);
+      await this.sessionCacheRepository.clearUserSession(
+        userIdNum,
+        params.socketId,
+      );
 
-      this.logger.log(`User ${userId} disconnected`);
+      this.logger.log(`User ${userIdNum} disconnected`);
     }
   }
 
@@ -87,14 +89,7 @@ export class ChatService {
   async removeUserFromAllOnlineConversations(params: {
     userId: number;
   }): Promise<void> {
-    const client = this.redisClient.getClient();
-
-    // room:*:online 패턴의 모든 키를 찾고 해당 사용자를 제거
-    const keys: string[] = await client.keys('room:*:online');
-
-    await Promise.all(
-      keys.map((key) => client.srem(key, params.userId.toString())),
-    );
+    await this.roomOnlineCacheRepository.removeUserFromAllRooms(params.userId);
 
     this.logger.log(
       `User ${params.userId} removed from all online conversations`,
@@ -110,10 +105,7 @@ export class ChatService {
   async getUserIdBySocketId(params: {
     socketId: string;
   }): Promise<number | null> {
-    const userId: string | null = await this.redisClient.get(
-      `socket:${params.socketId}:userId`,
-    );
-    return userId ? parseInt(userId, 10) : null;
+    return this.sessionCacheRepository.getSocketUser(params.socketId);
   }
 
   /**
@@ -126,10 +118,9 @@ export class ChatService {
     conversationId: number;
     userId: number;
   }): Promise<void> {
-    const client = this.redisClient.getClient();
-    await client.sadd(
-      `room:${params.conversationId}:online`,
-      params.userId.toString(),
+    await this.roomOnlineCacheRepository.addUserToRoom(
+      params.conversationId,
+      params.userId,
     );
     this.logger.log(
       `User ${params.userId} added to online conversation ${params.conversationId}`,
@@ -146,10 +137,9 @@ export class ChatService {
     conversationId: number;
     userId: number;
   }): Promise<void> {
-    const client = this.redisClient.getClient();
-    await client.srem(
-      `room:${params.conversationId}:online`,
-      params.userId.toString(),
+    await this.roomOnlineCacheRepository.removeUserFromRoom(
+      params.conversationId,
+      params.userId,
     );
     this.logger.log(
       `User ${params.userId} removed from online conversation ${params.conversationId}`,
@@ -165,11 +155,7 @@ export class ChatService {
   async getOnlineUsersInConversation(params: {
     conversationId: number;
   }): Promise<number[]> {
-    const client = this.redisClient.getClient();
-    const userIds: string[] = await client.smembers(
-      `room:${params.conversationId}:online`,
-    );
-    return userIds.map((id: string) => parseInt(id, 10));
+    return this.roomOnlineCacheRepository.getOnlineUsers(params.conversationId);
   }
 
   /**
@@ -182,19 +168,18 @@ export class ChatService {
     conversationId: number;
     participants: CachedConversationParticipantDto[];
   }): Promise<void> {
-    const key = `room:${params.conversationId}:participants`;
-    const participantData: Record<string, string> = {};
+    const participantCaches = params.participants.map((participant) =>
+      ConversationParticipantCache.from({
+        userId: participant.userId,
+        lastReadMessageNumber: participant.lastReadMessageNumber,
+        status: participant.status,
+      }),
+    );
 
-    params.participants.forEach((participant) => {
-      participantData[participant.userId.toString()] = JSON.stringify(
-        participant.toJSON(),
-      );
-    });
-
-    const client = this.redisClient.getClient();
-    await client.hset(key, participantData);
-    // 24시간 TTL 설정
-    await client.expire(key, 86400);
+    await this.participantCacheRepository.setParticipants(
+      params.conversationId,
+      participantCaches,
+    );
 
     this.logger.log(
       `Cached ${params.participants.length} participants for conversation ${params.conversationId}`,
@@ -210,18 +195,22 @@ export class ChatService {
   async getCachedConversationParticipants(params: {
     conversationId: number;
   }): Promise<CachedConversationParticipantDto[] | null> {
-    const key = `room:${params.conversationId}:participants`;
-    const client = this.redisClient.getClient();
-    const participantData: Record<string, string> = await client.hgetall(key);
+    const participantCaches =
+      await this.participantCacheRepository.getParticipants(
+        params.conversationId,
+      );
 
-    if (!participantData || Object.keys(participantData).length === 0) {
+    if (!participantCaches || participantCaches.length === 0) {
       return null;
     }
 
-    return Object.values(participantData).map((data) => {
-      const parsed = JSON.parse(data);
-      return CachedConversationParticipantDto.from(parsed);
-    });
+    return participantCaches.map((cache) =>
+      CachedConversationParticipantDto.from({
+        userId: cache.getUserId(),
+        lastReadMessageNumber: cache.getLastReadMessageNumber(),
+        status: cache.getStatus(),
+      }),
+    );
   }
 
   /**
@@ -236,21 +225,17 @@ export class ChatService {
     userId: number;
     lastReadMessageNumber: number;
   }): Promise<void> {
-    const key = `room:${params.conversationId}:participants`;
-    const client = this.redisClient.getClient();
-    const existingData: string | null = await client.hget(
-      key,
-      params.userId.toString(),
-    );
+    const participantCache =
+      await this.participantCacheRepository.getParticipant(
+        params.conversationId,
+        params.userId,
+      );
 
-    if (existingData) {
-      const participantInfo = JSON.parse(existingData);
-      participantInfo.lastReadMessageNumber = params.lastReadMessageNumber;
-
-      await client.hset(
-        key,
-        params.userId.toString(),
-        JSON.stringify(participantInfo),
+    if (participantCache) {
+      participantCache.setLastReadMessageNumber(params.lastReadMessageNumber);
+      await this.participantCacheRepository.updateParticipant(
+        params.conversationId,
+        participantCache,
       );
     }
   }
