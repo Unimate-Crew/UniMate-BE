@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'winston';
 import { WinstonModule } from 'nest-winston';
-import { setupSwagger } from 'libs/common/src/utils/swagger';
+import { setupSwagger } from '@app/common';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ApiServerModule } from './api-server.module';
 
