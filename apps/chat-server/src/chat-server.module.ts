@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from '@app/redis';
 import { DatabaseModule } from '@app/database';
 import { JwtAccessStrategy } from '@app/auth';
+import { LoggerModule } from '@app/logger';
 import { ChatServerController } from './chat-server.controller';
 import { ChatServerService } from './chat-server.service';
 import { ConversationModule } from './conversation/conversation.module';
@@ -15,6 +16,7 @@ import { WebSocketRedisAdapterConfig } from './common/config/websocket-redis-ada
       isGlobal: true,
       envFilePath: '.env',
     }),
+    LoggerModule,
     DatabaseModule,
     RedisModule,
     ConversationModule,

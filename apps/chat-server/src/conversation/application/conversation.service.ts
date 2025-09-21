@@ -15,13 +15,14 @@ import {
   TradeStatus,
   ConversationParticipantStatus,
 } from '@app/database/common/enums';
-import { ErrorCode } from '@app/common';
+import { Slice, PageRequest, ErrorCode } from '@app/common';
 import {
   RoomOnlineCacheRepository,
   ParticipantCacheRepository,
   ConversationParticipantCache,
 } from '@app/redis';
 import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
+import { GetConversationsResultDto } from './dto/get-conversations-result.dto';
 
 @Injectable()
 export class ConversationService {
@@ -119,6 +120,41 @@ export class ConversationService {
       });
 
     return CreateConversationResultDto.from(conversation);
+  }
+
+  async getConversations(params: {
+    userId: number;
+    pageRequest: PageRequest;
+    productPostId?: number;
+  }): Promise<Slice<GetConversationsResultDto>> {
+    const { userId, pageRequest, productPostId } = params;
+
+    const rawSlice =
+      await this.conversationParticipantRepository.findConversationsByUserId({
+        userId,
+        productPostId,
+        pageRequest,
+      });
+
+    const resultDtos = rawSlice.contents.map((row) => {
+      const unreadCount = row.lastMessageNumber - row.lastReadMessageNumber;
+
+      return GetConversationsResultDto.of({
+        conversationId: row.conversationId,
+        productPostId: row.productPostId,
+        productTitle: row.productTitle || null,
+        productThumbnailKey: row.productThumbnailKey || null,
+        otherUserId: row.otherUserId,
+        otherUserNickname: row.otherUserNickname || null,
+        otherUserProfileImageKey: row.otherUserProfileImageKey || null,
+        lastMessageContent: row.lastMessageContent || null,
+        lastMessageSenderId: row.lastMessageSenderId || null,
+        lastSentAt: row.lastSentAt || null,
+        unreadCount,
+      });
+    });
+
+    return Slice.of(resultDtos, rawSlice.hasNext);
   }
 
   private async findExistingConversation(params: {
