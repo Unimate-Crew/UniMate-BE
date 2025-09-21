@@ -9,7 +9,13 @@ import {
   OnGatewayInit,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Injectable, Logger, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  UseGuards,
+  UseInterceptors,
+  UseFilters,
+} from '@nestjs/common';
 import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
@@ -25,8 +31,10 @@ import {
 } from '../../common/decorators/websocket-user.decorator';
 import { WebSocketAuthMiddleware } from '../../common/middleware/websocket-auth.middleware';
 import { WebSocketSuccessResponseInterceptor } from '../../common/interceptors/websocket-success-response.interceptor';
+import { WebSocketExceptionFilter } from '../../common/websocket-exception.filter';
 
 @Injectable()
+@UseFilters(WebSocketExceptionFilter)
 @UseInterceptors(WebSocketSuccessResponseInterceptor)
 @WebSocketGateway({
   cors: {

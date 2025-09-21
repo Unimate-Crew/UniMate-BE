@@ -5,12 +5,12 @@ export class CachedConversationParticipantDto {
 
   lastReadMessageNumber: number;
 
-  status: ConversationParticipantStatus;
+  status: ConversationParticipantStatus[];
 
   constructor(
     userId: number,
     lastReadMessageNumber: number,
-    status: ConversationParticipantStatus,
+    status: ConversationParticipantStatus[],
   ) {
     this.userId = userId;
     this.lastReadMessageNumber = lastReadMessageNumber;
@@ -20,7 +20,7 @@ export class CachedConversationParticipantDto {
   static from(data: {
     userId: number;
     lastReadMessageNumber?: number;
-    status: ConversationParticipantStatus;
+    status: ConversationParticipantStatus[];
   }): CachedConversationParticipantDto {
     return new CachedConversationParticipantDto(
       data.userId,
@@ -32,7 +32,7 @@ export class CachedConversationParticipantDto {
   toJSON(): {
     userId: number;
     lastReadMessageNumber: number;
-    status: ConversationParticipantStatus;
+    status: ConversationParticipantStatus[];
   } {
     return {
       userId: this.userId,

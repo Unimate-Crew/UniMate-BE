@@ -6,6 +6,7 @@ import {
   ProductPost,
   User,
 } from '@app/database';
+import { RedisModule } from '@app/redis';
 import { ConversationController } from './api/conversation.controller';
 import { ConversationService } from './application/conversation.service';
 
@@ -17,6 +18,7 @@ import { ConversationService } from './application/conversation.service';
       ProductPost,
       User,
     ]),
+    RedisModule,
   ],
   controllers: [ConversationController],
   providers: [ConversationService],
