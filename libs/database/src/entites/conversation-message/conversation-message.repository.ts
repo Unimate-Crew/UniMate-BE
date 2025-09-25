@@ -2,6 +2,7 @@ import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
 import { ConversationMessage } from './conversation-message.entity';
 import { ConversationMessageType } from '../../common/enums';
+import { CursorSlice } from '@app/common';
 
 @Injectable()
 export class ConversationMessageRepository extends EntityRepository<ConversationMessage> {
@@ -143,5 +144,42 @@ export class ConversationMessageRepository extends EntityRepository<Conversation
 
   async persistAndFlush(message: ConversationMessage): Promise<void> {
     await this.em.persistAndFlush(message);
+  }
+
+  /**
+   * 대화방의 메시지 목록을 삭제 여부에 관계없이 특정 메시지 번호보다 작은 메시지들을 조회합니다.
+   *
+   * @param conversationId 대화방 ID
+   * @param messageNumber 기준 메시지 번호 (이 번호보다 작은 메시지들을 조회)
+   * @param leftAt 채팅방을 나간 시점 (이 시점 이후 메시지만 조회, 없으면 모든 메시지)
+   * @param limit 제한 개수
+   * @returns 커서 기반 페이지네이션 결과
+   */
+  async findByConversationIdAndLessThanMessageNumber(
+    conversationId: number,
+    messageNumber: number | undefined,
+    leftAt: Date | undefined,
+    limit: number,
+  ): Promise<CursorSlice<ConversationMessage>> {
+    const where: any = { conversationId };
+
+    if (messageNumber) {
+      where.messageNumber = { $lt: messageNumber };
+    }
+
+    if (leftAt) {
+      where.createdAt = { $gt: leftAt };
+    }
+
+    const messages = await this.find(where, {
+      orderBy: { messageNumber: 'DESC' },
+      limit: limit + 1,
+    });
+
+    return CursorSlice.fromData(
+      messages,
+      limit,
+      (message) => message.getMessageNumber()
+    );
   }
 }
