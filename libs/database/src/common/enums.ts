@@ -62,13 +62,6 @@ export enum CountryCode {
   US = 'US', // 미국
 }
 
-export enum ConversationParticipantStatus {
-  JOIN = 'JOIN', // 채팅방에 참여한 상태
-  LEFT = 'LEFT', // 채팅방을 나간 상태 (채팅방 나가기한 상태)
-  BLOCK = 'BLOCK', // 상대방을 차단한 상태
-  MUTE = 'MUTE', // 채팅방을 음소거한 상태 (푸시알림 X)
-}
-
 export enum ConversationMessageType {
   TEXT = 'TEXT',
   IMAGE = 'IMAGE',

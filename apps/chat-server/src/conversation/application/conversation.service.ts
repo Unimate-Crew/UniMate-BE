@@ -11,10 +11,7 @@ import { ProductPostRepository } from '@app/database/entites/product-post/produc
 import { UserRepository } from '@app/database/entites/user/user.repository';
 import { Conversation } from '@app/database/entites/conversation/conversation.entity';
 import { ConversationParticipant } from '@app/database/entites/conversation-participant/conversation-participant.entity';
-import {
-  TradeStatus,
-  ConversationParticipantStatus,
-} from '@app/database/common/enums';
+import { TradeStatus } from '@app/database/common/enums';
 import { Slice, PageRequest, ErrorCode } from '@app/common';
 import {
   RoomOnlineCacheRepository,
@@ -104,12 +101,10 @@ export class ConversationService {
           this.conversationParticipantRepository.create({
             conversationId: newConversation.getId(),
             userId,
-            status: ConversationParticipantStatus.JOIN,
           }),
           this.conversationParticipantRepository.create({
             conversationId: newConversation.getId(),
             userId: productPost.getUserId(),
-            status: ConversationParticipantStatus.JOIN,
           }),
         ];
 
@@ -226,21 +221,21 @@ export class ConversationService {
       });
     }
 
-    if (participant.isLeft()) {
+    if (participant.hasLeft()) {
       throw new ForbiddenException({
         code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
         message: '이미 나간 채팅방입니다.',
       });
     }
 
-    if (participant.isMuted()) {
+    if (participant.getIsMuted()) {
       throw new ConflictException({
         code: ErrorCode.CONVERSATION_ALREADY_MUTED,
         message: '이미 알림이 꺼진 채팅방입니다.',
       });
     }
 
-    participant.addStatus(ConversationParticipantStatus.MUTE);
+    participant.setIsMuted(true);
 
     await this.conversationParticipantRepository.persistAndFlush(participant);
   }
@@ -276,21 +271,21 @@ export class ConversationService {
       });
     }
 
-    if (participant.isLeft()) {
+    if (participant.hasLeft()) {
       throw new ForbiddenException({
         code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
         message: '이미 나간 채팅방입니다.',
       });
     }
 
-    if (!participant.isMuted()) {
+    if (!participant.getIsMuted()) {
       throw new ConflictException({
         code: ErrorCode.CONVERSATION_ALREADY_UNMUTED,
         message: '이미 알림이 켜진 채팅방입니다.',
       });
     }
 
-    participant.removeStatus(ConversationParticipantStatus.MUTE);
+    participant.setIsMuted(false);
 
     await this.conversationParticipantRepository.persistAndFlush(participant);
   }
@@ -326,14 +321,7 @@ export class ConversationService {
       });
     }
 
-    if (!participant.isJoined()) {
-      throw new ForbiddenException({
-        code: ErrorCode.PARTICIPANT_NOT_FOUND,
-        message: '채팅방에 참가하지 않은 사용자입니다.',
-      });
-    }
-
-    if (participant.isLeft()) {
+    if (!participant.isActive()) {
       throw new ConflictException({
         code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
         message: '이미 나간 채팅방입니다.',
@@ -361,14 +349,16 @@ export class ConversationService {
         const cachedParticipants = updatedParticipants.map((p) => ({
           userId: p.getUserId(),
           lastReadMessageNumber: p.getLastReadMessageNumber(),
-          status: p.getStatus(),
+          isBlockingOther: p.getIsBlockingOther(),
+          isMuted: p.getIsMuted(),
         }));
 
         const participantCaches = cachedParticipants.map((p) =>
           ConversationParticipantCache.from({
             userId: p.userId,
             lastReadMessageNumber: p.lastReadMessageNumber,
-            status: p.status,
+            isBlockingOther: p.isBlockingOther,
+            isMuted: p.isMuted,
           }),
         );
 

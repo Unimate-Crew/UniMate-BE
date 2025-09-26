@@ -172,7 +172,8 @@ export class ChatService {
       ConversationParticipantCache.from({
         userId: participant.userId,
         lastReadMessageNumber: participant.lastReadMessageNumber,
-        status: participant.status,
+        isBlockingOther: participant.isBlockingOther,
+        isMuted: participant.isMuted,
       }),
     );
 
@@ -208,7 +209,8 @@ export class ChatService {
       CachedConversationParticipantDto.from({
         userId: cache.getUserId(),
         lastReadMessageNumber: cache.getLastReadMessageNumber(),
-        status: cache.getStatus(),
+        isBlockingOther: cache.getIsBlockingOther(),
+        isMuted: cache.getIsMuted(),
       }),
     );
   }
@@ -308,7 +310,8 @@ export class ChatService {
               CachedConversationParticipantDto.from({
                 userId: p.getUserId(),
                 lastReadMessageNumber: p.getLastReadMessageNumber(),
-                status: p.getStatus(),
+                isBlockingOther: p.getIsBlockingOther(),
+                isMuted: p.getIsMuted(),
               }),
             );
 
