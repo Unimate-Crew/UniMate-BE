@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConversationRepository } from '@app/database/entites/conversation/conversation.repository';
 import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
+import { ConversationMessageRepository } from '@app/database/entites/conversation-message/conversation-message.repository';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
 import { UserRepository } from '@app/database/entites/user/user.repository';
 import { Conversation } from '@app/database/entites/conversation/conversation.entity';
@@ -23,12 +24,15 @@ import {
 } from '@app/redis';
 import { CreateConversationResultDto } from './dto/create-conversation-result.dto';
 import { GetConversationsResultDto } from './dto/get-conversations-result.dto';
+import { GetMessagesResultDto } from './dto/get-messages-result.dto';
+import { MessageDto } from './dto/message.dto';
 
 @Injectable()
 export class ConversationService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationParticipantRepository: ConversationParticipantRepository,
+    private readonly conversationMessageRepository: ConversationMessageRepository,
     private readonly productPostRepository: ProductPostRepository,
     private readonly userRepository: UserRepository,
     private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
@@ -155,6 +159,81 @@ export class ConversationService {
     });
 
     return Slice.of(resultDtos, rawSlice.hasNext);
+  }
+
+  async getMessages(params: {
+    userId: number;
+    conversationId: number;
+    size: number;
+    lastMessageNumber?: number;
+  }): Promise<GetMessagesResultDto> {
+    const { userId, conversationId, size, lastMessageNumber } = params;
+
+    const conversation = await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new NotFoundException({
+        code: ErrorCode.CONVERSATION_NOT_FOUND,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
+    }
+
+    const participant =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId({
+        conversationId,
+        userId,
+      });
+
+    if (!participant) {
+      throw new ForbiddenException({
+        code: ErrorCode.PARTICIPANT_NOT_FOUND,
+        message: '채팅방에 참가하지 않은 사용자입니다.',
+      });
+    }
+
+    if (conversation.getLastSentAt() &&
+        participant.getLeftAt() &&
+        conversation.getLastSentAt() > participant.getLeftAt()) {
+      throw new ForbiddenException({
+        code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
+        message: '이미 나간 채팅방입니다.',
+      });
+    }
+
+    // 채팅방의 모든 참여자 조회 (읽음 상태 계산용)
+    const allParticipants = await this.conversationParticipantRepository.find({
+      conversationId,
+      isDeleted: false,
+    });
+
+    const messageSlice = await this.conversationMessageRepository
+      .findByConversationIdAndLessThanMessageNumber(
+        conversationId,
+        lastMessageNumber,
+        participant.getLeftAt(),
+        size,
+      );
+
+    const messages = messageSlice.contents.slice().reverse();
+    const messageDtos = messages.map(message => MessageDto.from(message));
+
+    // 읽음 상태 맵 생성 - 참여자의 마지막 읽은 메시지 번호별로 사용자 수 계산
+    const readStatusMap: Record<string, number> = {};
+
+    allParticipants.forEach(participant => {
+      const lastReadMessageNumber = participant.getLastReadMessageNumber() || 0;
+      if (lastReadMessageNumber > 0) {
+        const key = lastReadMessageNumber.toString();
+        readStatusMap[key] = (readStatusMap[key] || 0) + 1;
+      }
+    });
+
+    return GetMessagesResultDto.of({
+      messages: messageDtos,
+      hasNext: messageSlice.hasNext,
+      nextCursor: messageSlice.nextCursor,
+      readStatusMap,
+    });
   }
 
   private async findExistingConversation(params: {

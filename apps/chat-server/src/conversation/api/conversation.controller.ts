@@ -1,14 +1,14 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Query,
-  Body,
-  UseGuards,
-  Param,
-  Patch,
-  HttpCode,
-  HttpStatus,
+    Controller,
+    Get,
+    Post,
+    Query,
+    Body,
+    UseGuards,
+    Param,
+    Patch,
+    HttpCode,
+    HttpStatus, ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +26,8 @@ import { GetConversationsResponseDto } from './dto/get-conversations-response.dt
 import { MuteConversationRequestDto } from './dto/mute-conversation-request.dto';
 import { UnmuteConversationRequestDto } from './dto/unmute-conversation-request.dto';
 import { LeaveConversationRequestDto } from './dto/leave-conversation-request.dto';
+import { GetMessagesRequestDto } from './dto/get-messages-request.dto';
+import { GetMessagesResponseDto } from './dto/get-messages-response.dto';
 
 @ApiTags('채팅방')
 @ApiBearerAuth('accessToken')
@@ -85,6 +87,36 @@ export class ConversationController {
     });
 
     return GetConversationsResponseDto.from(result);
+  }
+
+  @ApiOperation({
+    summary: '채팅방 메시지 리스트 조회',
+    description:
+      '특정 채팅방의 메시지 목록을 커서 기반 페이지네이션으로 조회합니다. 읽음 상태 정보가 포함됩니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '메시지 리스트 조회 성공',
+    type: GetMessagesResponseDto,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @ApiResponse({ status: 401, description: '인증 토큰이 유효하지 않음' })
+  @ApiResponse({ status: 403, description: '권한 없음 (채팅방 참여자가 아님)' })
+  @ApiResponse({ status: 404, description: '채팅방을 찾을 수 없음' })
+  @Get(':conversationId/messages')
+  async getMessages(
+    @Param('conversationId', ParseIntPipe) conversationId: number,
+    @Query() getMessagesDto: GetMessagesRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetMessagesResponseDto> {
+    const result = await this.conversationService.getMessages({
+      userId: userTokenInfo.userId,
+      conversationId,
+      size: getMessagesDto.getPageSize(),
+      lastMessageNumber: getMessagesDto.getLastMessageNumber(),
+    });
+
+    return GetMessagesResponseDto.from(result);
   }
 
   @ApiOperation({ summary: '채팅방 알림 끄기' })
