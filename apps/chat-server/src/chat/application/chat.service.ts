@@ -323,16 +323,34 @@ export class ChatService {
           participants = cachedParticipants;
         }
 
-        // 8. 온라인 사용자 목록 조회
+        // 8. 발신자가 상대방을 차단했는지 확인
+        const senderParticipant = participants.find(
+          (p) => p.userId === params.senderId,
+        );
+        if (senderParticipant?.isBlockingOther) {
+          throw WebSocketChatException.withCode(
+            ErrorCode.CONVERSATION_MESSAGE_BLOCKED,
+          );
+        }
+
+        // 9. 온라인 사용자 목록 조회
         const onlineUsers: number[] = await this.getOnlineUsersInConversation({
           conversationId: params.conversationId,
         });
 
-        // 9. WebSocket 이벤트 전송 대상 목록 생성
+        // 10. WebSocket 이벤트 전송 대상 목록 생성
         const emissions = participants
           .map((participant) => {
             if (onlineUsers.includes(participant.userId)) {
               // 온라인 사용자에게 실시간 메시지 전송
+              // 단, 해당 참여자가 발신자를 차단했다면 메시지 미전송
+              if (
+                participant.userId !== params.senderId &&
+                participant.isBlockingOther
+              ) {
+                return null; // 차단된 사용자는 메시지 받지 않음
+              }
+
               return {
                 userId: participant.userId,
                 event: 'newMessage',
@@ -351,6 +369,11 @@ export class ChatService {
 
             // 오프라인 사용자에게는 발송자 제외하고 채팅방 업데이트 알림
             if (participant.userId === params.senderId) {
+              return null;
+            }
+
+            // 오프라인이지만 발신자를 차단한 경우 알림 미전송
+            if (participant.isBlockingOther) {
               return null;
             }
 
