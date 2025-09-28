@@ -32,9 +32,13 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'user.id as seller_id',
         'user.nickname as seller_nickname',
         'user.profile_image_key as seller_profile_image_key',
+        'region.name as region_name',
+        'university.name as university_name',
       ])
       .from('product_post')
       .leftJoin('user', 'product_post.user_id', 'user.id')
+      .leftJoin('region', 'product_post.region_id', 'region.id')
+      .leftJoin('university', 'product_post.university_id', 'university.id')
       .where('product_post.id', id)
       .where('product_post.is_deleted', false)
       .first();
@@ -77,6 +81,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       sellerId: result.seller_id,
       sellerNickname: result.seller_nickname,
       sellerProfileImageKey: result.seller_profile_image_key,
+      regionName: result.region_name,
+      universityName: result.university_name,
       imageKeys: imageKeys.map((img) => img.image_key),
     });
   }

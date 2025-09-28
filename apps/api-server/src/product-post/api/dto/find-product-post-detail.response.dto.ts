@@ -62,6 +62,18 @@ export class FindProductPostDetailResponseDto {
   @ApiProperty({ description: '판매자 프로필 사진 URL' })
   sellerProfileImageUrl: string;
 
+  @ApiProperty({ description: '지역 ID' })
+  regionId: string;
+
+  @ApiProperty({ description: '지역명', nullable: true })
+  regionName: string | null;
+
+  @ApiProperty({ description: '대학교 ID', nullable: true })
+  universityId: number | null;
+
+  @ApiProperty({ description: '대학교명', nullable: true })
+  universityName: string | null;
+
   constructor(
     id: number,
     title: string,
@@ -81,6 +93,10 @@ export class FindProductPostDetailResponseDto {
     sellerId: number,
     sellerNickname: string,
     sellerProfileImageUrl: string,
+    regionId: string,
+    regionName: string | null,
+    universityId: number | null,
+    universityName: string | null,
   ) {
     this.id = id;
     this.title = title;
@@ -100,6 +116,10 @@ export class FindProductPostDetailResponseDto {
     this.sellerId = sellerId;
     this.sellerNickname = sellerNickname;
     this.sellerProfileImageUrl = sellerProfileImageUrl;
+    this.regionId = regionId;
+    this.regionName = regionName;
+    this.universityId = universityId;
+    this.universityName = universityName;
   }
 
   static from(
@@ -124,6 +144,10 @@ export class FindProductPostDetailResponseDto {
       productPostDetail.sellerId,
       productPostDetail.sellerNickname,
       productPostDetail.sellerProfileImageUrl || '',
+      productPostDetail.regionId,
+      productPostDetail.regionName,
+      productPostDetail.universityId,
+      productPostDetail.universityName,
     );
   }
 }

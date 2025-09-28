@@ -1,20 +1,22 @@
-import { ConversationParticipantStatus } from '@app/database';
-
 export class ConversationParticipantCache {
   private userId: number;
 
   private lastReadMessageNumber: number;
 
-  private status: ConversationParticipantStatus[];
+  private isBlockingOther: boolean;
+
+  private isMuted: boolean;
 
   constructor(
     userId: number,
     lastReadMessageNumber: number,
-    status: ConversationParticipantStatus[],
+    isBlockingOther: boolean,
+    isMuted: boolean,
   ) {
     this.userId = userId;
     this.lastReadMessageNumber = lastReadMessageNumber;
-    this.status = status;
+    this.isBlockingOther = isBlockingOther;
+    this.isMuted = isMuted;
   }
 
   public getUserId(): number {
@@ -25,28 +27,24 @@ export class ConversationParticipantCache {
     return this.lastReadMessageNumber;
   }
 
-  public getStatus(): ConversationParticipantStatus[] {
-    return this.status;
+  public getIsBlockingOther(): boolean {
+    return this.isBlockingOther;
+  }
+
+  public getIsMuted(): boolean {
+    return this.isMuted;
   }
 
   public setLastReadMessageNumber(messageNumber: number): void {
     this.lastReadMessageNumber = messageNumber;
   }
 
-  public isJoined(): boolean {
-    return this.status.includes(ConversationParticipantStatus.JOIN);
+  public checkIsBlockingOther(): boolean {
+    return this.isBlockingOther;
   }
 
-  public isMuted(): boolean {
-    return this.status.includes(ConversationParticipantStatus.MUTE);
-  }
-
-  public isLeft(): boolean {
-    return this.status.includes(ConversationParticipantStatus.LEFT);
-  }
-
-  public isBlocked(): boolean {
-    return this.status.includes(ConversationParticipantStatus.BLOCK);
+  public checkIsMuted(): boolean {
+    return this.isMuted;
   }
 
   public serialize(): string {
@@ -61,24 +59,28 @@ export class ConversationParticipantCache {
   public static from(data: {
     userId: number;
     lastReadMessageNumber?: number;
-    status: ConversationParticipantStatus[];
+    isBlockingOther: boolean;
+    isMuted: boolean;
   }): ConversationParticipantCache {
     return new ConversationParticipantCache(
       data.userId,
       data.lastReadMessageNumber || 0,
-      data.status,
+      data.isBlockingOther,
+      data.isMuted,
     );
   }
 
   public toJSON(): {
     userId: number;
     lastReadMessageNumber: number;
-    status: ConversationParticipantStatus[];
+    isBlockingOther: boolean;
+    isMuted: boolean;
   } {
     return {
       userId: this.userId,
       lastReadMessageNumber: this.lastReadMessageNumber,
-      status: this.status,
+      isBlockingOther: this.isBlockingOther,
+      isMuted: this.isMuted,
     };
   }
 }

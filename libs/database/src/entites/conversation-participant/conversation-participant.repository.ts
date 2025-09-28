@@ -2,7 +2,6 @@ import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
 import { PageRequest, Slice } from '@app/common';
 import { ConversationParticipant } from './conversation-participant.entity';
-import { ConversationParticipantStatus } from '../../common/enums';
 
 @Injectable()
 export class ConversationParticipantRepository extends EntityRepository<ConversationParticipant> {
@@ -76,18 +75,15 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
    *
    * @param params.conversationId 대화방 ID
    * @param params.userId 사용자 ID
-   * @param params.status 참여자 상태
    * @returns 생성된 참여자 엔티티
    */
   create(params: {
     conversationId: number;
     userId: number;
-    status?: ConversationParticipantStatus;
   }): ConversationParticipant {
     const participant = this.em.create(ConversationParticipant, {
       conversationId: params.conversationId,
       userId: params.userId,
-      status: params.status,
     });
     return participant;
   }
