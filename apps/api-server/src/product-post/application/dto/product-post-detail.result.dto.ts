@@ -26,6 +26,10 @@ export class ProductPostDetailResultDto {
     public readonly sellerId: number,
     public readonly sellerNickname: string,
     public readonly sellerProfileImageUrl: string | null,
+    public readonly regionId: string,
+    public readonly regionName: string | null,
+    public readonly universityId: number | null,
+    public readonly universityName: string | null,
   ) {}
 
   static of(
@@ -57,6 +61,10 @@ export class ProductPostDetailResultDto {
       productPostDetail.sellerId,
       productPostDetail.sellerNickname,
       sellerProfileImageUrl,
+      productPost.getRegionId(),
+      productPostDetail.regionName,
+      productPost.getUniversityId(),
+      productPostDetail.universityName,
     );
   }
 }
