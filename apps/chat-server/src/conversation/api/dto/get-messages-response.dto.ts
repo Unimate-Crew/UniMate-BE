@@ -23,14 +23,17 @@ export class GetMessagesResponseDto {
   nextCursor?: number;
 
   @ApiProperty({
-    description: '참여자별 마지막 읽은 메시지 번호와 해당 번호까지 읽은 사용자 수 맵',
-    example: { "10": 1, "13": 1 },
+    description:
+      '참여자별 마지막 읽은 메시지 번호와 해당 번호까지 읽은 사용자 수 맵',
+    example: { '10': 1, '13': 1 },
   })
   readStatusMap: Record<string, number>;
 
   public static from(result: GetMessagesResultDto): GetMessagesResponseDto {
     const dto = new GetMessagesResponseDto();
-    dto.contents = result.messages.map(message => MessageSummaryDto.from(message));
+    dto.contents = result.messages.map((message) =>
+      MessageSummaryDto.from(message),
+    );
     dto.hasNext = result.hasNext;
     dto.nextCursor = result.nextCursor;
     dto.readStatusMap = result.readStatusMap || {};

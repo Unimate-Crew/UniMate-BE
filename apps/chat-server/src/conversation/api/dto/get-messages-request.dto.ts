@@ -18,7 +18,8 @@ export class GetMessagesRequestDto {
   pageSize?: number = 50;
 
   @ApiProperty({
-    description: '마지막 메시지 번호 (커서 페이지네이션용, 이 번호 이전의 메시지들을 조회)',
+    description:
+      '마지막 메시지 번호 (커서 페이지네이션용, 이 번호 이전의 메시지들을 조회)',
     required: false,
   })
   @IsOptional()

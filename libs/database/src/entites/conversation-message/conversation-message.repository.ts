@@ -1,8 +1,8 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
+import { CursorSlice } from '@app/common';
 import { ConversationMessage } from './conversation-message.entity';
 import { ConversationMessageType } from '../../common/enums';
-import { CursorSlice } from '@app/common';
 
 @Injectable()
 export class ConversationMessageRepository extends EntityRepository<ConversationMessage> {
@@ -176,10 +176,8 @@ export class ConversationMessageRepository extends EntityRepository<Conversation
       limit: limit + 1,
     });
 
-    return CursorSlice.fromData(
-      messages,
-      limit,
-      (message) => message.getMessageNumber()
+    return CursorSlice.fromData(messages, limit, (message) =>
+      message.getMessageNumber(),
     );
   }
 }

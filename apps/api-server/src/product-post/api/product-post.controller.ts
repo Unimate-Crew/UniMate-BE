@@ -430,10 +430,10 @@ export class ProductPostController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('accessToken')
-  @ApiOperation({ summary: '제품 게시글 생성' })
+  @ApiOperation({ summary: '상품 게시글 생성' })
   @ApiResponse({
     status: 201,
-    description: '제품 게시글 생성 성공',
+    description: '상품 게시글 생성 성공',
     type: CreateProductPostResponseDto,
   })
   @ApiResponse({

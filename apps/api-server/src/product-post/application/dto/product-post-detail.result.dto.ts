@@ -30,6 +30,7 @@ export class ProductPostDetailResultDto {
     public readonly regionName: string | null,
     public readonly universityId: number | null,
     public readonly universityName: string | null,
+    public readonly isHidden: boolean,
   ) {}
 
   static of(
@@ -65,6 +66,7 @@ export class ProductPostDetailResultDto {
       productPostDetail.regionName,
       productPost.getUniversityId(),
       productPostDetail.universityName,
+      productPost.getIsHidden(),
     );
   }
 }

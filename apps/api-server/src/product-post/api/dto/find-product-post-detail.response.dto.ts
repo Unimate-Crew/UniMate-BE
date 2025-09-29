@@ -74,6 +74,9 @@ export class FindProductPostDetailResponseDto {
   @ApiProperty({ description: '대학교명', nullable: true })
   universityName: string | null;
 
+  @ApiProperty({ description: '게시글 숨김 여부' })
+  isHidden: boolean;
+
   constructor(
     id: number,
     title: string,
@@ -97,6 +100,7 @@ export class FindProductPostDetailResponseDto {
     regionName: string | null,
     universityId: number | null,
     universityName: string | null,
+    isHidden: boolean,
   ) {
     this.id = id;
     this.title = title;
@@ -120,6 +124,7 @@ export class FindProductPostDetailResponseDto {
     this.regionName = regionName;
     this.universityId = universityId;
     this.universityName = universityName;
+    this.isHidden = isHidden;
   }
 
   static from(
@@ -148,6 +153,7 @@ export class FindProductPostDetailResponseDto {
       productPostDetail.regionName,
       productPostDetail.universityId,
       productPostDetail.universityName,
+      productPostDetail.isHidden,
     );
   }
 }

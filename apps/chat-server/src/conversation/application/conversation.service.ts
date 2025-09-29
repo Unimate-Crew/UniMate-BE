@@ -164,7 +164,8 @@ export class ConversationService {
   }): Promise<GetMessagesResultDto> {
     const { userId, conversationId, size, lastMessageNumber } = params;
 
-    const conversation = await this.conversationRepository.findById(conversationId);
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
 
     if (!conversation) {
       throw new NotFoundException({
@@ -174,10 +175,12 @@ export class ConversationService {
     }
 
     const participant =
-      await this.conversationParticipantRepository.findByConversationIdAndUserId({
-        conversationId,
-        userId,
-      });
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId,
+        },
+      );
 
     if (!participant) {
       throw new ForbiddenException({
@@ -186,9 +189,11 @@ export class ConversationService {
       });
     }
 
-    if (conversation.getLastSentAt() &&
-        participant.getLeftAt() &&
-        conversation.getLastSentAt() > participant.getLeftAt()) {
+    if (
+      conversation.getLastSentAt() &&
+      participant.getLeftAt() &&
+      conversation.getLastSentAt() > participant.getLeftAt()
+    ) {
       throw new ForbiddenException({
         code: ErrorCode.CONVERSATION_PARTICIPANT_ALREADY_LEFT,
         message: '이미 나간 채팅방입니다.',
@@ -201,8 +206,8 @@ export class ConversationService {
       isDeleted: false,
     });
 
-    const messageSlice = await this.conversationMessageRepository
-      .findByConversationIdAndLessThanMessageNumber(
+    const messageSlice =
+      await this.conversationMessageRepository.findByConversationIdAndLessThanMessageNumber(
         conversationId,
         lastMessageNumber,
         participant.getLeftAt(),
@@ -210,12 +215,12 @@ export class ConversationService {
       );
 
     const messages = messageSlice.contents.slice().reverse();
-    const messageDtos = messages.map(message => MessageDto.from(message));
+    const messageDtos = messages.map((message) => MessageDto.from(message));
 
     // 읽음 상태 맵 생성 - 참여자의 마지막 읽은 메시지 번호별로 사용자 수 계산
     const readStatusMap: Record<string, number> = {};
 
-    allParticipants.forEach(participant => {
+    allParticipants.forEach((participant) => {
       const lastReadMessageNumber = participant.getLastReadMessageNumber() || 0;
       if (lastReadMessageNumber > 0) {
         const key = lastReadMessageNumber.toString();
