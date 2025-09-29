@@ -109,7 +109,11 @@ export class CursorSlice<T> {
    * @param nextCursor 다음 커서 (없으면 마지막 페이지)
    * @returns CursorSlice 인스턴스
    */
-  static of<T>(contents: T[], hasNext: boolean, nextCursor?: any): CursorSlice<T> {
+  static of<T>(
+    contents: T[],
+    hasNext: boolean,
+    nextCursor?: any,
+  ): CursorSlice<T> {
     return new CursorSlice<T>(contents, hasNext, nextCursor);
   }
 
@@ -131,14 +135,17 @@ export class CursorSlice<T> {
   static fromData<T>(
     data: T[],
     limit: number,
-    getCursor: (item: T) => any
+    getCursor: (item: T) => any,
   ): CursorSlice<T> {
     if (data.length <= limit) {
       return new CursorSlice<T>(data, false, undefined);
     }
 
     const contents = data.slice(0, limit);
-    const nextCursor = contents.length > 0 ? getCursor(contents[contents.length - 1]) : undefined;
+    const nextCursor =
+      contents.length > 0
+        ? getCursor(contents[contents.length - 1])
+        : undefined;
 
     return new CursorSlice<T>(contents, true, nextCursor);
   }
@@ -149,6 +156,10 @@ export class CursorSlice<T> {
    * @returns 변환된 요소들로 구성된 새로운 CursorSlice
    */
   map<R>(transform: (item: T) => R): CursorSlice<R> {
-    return new CursorSlice<R>(this.contents.map(transform), this.hasNext, this.nextCursor);
+    return new CursorSlice<R>(
+      this.contents.map(transform),
+      this.hasNext,
+      this.nextCursor,
+    );
   }
 }

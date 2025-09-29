@@ -2,8 +2,11 @@ import { MessageDto } from './message.dto';
 
 export class GetMessagesResultDto {
   messages: MessageDto[];
+
   hasNext: boolean;
+
   nextCursor?: number;
+
   readStatusMap: Record<string, number>;
 
   public static of(params: {

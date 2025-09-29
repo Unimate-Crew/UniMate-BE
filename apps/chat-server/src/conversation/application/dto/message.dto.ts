@@ -2,10 +2,15 @@ import { ConversationMessage, ConversationMessageType } from '@app/database';
 
 export class MessageDto {
   id: number;
+
   senderId: number;
+
   content?: string;
+
   messageNumber: number;
+
   type: ConversationMessageType;
+
   createdAt: Date;
 
   public static from(message: ConversationMessage): MessageDto {
