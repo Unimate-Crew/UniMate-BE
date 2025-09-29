@@ -12,4 +12,13 @@ export class TokensDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   refreshToken: string;
+
+  private constructor(accessToken: string, refreshToken: string) {
+      this.accessToken = accessToken;
+      this.refreshToken = refreshToken;
+  }
+
+  static of(accessToken: string, refreshToken: string): TokensDto {
+    return new TokensDto(accessToken, refreshToken);
+  }
 }

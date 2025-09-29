@@ -26,6 +26,7 @@ import { AuthService } from '../auth/auth.service';
 import { SignUpResponseDto } from './dto/sign-up-response.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
+import { TokensDto } from '../auth/dto/tokens.dto';
 import { CheckUserExistsDto } from './dto/check-user-exists.dto';
 import { CheckUserExistsResponseDto } from './dto/check-user-exists-response.dto';
 import { ErrorResponse } from '../common/error-response';
@@ -92,12 +93,12 @@ export class UserController {
   @Post('signin')
   async signIn(@Body() signInDto: SignInDto): Promise<SignInResponseDto> {
     const user = await this.userService.signIn(signInDto);
-    const token = await this.authService.generateAccessToken(
+    const accessToken = await this.authService.generateAccessToken(
       user.getId(),
       user.getProvider(),
     );
 
-    return SignInResponseDto.of(token);
+    return SignInResponseDto.of(TokensDto.of(accessToken, user.getRefreshToken()));
   }
 
   @ApiOperation({
