@@ -28,6 +28,8 @@ import { UserBlockRepository } from '@app/database/entites/user-block/user-block
 import { CategoryCountDto } from '@app/database/entites/product-post/dto/category-count.dto';
 import { Like } from '@app/database/entites/like/like.entity';
 import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
+import { InterestRegionRepository } from '@app/database/entites/interest-region/interest-region.repository';
+import { InterestRegion } from '@app/database/entites/interest-region/interest-region.entity';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
@@ -40,6 +42,7 @@ export class ProductPostService {
     private readonly userRepository: UserRepository,
     private readonly likeRepository: LikeRepository,
     private readonly userBlockRepository: UserBlockRepository,
+    private readonly interestRegionRepository: InterestRegionRepository,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -118,9 +121,9 @@ export class ProductPostService {
     description: string;
     tradeType: TradeType;
     tradeTypeDescription: string;
-    regionId: string;
     userId: number;
   }): Promise<number> {
+    // 1. 사용자 검증
     const user: User = await this.userRepository.findById(params.userId);
     if (!user) {
       throw new NotFoundException({
@@ -129,6 +132,19 @@ export class ProductPostService {
       });
     }
 
+    // 2. 기본 관심도시 조회
+    const primaryInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findPrimaryByUserId(params.userId);
+    if (!primaryInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.PRIMARY_INTEREST_REGION_NOT_FOUND,
+        message: '기본 관심도시가 설정되지 않았습니다.',
+      });
+    }
+
+    const regionId: string = primaryInterestRegion.getRegion().getId();
+
+    // 3. 상품 게시글 생성
     const productPost: ProductPost = this.productPostRepository.create({
       title: params.title,
       category: params.category,
@@ -137,7 +153,7 @@ export class ProductPostService {
       description: params.description,
       tradeType: params.tradeType,
       tradeTypeDescription: params.tradeTypeDescription,
-      regionId: params.regionId,
+      regionId,
       userId: params.userId,
       tradeStatus: TradeStatus.FOR_SALE,
       universityId: user.getUniversityId(),
