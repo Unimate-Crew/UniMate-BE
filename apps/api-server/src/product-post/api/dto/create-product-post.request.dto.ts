@@ -83,12 +83,4 @@ export class CreateProductPostRequestDto {
   @IsString()
   @IsNotEmpty()
   tradeTypeDescription: string;
-
-  @ApiProperty({
-    description: '지역 ID',
-    example: '3651000',
-  })
-  @IsString()
-  @IsNotEmpty()
-  regionId: string;
 }

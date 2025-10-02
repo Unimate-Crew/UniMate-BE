@@ -460,7 +460,6 @@ export class ProductPostController {
         description: createProductPostDto.description,
         tradeType: createProductPostDto.tradeType,
         tradeTypeDescription: createProductPostDto.tradeTypeDescription,
-        regionId: createProductPostDto.regionId,
         userId: userTokenInfo.userId,
       });
 
