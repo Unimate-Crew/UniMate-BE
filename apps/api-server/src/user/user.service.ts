@@ -15,7 +15,7 @@ import {
   RegionRepository,
   UniversityRepository,
   ReviewRepository,
-  ReviewStatsDto as DatabaseReviewStatsDto,
+  ReviewStatsDto,
 } from '@app/database';
 import { ErrorCode } from '@app/common';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -167,19 +167,19 @@ export class UserService {
       }
     }
 
-    const databaseReviewStats: DatabaseReviewStatsDto =
+    const reviewStats: ReviewStatsDto =
       await this.reviewRepository.getReviewStatsByRevieweeId(userId);
 
-    const reviewStats = ReviewStatsResultDto.of(
-      databaseReviewStats.averageRating,
-      databaseReviewStats.totalReviews,
+    const reviewStatsResult: ReviewStatsResultDto = ReviewStatsResultDto.of(
+      reviewStats.averageRating,
+      reviewStats.totalReviews,
     );
 
     return GetUserProfileResultDto.of(
       user.getNickname(),
       user.getProfileImageKey(),
       university,
-      reviewStats,
+      reviewStatsResult,
     );
   }
 
