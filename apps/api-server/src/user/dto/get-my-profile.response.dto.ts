@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UniversityInfoDto } from './university-info.dto';
 import { InterestRegionInfosDto } from './inrerest-resion-info.dto';
+import { ReviewStatsResultDto } from './review-stats-result.dto';
 
 export class GetMyProfileResponseDto {
   @ApiProperty({
@@ -28,17 +29,25 @@ export class GetMyProfileResponseDto {
   })
   interestRegions: InterestRegionInfosDto;
 
+  @ApiProperty({
+    description: '거래 후기 통계',
+    type: ReviewStatsResultDto,
+  })
+  reviewStats: ReviewStatsResultDto;
+
   static of(
     nickname: string,
     profileImageKey: string | undefined,
     university: UniversityInfoDto | undefined,
     interestRegions: InterestRegionInfosDto,
+    reviewStats: ReviewStatsResultDto,
   ): GetMyProfileResponseDto {
     const dto = new GetMyProfileResponseDto();
     dto.nickname = nickname;
     dto.profileImageKey = profileImageKey;
     dto.university = university;
     dto.interestRegions = interestRegions;
+    dto.reviewStats = reviewStats;
     return dto;
   }
 }

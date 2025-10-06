@@ -14,6 +14,8 @@ import {
   Region,
   RegionRepository,
   UniversityRepository,
+  ReviewRepository,
+  ReviewStatsDto as DatabaseReviewStatsDto,
 } from '@app/database';
 import { ErrorCode } from '@app/common';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -25,6 +27,7 @@ import { InterestRegionInfosDto } from './dto/inrerest-resion-info.dto';
 import { GetUserProfileResultDto } from './dto/get-user-profile-result.dto';
 import { UniversityInfoDto } from './dto/university-info.dto';
 import { UpdateUserProfileResultDto } from './dto/update-user-profile-result.dto';
+import { ReviewStatsResultDto } from './dto/review-stats-result.dto';
 
 const INTEREST_REGIONS_MAX_COUNT = 3;
 
@@ -36,6 +39,7 @@ export class UserService {
     private readonly interestRegionRepository: InterestRegionRepository,
     private readonly regionRepository: RegionRepository,
     private readonly universityRepository: UniversityRepository,
+    private readonly reviewRepository: ReviewRepository,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -163,10 +167,19 @@ export class UserService {
       }
     }
 
+    const databaseReviewStats: DatabaseReviewStatsDto =
+      await this.reviewRepository.getReviewStatsByRevieweeId(userId);
+
+    const reviewStats = ReviewStatsResultDto.of(
+      databaseReviewStats.averageRating,
+      databaseReviewStats.totalReviews,
+    );
+
     return GetUserProfileResultDto.of(
       user.getNickname(),
       user.getProfileImageKey(),
       university,
+      reviewStats,
     );
   }
 

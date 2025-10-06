@@ -20,6 +20,7 @@ export * from './entites/university/university.entity';
 export * from './entites/university/university.repository';
 export * from './entites/review/review.entity';
 export * from './entites/review/review.repository';
+export * from './entites/review/dto/review-stats.dto';
 export * from './entites/conversation/conversation.entity';
 export * from './entites/conversation/conversation.repository';
 export * from './entites/conversation-participant/conversation-participant.entity';

@@ -98,7 +98,9 @@ export class UserController {
       user.getProvider(),
     );
 
-    return SignInResponseDto.of(TokensDto.of(accessToken, user.getRefreshToken()));
+    return SignInResponseDto.of(
+      TokensDto.of(accessToken, user.getRefreshToken()),
+    );
   }
 
   @ApiOperation({
@@ -373,6 +375,7 @@ export class UserController {
       userProfile.profileImageKey,
       userProfile.university,
       interestRegions,
+      userProfile.reviewStats,
     );
   }
 
@@ -446,6 +449,7 @@ export class UserController {
       userProfileResult.nickname,
       userProfileResult.profileImageKey,
       userProfileResult.university,
+      userProfileResult.reviewStats,
     );
   }
 }

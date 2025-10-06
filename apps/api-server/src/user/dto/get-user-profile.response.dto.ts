@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UniversityInfoDto } from './university-info.dto';
+import { ReviewStatsResultDto } from './review-stats-result.dto';
 
 export class GetUserProfileResponseDto {
   @ApiProperty({
@@ -21,15 +22,23 @@ export class GetUserProfileResponseDto {
   })
   university?: UniversityInfoDto;
 
+  @ApiProperty({
+    description: '거래 후기 통계',
+    type: ReviewStatsResultDto,
+  })
+  reviewStats: ReviewStatsResultDto;
+
   static of(
     nickname: string,
     profileImageKey: string | undefined,
     university: UniversityInfoDto | undefined,
+    reviewStats: ReviewStatsResultDto,
   ): GetUserProfileResponseDto {
     const dto = new GetUserProfileResponseDto();
     dto.nickname = nickname;
     dto.profileImageKey = profileImageKey;
     dto.university = university;
+    dto.reviewStats = reviewStats;
     return dto;
   }
 }
