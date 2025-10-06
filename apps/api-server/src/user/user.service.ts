@@ -18,6 +18,7 @@ import {
   ReviewStatsDto,
 } from '@app/database';
 import { ErrorCode } from '@app/common';
+import { S3Service } from '@app/common/s3/s3.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
 import { SignInDto } from './dto/sign-in.dto';
@@ -40,6 +41,7 @@ export class UserService {
     private readonly regionRepository: RegionRepository,
     private readonly universityRepository: UniversityRepository,
     private readonly reviewRepository: ReviewRepository,
+    private readonly s3Service: S3Service,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -175,9 +177,17 @@ export class UserService {
       reviewStats.totalReviews,
     );
 
+    // profileImageKey를 profileImageUrl로 변환
+    let profileImageUrl: string | undefined;
+    const profileImageKey = user.getProfileImageKey();
+    if (profileImageKey) {
+      profileImageUrl =
+        await this.s3Service.generateGetPresignedUrl(profileImageKey);
+    }
+
     return GetUserProfileResultDto.of(
       user.getNickname(),
-      user.getProfileImageKey(),
+      profileImageUrl,
       university,
       reviewStatsResult,
     );

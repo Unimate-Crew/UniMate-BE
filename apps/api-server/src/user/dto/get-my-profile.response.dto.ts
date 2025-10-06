@@ -11,10 +11,10 @@ export class GetMyProfileResponseDto {
   nickname: string;
 
   @ApiProperty({
-    description: '프로필 이미지 키',
-    example: 'user/profile/image.jpg',
+    description: '프로필 이미지 URL',
+    example: 'https://s3.amazonaws.com/bucket/user/profile/image.jpg',
   })
-  profileImageKey: string;
+  profileImageUrl: string;
 
   @ApiProperty({
     description: '대학교 정보',
@@ -37,14 +37,14 @@ export class GetMyProfileResponseDto {
 
   static of(
     nickname: string,
-    profileImageKey: string | undefined,
+    profileImageUrl: string | undefined,
     university: UniversityInfoDto | undefined,
     interestRegions: InterestRegionInfosDto,
     reviewStats: ReviewStatsResultDto,
   ): GetMyProfileResponseDto {
     const dto = new GetMyProfileResponseDto();
     dto.nickname = nickname;
-    dto.profileImageKey = profileImageKey;
+    dto.profileImageUrl = profileImageUrl;
     dto.university = university;
     dto.interestRegions = interestRegions;
     dto.reviewStats = reviewStats;

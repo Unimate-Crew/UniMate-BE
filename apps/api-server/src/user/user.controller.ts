@@ -372,7 +372,7 @@ export class UserController {
 
     return GetMyProfileResponseDto.of(
       userProfile.nickname,
-      userProfile.profileImageKey,
+      userProfile.profileImageUrl,
       userProfile.university,
       interestRegions,
       userProfile.reviewStats,
@@ -447,7 +447,7 @@ export class UserController {
 
     return GetUserProfileResponseDto.of(
       userProfileResult.nickname,
-      userProfileResult.profileImageKey,
+      userProfileResult.profileImageUrl,
       userProfileResult.university,
       userProfileResult.reviewStats,
     );
