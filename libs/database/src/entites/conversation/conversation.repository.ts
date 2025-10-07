@@ -48,4 +48,28 @@ export class ConversationRepository extends EntityRepository<Conversation> {
   async persistAndFlush(conversation: Conversation): Promise<void> {
     await this.em.persistAndFlush(conversation);
   }
+
+  /**
+   * 상품 ID 목록에 대한 채팅방 수를 그룹화하여 가져옵니다.
+   * @param productIds 상품 ID 목록
+   * @returns Map<상품ID, 채팅방수>
+   */
+  async countByProductIds(productIds: number[]): Promise<Map<number, number>> {
+    if (productIds.length === 0) {
+      return new Map();
+    }
+
+    const knex = this.em.getKnex();
+    const result = await knex
+      .select('product_post_id')
+      .count('* as count')
+      .from('conversation')
+      .whereIn('product_post_id', productIds)
+      .where('is_deleted', false)
+      .groupBy('product_post_id');
+
+    return new Map(
+      result.map((row) => [row.product_post_id, Number(row.count)]),
+    );
+  }
 }

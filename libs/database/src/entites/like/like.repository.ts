@@ -77,4 +77,28 @@ export class LikeRepository extends EntityRepository<Like> {
 
     return new Map(result.map((row) => [row.product_id, Number(row.count)]));
   }
+
+  /**
+   * 특정 유저가 좋아요한 상품 ID 목록을 조회합니다.
+   * @param userId 유저 ID
+   * @param productIds 조회할 상품 ID 목록
+   * @returns 유저가 좋아요한 상품 ID Set
+   */
+  async findLikedProductIdsByUserIdAndProductIds(
+    userId: number,
+    productIds: number[],
+  ): Promise<Set<number>> {
+    if (productIds.length === 0) {
+      return new Set();
+    }
+
+    const knex = this.em.getKnex();
+    const result = await knex
+      .select('product_id')
+      .from('like')
+      .where('user_id', userId)
+      .whereIn('product_id', productIds);
+
+    return new Set(result.map((row) => row.product_id));
+  }
 }

@@ -178,11 +178,13 @@ export class ProductPostController {
   async findUserSales(
     @Param('userId', ParseIntPipe) userId: number,
     @Query() query: FindUserSalesRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<FindUserSalesResponseDto> {
     const productPostInfoSlice: Slice<ProductPostResultDto> =
       await this.productPostService.findUserSales({
         pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
         userId,
+        currentUserId: userTokenInfo.userId,
         userSalesFilter: query.userSalesFilter,
       });
 
