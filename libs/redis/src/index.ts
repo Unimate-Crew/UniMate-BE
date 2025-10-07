@@ -4,4 +4,6 @@ export * from './redis.utils';
 export * from './repositories/session-cache.repository';
 export * from './repositories/room-online-cache.repository';
 export * from './repositories/participant-cache.repository';
+export * from './repositories/verification-code-cache.repository';
 export * from './entities/conversation-participant-cache.entity';
+export * from './entities/verification-code-cache.entity';

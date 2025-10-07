@@ -1,4 +1,12 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  UseGuards,
+  HttpCode,
+} from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -6,10 +14,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { PageRequest } from '@app/common';
-import { JwtAuthGuard } from '@app/auth';
+import { JwtAuthGuard, CurrentUser, UserTokenInfo } from '@app/auth';
 import { UniversityService } from '../application/university.service';
 import { SearchUniversitiesRequestDto } from './dto/search-universities.request.dto';
 import { SearchUniversitiesResponseDto } from './dto/search-universities.response.dto';
+import { SendVerificationCodeRequestDto } from './dto/send-verification-code.request.dto';
 
 @ApiTags('대학교')
 @ApiBearerAuth('accessToken')
@@ -39,6 +48,31 @@ export class UniversityController {
     return SearchUniversitiesResponseDto.of(
       universitySlice.contents,
       universitySlice.hasNext,
+    );
+  }
+
+  @Post('/email-verifications')
+  @HttpCode(204)
+  @ApiOperation({
+    summary: '대학교 이메일 인증코드 발송 API',
+    description:
+      '대학교 이메일로 6자리 인증코드를 발송합니다. 인증코드는 10분간 유효합니다.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '인증코드 발송 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '등록되지 않은 대학교 도메인',
+  })
+  async sendVerificationCode(
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+    @Body() requestDto: SendVerificationCodeRequestDto,
+  ): Promise<void> {
+    await this.universityService.sendVerificationCode(
+      userTokenInfo.userId,
+      requestDto.email,
     );
   }
 }
