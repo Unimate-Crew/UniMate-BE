@@ -75,6 +75,12 @@ export class UserSalesItemDto {
   })
   tradeStatus: TradeStatus;
 
+  @ApiProperty({
+    description: '좋아요 여부 (내가 좋아요한 게시글인지)',
+    example: false,
+  })
+  isLiked: boolean;
+
   constructor(
     id: number,
     title: string,
@@ -87,6 +93,7 @@ export class UserSalesItemDto {
     chatRoomCount: number,
     regionId: string,
     tradeStatus: TradeStatus,
+    isLiked: boolean,
   ) {
     this.id = id;
     this.title = title;
@@ -99,6 +106,7 @@ export class UserSalesItemDto {
     this.chatRoomCount = chatRoomCount;
     this.regionId = regionId;
     this.tradeStatus = tradeStatus;
+    this.isLiked = isLiked;
   }
 }
 
@@ -138,6 +146,7 @@ export class FindUserSalesResponseDto {
             info.chatRoomCount,
             info.productPost.getRegionId(),
             info.productPost.getTradeStatus(),
+            info.isLiked,
           ),
       ),
       productPostInfoSlice.hasNext,
