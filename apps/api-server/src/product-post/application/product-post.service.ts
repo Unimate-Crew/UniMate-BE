@@ -88,7 +88,17 @@ export class ProductPostService {
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 5. 좋아요 여부 조회 (로그인한 유저인 경우)
+    let likedProductIds: Set<number> = new Set();
+    if (params.userId) {
+      likedProductIds =
+        await this.likeRepository.findLikedProductIdsByUserIdAndProductIds(
+          params.userId,
+          productIds,
+        );
+    }
+
+    // 6. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
     const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
@@ -104,6 +114,7 @@ export class ProductPostService {
           thumbnailUrl,
           likeCountMap.get(post.productPost.getId()) ?? 0,
           0, // TODO: 채팅방 수 구현
+          likedProductIds.has(post.productPost.getId()),
         );
       }),
     );
@@ -261,7 +272,17 @@ export class ProductPostService {
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 5. 좋아요 여부 조회 (로그인한 유저인 경우)
+    let likedProductIds: Set<number> = new Set();
+    if (params.userId) {
+      likedProductIds =
+        await this.likeRepository.findLikedProductIdsByUserIdAndProductIds(
+          params.userId,
+          productIds,
+        );
+    }
+
+    // 6. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
     const productPostInfos = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
@@ -277,6 +298,7 @@ export class ProductPostService {
           thumbnailUrl,
           likeCountMap.get(post.productPost.getId()) ?? 0,
           0, // TODO: 채팅방 수 구현
+          likedProductIds.has(post.productPost.getId()),
         );
       }),
     );
@@ -337,7 +359,14 @@ export class ProductPostService {
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 5. 좋아요 여부 조회
+    const likedProductIds: Set<number> =
+      await this.likeRepository.findLikedProductIdsByUserIdAndProductIds(
+        params.userId,
+        productIds,
+      );
+
+    // 6. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
     const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
@@ -353,6 +382,7 @@ export class ProductPostService {
           thumbnailUrl,
           likeCountMap.get(post.productPost.getId()) ?? 0,
           0, // TODO: 채팅방 수 구현
+          likedProductIds.has(post.productPost.getId()),
         );
       }),
     );
@@ -389,6 +419,7 @@ export class ProductPostService {
       await this.likeRepository.countByProductIds(productIds);
 
     // 4. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 내가 좋아요한 목록이므로 모든 게시글의 isLiked는 true
     const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
@@ -404,6 +435,7 @@ export class ProductPostService {
           thumbnailUrl,
           likeCountMap.get(post.productPost.getId()) ?? 0,
           0, // TODO: 채팅방 수 구현
+          true, // 내가 좋아요한 목록이므로 항상 true
         );
       }),
     );
@@ -417,12 +449,14 @@ export class ProductPostService {
    * @param params.page 페이지 번호 (1부터 시작)
    * @param params.limit 페이지 크기
    * @param params.userId 조회할 유저 ID
+   * @param params.currentUserId 현재 로그인한 유저 ID (좋아요 여부 확인용)
    * @param params.userSalesFilter 판매내역 필터 (옵셔널)
    * @returns 페이지네이션된 유저의 판매내역 목록과 다음 페이지 존재 여부
    */
   async findUserSales(params: {
     pageRequest: PageRequest;
     userId: number;
+    currentUserId?: number;
     userSalesFilter?: UserSalesFilter;
   }): Promise<Slice<ProductPostResultDto>> {
     // 1. 필터 파라미터 설정
@@ -461,7 +495,17 @@ export class ProductPostService {
     const likeCountMap: Map<number, number> =
       await this.likeRepository.countByProductIds(productIds);
 
-    // 5. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
+    // 5. 좋아요 여부 조회 (로그인한 유저인 경우)
+    let likedProductIds: Set<number> = new Set();
+    if (params.currentUserId) {
+      likedProductIds =
+        await this.likeRepository.findLikedProductIdsByUserIdAndProductIds(
+          params.currentUserId,
+          productIds,
+        );
+    }
+
+    // 6. ProductPostInfo로 변환 (이미지 키를 PresignedUrl로 변환)
     const productPostInfos: ProductPostResultDto[] = await Promise.all(
       productPostSlice.contents.map(async (post) => {
         let thumbnailUrl = null;
@@ -477,6 +521,7 @@ export class ProductPostService {
           thumbnailUrl,
           likeCountMap.get(post.productPost.getId()) ?? 0,
           0, // TODO: 채팅방 수 구현
+          likedProductIds.has(post.productPost.getId()),
         );
       }),
     );
