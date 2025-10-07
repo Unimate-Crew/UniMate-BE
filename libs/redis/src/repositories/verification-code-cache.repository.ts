@@ -9,18 +9,13 @@ export class VerificationCodeCacheRepository {
 
   private readonly VERIFICATION_CODE_PREFIX = 'verification:code';
 
-  private readonly VERIFICATION_CODE_TTL = 600; // 10분 (600초)
-
   async setVerificationCode(
     userId: number,
     data: VerificationCodeCache,
+    ttl: number,
   ): Promise<void> {
     const key = buildRedisKey(this.VERIFICATION_CODE_PREFIX, userId.toString());
-    await this.redisClient.set(
-      key,
-      data.serialize(),
-      this.VERIFICATION_CODE_TTL,
-    );
+    await this.redisClient.set(key, data.serialize(), ttl);
   }
 
   async getVerificationCode(
