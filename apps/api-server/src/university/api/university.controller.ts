@@ -13,13 +13,14 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { PageRequest } from '@app/common';
+import { PageRequest, Slice } from '@app/common';
 import { JwtAuthGuard, CurrentUser, UserTokenInfo } from '@app/auth';
 import { UniversityService } from '../application/university.service';
 import { SearchUniversitiesRequestDto } from './dto/search-universities.request.dto';
 import { SearchUniversitiesResponseDto } from './dto/search-universities.response.dto';
 import { SendVerificationCodeRequestDto } from './dto/send-verification-code.request.dto';
 import { SendVerificationCodeResponseDto } from './dto/send-verification-code.response.dto';
+import { UniversityResultDto } from '../application/dto/university.result.dto';
 
 @ApiTags('대학교')
 @ApiBearerAuth('accessToken')
@@ -41,10 +42,11 @@ export class UniversityController {
   async searchUniversities(
     @Query() query: SearchUniversitiesRequestDto,
   ): Promise<SearchUniversitiesResponseDto> {
-    const universitySlice = await this.universityService.searchUniversities({
-      name: query.name,
-      pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
-    });
+    const universitySlice: Slice<UniversityResultDto> =
+      await this.universityService.searchUniversities({
+        name: query.name,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
+      });
 
     return SearchUniversitiesResponseDto.of(
       universitySlice.contents,

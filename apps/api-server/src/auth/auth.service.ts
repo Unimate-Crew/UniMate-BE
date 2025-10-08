@@ -32,7 +32,7 @@ export class AuthService {
     user.changeRefreshToken(refreshToken);
     await this.userRepository.persistAndFlush(user);
 
-    return TokensDto.of(accessToken, refreshToken)
+    return TokensDto.of(accessToken, refreshToken);
   }
 
   async generateAccessToken(
