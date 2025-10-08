@@ -34,6 +34,9 @@ export class User extends BaseEntity {
   @Property({ nullable: true })
   universityId?: number;
 
+  @Property({ nullable: true })
+  universityEmail?: string;
+
   @Property({ default: true })
   priceChangedNotificationEnabled: boolean = true;
 
@@ -86,6 +89,14 @@ export class User extends BaseEntity {
 
   public setUniversityId(universityId: number): void {
     this.universityId = universityId;
+  }
+
+  public getUniversityEmail(): string | undefined {
+    return this.universityEmail;
+  }
+
+  public setUniversityEmail(universityEmail: string): void {
+    this.universityEmail = universityEmail;
   }
 
   public isUserDeleted(): boolean {

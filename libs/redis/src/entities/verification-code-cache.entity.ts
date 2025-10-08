@@ -23,6 +23,10 @@ export class VerificationCodeCache {
     return this.universityId;
   }
 
+  public isCodeMatching(code: string): boolean {
+    return this.code === code;
+  }
+
   public serialize(): string {
     return JSON.stringify(this.toJSON());
   }
