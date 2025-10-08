@@ -19,6 +19,7 @@ import { UniversityService } from '../application/university.service';
 import { SearchUniversitiesRequestDto } from './dto/search-universities.request.dto';
 import { SearchUniversitiesResponseDto } from './dto/search-universities.response.dto';
 import { SendVerificationCodeRequestDto } from './dto/send-verification-code.request.dto';
+import { SendVerificationCodeResponseDto } from './dto/send-verification-code.response.dto';
 
 @ApiTags('대학교')
 @ApiBearerAuth('accessToken')
@@ -52,15 +53,15 @@ export class UniversityController {
   }
 
   @Post('/email-verifications')
-  @HttpCode(204)
   @ApiOperation({
     summary: '대학교 이메일 인증코드 발송 API',
     description:
       '대학교 이메일로 6자리 인증코드를 발송합니다. 인증코드는 10분간 유효합니다.',
   })
   @ApiResponse({
-    status: 204,
+    status: 201,
     description: '인증코드 발송 성공',
+    type: SendVerificationCodeResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -69,10 +70,13 @@ export class UniversityController {
   async sendVerificationCode(
     @CurrentUser() userTokenInfo: UserTokenInfo,
     @Body() requestDto: SendVerificationCodeRequestDto,
-  ): Promise<void> {
-    await this.universityService.sendVerificationCode(
-      userTokenInfo.userId,
-      requestDto.email,
-    );
+  ): Promise<SendVerificationCodeResponseDto> {
+    const expiresInSeconds: number =
+      await this.universityService.sendVerificationCode(
+        userTokenInfo.userId,
+        requestDto.email,
+      );
+
+    return SendVerificationCodeResponseDto.of(expiresInSeconds);
   }
 }

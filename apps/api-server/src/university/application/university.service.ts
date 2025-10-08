@@ -11,6 +11,8 @@ import { UniversityResultDto } from './dto/university.result.dto';
 
 @Injectable()
 export class UniversityService {
+  private readonly VERIFICATION_CODE_TTL = 600; // 10분 (600초)
+
   constructor(
     private readonly universityRepository: UniversityRepository,
     private readonly verificationCodeCacheRepository: VerificationCodeCacheRepository,
@@ -56,7 +58,7 @@ export class UniversityService {
     return Slice.of(pagedUniversities, hasNext);
   }
 
-  async sendVerificationCode(userId: number, email: string): Promise<void> {
+  async sendVerificationCode(userId: number, email: string): Promise<number> {
     // 1. 이메일에서 도메인 추출
     const domain: string = this.extractDomain(email);
 
@@ -82,6 +84,7 @@ export class UniversityService {
         email,
         universityId: university.id,
       }),
+      this.VERIFICATION_CODE_TTL,
     );
 
     // 5. SQS로 이메일 발송 요청
@@ -93,6 +96,9 @@ export class UniversityService {
         timestamp: new Date().toISOString(),
       },
     );
+
+    // 6. 인증코드 유효 기간 반환
+    return this.VERIFICATION_CODE_TTL;
   }
 
   private extractDomain(email: string): string {

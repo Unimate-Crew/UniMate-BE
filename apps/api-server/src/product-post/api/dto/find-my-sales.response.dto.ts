@@ -81,6 +81,12 @@ export class MySalesItemDto {
   })
   isHidden: boolean;
 
+  @ApiProperty({
+    description: '좋아요 여부 (내가 좋아요한 게시글인지)',
+    example: false,
+  })
+  isLiked: boolean;
+
   constructor(
     id: number,
     title: string,
@@ -94,6 +100,7 @@ export class MySalesItemDto {
     regionId: string,
     tradeStatus: TradeStatus,
     isHidden: boolean,
+    isLiked: boolean,
   ) {
     this.id = id;
     this.title = title;
@@ -107,6 +114,7 @@ export class MySalesItemDto {
     this.regionId = regionId;
     this.tradeStatus = tradeStatus;
     this.isHidden = isHidden;
+    this.isLiked = isLiked;
   }
 }
 
@@ -147,6 +155,7 @@ export class FindMySalesResponseDto {
             info.productPost.getRegionId(),
             info.productPost.getTradeStatus(),
             info.productPost.getIsHidden(),
+            info.isLiked,
           ),
       ),
       productPostInfoSlice.hasNext,
