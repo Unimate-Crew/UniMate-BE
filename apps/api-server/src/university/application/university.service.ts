@@ -20,42 +20,24 @@ export class UniversityService {
     private readonly configService: ConfigService,
   ) {}
 
-  // 실제로는 데이터베이스에서 조회하는 로직이 구현되어야 함
   async searchUniversities(params: {
     name?: string;
     pageRequest: PageRequest;
   }): Promise<Slice<UniversityResultDto>> {
-    // 모의 데이터 (실제 구현 시 데이터베이스 조회 로직으로 대체)
-    const mockUniversities: UniversityResultDto[] = [
-      new UniversityResultDto(1, 'Harvard University', Country.USA),
-      new UniversityResultDto(2, 'Seoul National University', Country.KOREA),
-      new UniversityResultDto(
-        3,
-        'Massachusetts Institute of Technology',
-        Country.USA,
-      ),
-      new UniversityResultDto(4, 'University of Oxford', Country.UK),
-      new UniversityResultDto(5, 'Kyoto University', Country.JAPAN),
-    ];
+    const universitySlice: Slice<University> =
+      await this.universityRepository.searchUniversities({
+        name: params.name,
+        pageRequest: params.pageRequest,
+      });
 
-    // 필터링 조건 적용 (name과 country)
-    let filteredUniversities = mockUniversities;
-
-    if (params.name) {
-      const lowerName = params.name.toLowerCase();
-      filteredUniversities = filteredUniversities.filter((uni) =>
-        uni.name.toLowerCase().includes(lowerName),
-      );
-    }
-
-    // 페이지네이션 적용
-    const startIndex = params.pageRequest.getOffset();
-    const endIndex = startIndex + params.pageRequest.getLimit();
-    const totalItems = filteredUniversities.length;
-    const pagedUniversities = filteredUniversities.slice(startIndex, endIndex);
-    const hasNext = endIndex < totalItems;
-
-    return Slice.of(pagedUniversities, hasNext);
+    return universitySlice.map(
+      (university) =>
+        new UniversityResultDto(
+          university.getId(),
+          university.getName(),
+          university.getCountry() as Country,
+        ),
+    );
   }
 
   async sendVerificationCode(userId: number, email: string): Promise<number> {

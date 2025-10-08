@@ -14,8 +14,8 @@ export class TokensDto {
   refreshToken: string;
 
   private constructor(accessToken: string, refreshToken: string) {
-      this.accessToken = accessToken;
-      this.refreshToken = refreshToken;
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
   }
 
   static of(accessToken: string, refreshToken: string): TokensDto {

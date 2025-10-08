@@ -1,5 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import { ApiProperty } from '@nestjs/swagger';
+import { response } from 'express';
 import { Country } from '../../../common/enums';
 import { UniversityResultDto } from '../../application/dto/university.result.dto';
 
@@ -29,7 +30,7 @@ export class SearchUniversitiesResponseDto {
     description: '대학교 목록',
     type: [UniversityDto],
   })
-  content: UniversityDto[];
+  contents: UniversityDto[];
 
   @ApiProperty({
     description: '다음 페이지 존재 여부',
@@ -37,17 +38,21 @@ export class SearchUniversitiesResponseDto {
   })
   hasNext: boolean;
 
+  constructor(contents: UniversityDto[], hasNext: boolean) {
+    this.contents = contents;
+    this.hasNext = hasNext;
+  }
+
   static of(
     content: UniversityResultDto[],
     hasNext: boolean,
   ): SearchUniversitiesResponseDto {
-    const response = new SearchUniversitiesResponseDto();
-    response.content = content.map((university) => ({
+    const results: UniversityDto[] = content.map((university) => ({
       id: university.id,
       name: university.name,
       country: university.country,
     }));
-    response.hasNext = hasNext;
-    return response;
+
+    return new SearchUniversitiesResponseDto(results, hasNext);
   }
 }
