@@ -579,10 +579,44 @@ export class ProductPostService {
     tradeType?: TradeType;
     tradeTypeDescription?: string;
   }): Promise<number> {
-    // 1. 상품 게시글 조회
-    const productPost: ProductPost = await this.productPostRepository.findById(
+    // 1. 상품 게시글 조회 및 검증
+    const productPost = await this.validateProductPostForUpdate(
       params.productPostId,
+      params.userId,
     );
+
+    // 2. 상품 게시글 기본 정보 수정
+    this.updateProductPostFields(productPost, params);
+
+    // 3. 이미지 수정 (제공된 경우)
+    if (params.imageKeys !== undefined && params.imageKeys.length > 0) {
+      await this.updateProductPostImages(
+        params.productPostId,
+        params.imageKeys,
+      );
+    }
+
+    // 4. 변경사항 저장
+    await this.productPostRepository.persistAndFlush(productPost);
+
+    return productPost.getId();
+  }
+
+  /**
+   * 상품 게시글 수정 권한을 검증합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @param userId 사용자 ID
+   * @returns 검증된 상품 게시글
+   * @throws NotFoundException 게시글을 찾을 수 없거나 삭제된 경우
+   * @throws ForbiddenException 수정 권한이 없는 경우
+   */
+  private async validateProductPostForUpdate(
+    productPostId: number,
+    userId: number,
+  ): Promise<ProductPost> {
+    const productPost =
+      await this.productPostRepository.findById(productPostId);
 
     if (!productPost) {
       throw new NotFoundException({
@@ -591,7 +625,6 @@ export class ProductPostService {
       });
     }
 
-    // 2. 삭제된 게시글인지 확인
     if (productPost.isProductPostDeleted()) {
       throw new NotFoundException({
         code: ErrorCode.PRODUCT_POST_DELETED,
@@ -599,15 +632,34 @@ export class ProductPostService {
       });
     }
 
-    // 3. 권한 검증 (본인이 작성한 게시글만 수정 가능)
-    if (productPost.getUserId() !== params.userId) {
+    if (productPost.getUserId() !== userId) {
       throw new ForbiddenException({
         code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
         message: '본인이 작성한 상품 게시글만 수정할 수 있습니다.',
       });
     }
 
-    // 4. 상품 게시글 수정
+    return productPost;
+  }
+
+  /**
+   * 상품 게시글의 필드를 업데이트합니다.
+   *
+   * @param productPost 상품 게시글 엔티티
+   * @param params 업데이트할 필드들
+   */
+  private updateProductPostFields(
+    productPost: ProductPost,
+    params: {
+      title?: string;
+      category?: ProductCategory;
+      price?: number;
+      currencyType?: CurrencyType;
+      description?: string;
+      tradeType?: TradeType;
+      tradeTypeDescription?: string;
+    },
+  ): void {
     if (params.title !== undefined) {
       productPost.setTitle(params.title);
     }
@@ -635,36 +687,37 @@ export class ProductPostService {
     if (params.tradeTypeDescription !== undefined) {
       productPost.setTradeTypeDescription(params.tradeTypeDescription);
     }
+  }
 
-    // 5. 이미지 수정 (제공된 경우 기존 이미지 삭제 후 새 이미지 저장)
-    if (params.imageKeys !== undefined && params.imageKeys.length > 0) {
-      // 5-1. 기존 이미지 소프트 삭제
-      await this.productImageRepository.softDeleteByProductId(
-        params.productPostId,
-      );
+  /**
+   * 상품 게시글의 이미지를 업데이트합니다.
+   * 기존 이미지를 소프트 삭제하고 새 이미지로 대체합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @param imageKeys 새로운 이미지 키 배열 (첫 번째가 썸네일)
+   */
+  private async updateProductPostImages(
+    productPostId: number,
+    imageKeys: string[],
+  ): Promise<void> {
+    // 1. 기존 이미지 소프트 삭제
+    await this.productImageRepository.softDeleteByProductId(productPostId);
 
-      // 5-2. 새 이미지 저장
-      const productImages = params.imageKeys.map((imageKey, index) => {
-        const productImage: ProductImage = this.productImageRepository.create({
-          productId: params.productPostId,
-          imageKey,
-          isThumbnail: index === 0,
-        });
-        return productImage;
-      });
+    // 2. 새 이미지 생성
+    const productImages = imageKeys.map((imageKey, index) =>
+      this.productImageRepository.create({
+        productId: productPostId,
+        imageKey,
+        isThumbnail: index === 0,
+      }),
+    );
 
-      // 5-3. 이미지들 저장
-      await Promise.all(
-        productImages.map((productImage) =>
-          this.productImageRepository.persistAndFlush(productImage),
-        ),
-      );
-    }
-
-    // 6. 변경사항 저장
-    await this.productPostRepository.persistAndFlush(productPost);
-
-    return productPost.getId();
+    // 3. 이미지 저장
+    await Promise.all(
+      productImages.map((productImage) =>
+        this.productImageRepository.persistAndFlush(productImage),
+      ),
+    );
   }
 
   /**
