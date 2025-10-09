@@ -557,10 +557,11 @@ export class ProductPostService {
    * @param params.productPostId 수정할 상품 게시글 ID
    * @param params.userId 현재 로그인한 유저 ID
    * @param params.title 제목
-   * @param params.description 설명
+   * @param params.imageKeys 이미지 키 배열 (제공 시 기존 이미지 대체)
+   * @param params.category 카테고리
    * @param params.price 가격
    * @param params.currencyType 통화 타입
-   * @param params.category 카테고리
+   * @param params.description 설명
    * @param params.tradeType 거래 타입
    * @param params.tradeTypeDescription 거래 타입 설명
    * @returns 수정된 상품 게시글 ID
@@ -570,10 +571,11 @@ export class ProductPostService {
     productPostId: number;
     userId: number;
     title?: string;
-    description?: string;
+    imageKeys?: string[];
+    category?: ProductCategory;
     price?: number;
     currencyType?: CurrencyType;
-    category?: ProductCategory;
+    description?: string;
     tradeType?: TradeType;
     tradeTypeDescription?: string;
   }): Promise<number> {
@@ -610,8 +612,8 @@ export class ProductPostService {
       productPost.setTitle(params.title);
     }
 
-    if (params.description !== undefined) {
-      productPost.setDescription(params.description);
+    if (params.category !== undefined) {
+      productPost.setCategory(params.category);
     }
 
     if (params.price !== undefined) {
@@ -622,8 +624,8 @@ export class ProductPostService {
       productPost.setCurrencyType(params.currencyType);
     }
 
-    if (params.category !== undefined) {
-      productPost.setCategory(params.category);
+    if (params.description !== undefined) {
+      productPost.setDescription(params.description);
     }
 
     if (params.tradeType !== undefined) {
@@ -634,7 +636,32 @@ export class ProductPostService {
       productPost.setTradeTypeDescription(params.tradeTypeDescription);
     }
 
-    // 5. 변경사항 저장
+    // 5. 이미지 수정 (제공된 경우 기존 이미지 삭제 후 새 이미지 저장)
+    if (params.imageKeys !== undefined && params.imageKeys.length > 0) {
+      // 5-1. 기존 이미지 소프트 삭제
+      await this.productImageRepository.softDeleteByProductId(
+        params.productPostId,
+      );
+
+      // 5-2. 새 이미지 저장
+      const productImages = params.imageKeys.map((imageKey, index) => {
+        const productImage: ProductImage = this.productImageRepository.create({
+          productId: params.productPostId,
+          imageKey,
+          isThumbnail: index === 0,
+        });
+        return productImage;
+      });
+
+      // 5-3. 이미지들 저장
+      await Promise.all(
+        productImages.map((productImage) =>
+          this.productImageRepository.persistAndFlush(productImage),
+        ),
+      );
+    }
+
+    // 6. 변경사항 저장
     await this.productPostRepository.persistAndFlush(productPost);
 
     return productPost.getId();

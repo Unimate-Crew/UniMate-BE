@@ -583,10 +583,11 @@ export class ProductPostController {
         productPostId,
         userId: userTokenInfo.userId,
         title: updateProductPostRequestDto.title,
-        description: updateProductPostRequestDto.description,
+        imageKeys: updateProductPostRequestDto.imageKeys,
+        category: updateProductPostRequestDto.category,
         price: updateProductPostRequestDto.price,
         currencyType: updateProductPostRequestDto.currencyType,
-        category: updateProductPostRequestDto.category,
+        description: updateProductPostRequestDto.description,
         tradeType: updateProductPostRequestDto.tradeType,
         tradeTypeDescription: updateProductPostRequestDto.tradeTypeDescription,
       });
