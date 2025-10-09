@@ -574,7 +574,7 @@ export class ProductPostController {
     },
   })
   async updateProductPost(
-    @Param('id') productPostId: number,
+    @Param('id', ParseIntPipe) productPostId: number,
     @Body() updateProductPostRequestDto: UpdateProductPostRequestDto,
     @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<UpdateProductPostResponseDto> {
