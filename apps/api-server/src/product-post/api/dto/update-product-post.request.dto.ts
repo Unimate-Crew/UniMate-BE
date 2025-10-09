@@ -7,23 +7,12 @@ import {
   MaxLength,
 } from 'class-validator';
 import {
-  TradeStatus,
   CurrencyType,
   ProductCategory,
   TradeType,
 } from '@app/database/common/enums';
 
 export class UpdateProductPostRequestDto {
-  @ApiProperty({
-    description: '거래 상태',
-    enum: TradeStatus,
-    example: TradeStatus.RESERVED,
-    required: false,
-  })
-  @IsEnum(TradeStatus)
-  @IsOptional()
-  tradeStatus?: TradeStatus;
-
   @ApiProperty({
     description: '제품 게시글 제목',
     example: '아이폰 15 Pro 팝니다',

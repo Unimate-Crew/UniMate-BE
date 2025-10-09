@@ -556,7 +556,6 @@ export class ProductPostService {
    *
    * @param params.productPostId 수정할 상품 게시글 ID
    * @param params.userId 현재 로그인한 유저 ID
-   * @param params.tradeStatus 거래 상태
    * @param params.title 제목
    * @param params.description 설명
    * @param params.price 가격
@@ -570,7 +569,6 @@ export class ProductPostService {
   async updateProductPost(params: {
     productPostId: number;
     userId: number;
-    tradeStatus?: TradeStatus;
     title?: string;
     description?: string;
     price?: number;
@@ -608,10 +606,6 @@ export class ProductPostService {
     }
 
     // 4. 상품 게시글 수정
-    if (params.tradeStatus !== undefined) {
-      productPost.setTradeStatus(params.tradeStatus);
-    }
-
     if (params.title !== undefined) {
       productPost.setTitle(params.title);
     }

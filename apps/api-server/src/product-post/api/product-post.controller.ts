@@ -582,7 +582,6 @@ export class ProductPostController {
       await this.productPostService.updateProductPost({
         productPostId,
         userId: userTokenInfo.userId,
-        tradeStatus: updateProductPostRequestDto.tradeStatus,
         title: updateProductPostRequestDto.title,
         description: updateProductPostRequestDto.description,
         price: updateProductPostRequestDto.price,
