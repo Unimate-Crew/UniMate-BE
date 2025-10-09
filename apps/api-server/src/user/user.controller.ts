@@ -98,9 +98,7 @@ export class UserController {
       user.getProvider(),
     );
 
-    return SignInResponseDto.of(
-      TokensDto.of(accessToken, user.getRefreshToken()),
-    );
+    return SignInResponseDto.of(accessToken, user.getRefreshToken());
   }
 
   @ApiOperation({
