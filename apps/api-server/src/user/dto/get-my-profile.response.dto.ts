@@ -35,12 +35,20 @@ export class GetMyProfileResponseDto {
   })
   reviewStats: ReviewStatsResultDto;
 
+  @ApiProperty({
+    description: '대학교 이메일',
+    example: 'student@university.ac.kr',
+    required: false,
+  })
+  universityEmail?: string;
+
   static of(
     nickname: string,
     profileImageUrl: string | undefined,
     university: UniversityInfoDto | undefined,
     interestRegions: InterestRegionInfosDto,
     reviewStats: ReviewStatsResultDto,
+    universityEmail: string | undefined,
   ): GetMyProfileResponseDto {
     const dto = new GetMyProfileResponseDto();
     dto.nickname = nickname;
@@ -48,6 +56,7 @@ export class GetMyProfileResponseDto {
     dto.university = university;
     dto.interestRegions = interestRegions;
     dto.reviewStats = reviewStats;
+    dto.universityEmail = universityEmail;
     return dto;
   }
 }

@@ -28,17 +28,26 @@ export class GetUserProfileResultDto {
   })
   reviewStats: ReviewStatsResultDto;
 
+  @ApiProperty({
+    description: '대학교 이메일',
+    example: 'student@university.ac.kr',
+    required: false,
+  })
+  universityEmail?: string;
+
   static of(
     nickname: string,
     profileImageUrl: string | undefined,
     university: UniversityInfoDto | undefined,
     reviewStats: ReviewStatsResultDto,
+    universityEmail: string | undefined,
   ): GetUserProfileResultDto {
     const dto = new GetUserProfileResultDto();
     dto.nickname = nickname;
     dto.profileImageUrl = profileImageUrl;
     dto.university = university;
     dto.reviewStats = reviewStats;
+    dto.universityEmail = universityEmail;
     return dto;
   }
 }

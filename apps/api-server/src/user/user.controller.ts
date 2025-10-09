@@ -374,6 +374,7 @@ export class UserController {
       userProfile.university,
       interestRegions,
       userProfile.reviewStats,
+      userProfile.universityEmail,
     );
   }
 
