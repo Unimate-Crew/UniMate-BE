@@ -574,7 +574,7 @@ export class ProductPostController {
     },
   })
   async updateProductPost(
-    @Param('id') productPostId: number,
+    @Param('id', ParseIntPipe) productPostId: number,
     @Body() updateProductPostRequestDto: UpdateProductPostRequestDto,
     @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<UpdateProductPostResponseDto> {
@@ -582,12 +582,12 @@ export class ProductPostController {
       await this.productPostService.updateProductPost({
         productPostId,
         userId: userTokenInfo.userId,
-        tradeStatus: updateProductPostRequestDto.tradeStatus,
         title: updateProductPostRequestDto.title,
-        description: updateProductPostRequestDto.description,
+        imageKeys: updateProductPostRequestDto.imageKeys,
+        category: updateProductPostRequestDto.category,
         price: updateProductPostRequestDto.price,
         currencyType: updateProductPostRequestDto.currencyType,
-        category: updateProductPostRequestDto.category,
+        description: updateProductPostRequestDto.description,
         tradeType: updateProductPostRequestDto.tradeType,
         tradeTypeDescription: updateProductPostRequestDto.tradeTypeDescription,
       });
