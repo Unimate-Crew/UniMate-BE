@@ -1,18 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TokensDto } from '../../auth/dto/tokens.dto';
 
 export class SignInResponseDto {
   @ApiProperty({
-    description: '발급된 토큰 정보',
-    type: TokensDto,
+    description: '발급된 액세스 토큰',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
-  tokens: TokensDto;
+  accessToken: string;
 
-  private constructor(tokens: TokensDto) {
-    this.tokens = tokens;
+  @ApiProperty({
+    description: '발급된 리프레시 토큰',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refreshToken: string;
+
+  private constructor(accessToken: string, refreshToken: string) {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
   }
 
-  static of(tokens: TokensDto): SignInResponseDto {
-    return new SignInResponseDto(tokens);
+  static of(accessToken: string, refreshToken: string): SignInResponseDto {
+    return new SignInResponseDto(accessToken, refreshToken);
   }
 }
