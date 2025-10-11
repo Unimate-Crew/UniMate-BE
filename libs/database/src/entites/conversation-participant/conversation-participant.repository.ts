@@ -172,4 +172,65 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
 
     return Slice.of(contents, hasNext);
   }
+
+  /**
+   * 특정 상품과 사용자에 대해 현재 대화 중인 채팅방 참여자 목록을 조회합니다.
+   * 마지막 메시지 시간 기준 최신순으로 정렬됩니다.
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @param params.userId 사용자 ID
+   * @returns 대화 중인 채팅방 참여자 엔티티 목록 (최신순)
+   */
+  async findActiveByProductIdAndUserId(params: {
+    productPostId: number;
+    userId: number;
+  }): Promise<ConversationParticipant[]> {
+    const knex = this.em.getKnex();
+
+    const results = await knex
+      .select('cp.*')
+      .from('conversation_participant as cp')
+      .innerJoin('conversation as c', function () {
+        this.on('c.id', '=', 'cp.conversation_id').andOn(
+          'c.is_deleted',
+          '=',
+          knex.raw('false'),
+        );
+      })
+      .where('c.product_post_id', params.productPostId)
+      .andWhere('cp.user_id', params.userId)
+      .andWhere('cp.is_deleted', false)
+      .andWhere(function () {
+        this.whereNull('cp.left_at').orWhere(
+          'cp.left_at',
+          '<',
+          knex.ref('c.last_sent_at'),
+        );
+      })
+      .orderBy('c.last_sent_at', 'desc');
+
+    return results.map((row) => this.em.map(ConversationParticipant, row));
+  }
+
+  /**
+   * 특정 채팅방들의 상대방 참여자를 조회합니다.
+   *
+   * @param params.conversationIds 채팅방 ID 목록
+   * @param params.excludeUserId 제외할 사용자 ID
+   * @returns 상대방 참여자 엔티티 목록
+   */
+  async findOtherParticipantsByConversationIds(params: {
+    conversationIds: number[];
+    excludeUserId: number;
+  }): Promise<ConversationParticipant[]> {
+    if (params.conversationIds.length === 0) {
+      return [];
+    }
+
+    return this.find({
+      conversationId: { $in: params.conversationIds },
+      userId: { $ne: params.excludeUserId },
+      isDeleted: false,
+    });
+  }
 }

@@ -12,6 +12,9 @@ export class TradeProgress extends BaseEntity {
   productPostId!: number;
 
   @Property()
+  conversationId!: number;
+
+  @Property()
   buyerId!: number;
 
   @Enum(() => TradeProgressStatus)
@@ -27,6 +30,14 @@ export class TradeProgress extends BaseEntity {
 
   public setProductPostId(productPostId: number): void {
     this.productPostId = productPostId;
+  }
+
+  public getConversationId(): number {
+    return this.conversationId;
+  }
+
+  public setConversationId(conversationId: number): void {
+    this.conversationId = conversationId;
   }
 
   public getBuyerId(): number {

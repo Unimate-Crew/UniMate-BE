@@ -44,6 +44,11 @@ import { FindUserSalesRequestDto } from './dto/find-user-sales.request.dto';
 import { FindUserSalesResponseDto } from './dto/find-user-sales.response.dto';
 import { FindMyLikesRequestDto } from './dto/find-my-likes.request.dto';
 import { FindMyLikesResponseDto } from './dto/find-my-likes.response.dto';
+import { UpdateTradeStatusRequestDto } from './dto/update-trade-status.request.dto';
+import { GetTradableUsersResponseDto } from './dto/get-tradable-users.response.dto';
+import { GetTradeProgressResponseDto } from './dto/get-trade-progress.response.dto';
+import { TradableUserResultDto } from '../application/dto/tradable-user.result.dto';
+import { TradeProgressResultDto } from '../application/dto/trade-progress.result.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -717,5 +722,119 @@ export class ProductPostController {
       });
 
     return FindProductPostDetailResponseDto.from(productPostDetail);
+  }
+
+  @Patch('/:id/trade-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 거래 상태 변경 API',
+    description: '상품의 거래 상태를 변경합니다 (판매중 → 예약중 → 거래완료).',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '거래 상태 변경 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청 (구매자 ID/채팅방 ID 누락, 잘못된 상태 전환 등)',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (본인이 작성한 게시글만 상태 변경 가능)',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '상품 게시글을 찾을 수 없음',
+    type: ErrorResponse,
+  })
+  async updateTradeStatus(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @Body() updateTradeStatusDto: UpdateTradeStatusRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.updateTradeStatus({
+      productPostId,
+      userId: userTokenInfo.userId,
+      tradeStatus: updateTradeStatusDto.tradeStatus,
+      buyerId: updateTradeStatusDto.buyerId,
+      conversationId: updateTradeStatusDto.conversationId,
+    });
+  }
+
+  @Get('/:id/tradable-users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '거래 가능한 사용자 목록 조회 API',
+    description:
+      '상품 관련 현재 채팅 중인 사용자 목록을 조회합니다 (최신 대화순 정렬).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '거래 가능한 사용자 목록 조회 성공',
+    type: GetTradableUsersResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async getTradableUsers(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetTradableUsersResponseDto> {
+    const tradableUsers: TradableUserResultDto[] =
+      await this.productPostService.getTradableUsers({
+        productPostId,
+        userId: userTokenInfo.userId,
+      });
+
+    return GetTradableUsersResponseDto.of(tradableUsers);
+  }
+
+  @Get('/:id/trade-progress')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '거래 진행 현황 조회 API',
+    description: '상품의 현재 거래 진행 현황 정보를 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '거래 진행 현황 조회 성공',
+    type: GetTradeProgressResponseDto,
+  })
+  @ApiResponse({
+    status: 204,
+    description: '진행 중인 거래 없음',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async getTradeProgress(
+    @Param('id', ParseIntPipe) productPostId: number,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetTradeProgressResponseDto | null> {
+    const tradeProgress: TradeProgressResultDto | null =
+      await this.productPostService.getTradeProgress({
+        productPostId,
+        userId: userTokenInfo.userId,
+      });
+
+    if (!tradeProgress) {
+      return null;
+    }
+
+    return GetTradeProgressResponseDto.of(tradeProgress);
   }
 }
