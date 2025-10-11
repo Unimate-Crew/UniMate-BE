@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
 import { User } from '@app/database/entites/user/user.entity';
@@ -16,6 +17,7 @@ import {
   TradeType,
   MySalesFilter,
   UserSalesFilter,
+  TradeProgressStatus,
 } from '@app/database/common/enums';
 import { Transactional } from '@mikro-orm/core';
 import { UserRepository } from '@app/database/entites/user/user.repository';
@@ -31,6 +33,8 @@ import { ProductPostDetailWithRelations } from '@app/database/entites/product-po
 import { InterestRegionRepository } from '@app/database/entites/interest-region/interest-region.repository';
 import { InterestRegion } from '@app/database/entites/interest-region/interest-region.entity';
 import { ConversationRepository } from '@app/database/entites/conversation/conversation.repository';
+import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
+import { TradeProgressRepository } from '@app/database/entites/trade-progress/trade-progress.repository';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
@@ -45,6 +49,8 @@ export class ProductPostService {
     private readonly userBlockRepository: UserBlockRepository,
     private readonly interestRegionRepository: InterestRegionRepository,
     private readonly conversationRepository: ConversationRepository,
+    private readonly conversationParticipantRepository: ConversationParticipantRepository,
+    private readonly tradeProgressRepository: TradeProgressRepository,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -992,5 +998,53 @@ export class ProductPostService {
     // 5. 게시글 소프트 삭제
     productPost.delete();
     await this.productPostRepository.persistAndFlush(productPost);
+  }
+
+  /**
+   * 구매자가 특정 상품의 특정 채팅방에 활성 참여 중인지 검증합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @param conversationId 채팅방 ID
+   * @param buyerId 구매자 ID
+   * @throws BadRequestException 검증 실패 시
+   */
+  private async validateUserHasChatWithProduct(
+    productPostId: number,
+    conversationId: number,
+    buyerId: number,
+  ): Promise<void> {
+    // 1. 채팅방이 해당 상품의 채팅방인지 확인
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new BadRequestException({
+        code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
+    }
+
+    if (conversation.getProductPostId() !== productPostId) {
+      throw new BadRequestException({
+        code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+        message: '해당 상품의 채팅방이 아닙니다.',
+      });
+    }
+
+    // 2. 구매자가 채팅방의 활성 참여자인지 확인
+    const participant =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId: buyerId,
+        },
+      );
+
+    if (!participant || !participant.isActive()) {
+      throw new BadRequestException({
+        code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+        message: '해당 구매자와의 활성 채팅방이 존재하지 않습니다.',
+      });
+    }
   }
 }

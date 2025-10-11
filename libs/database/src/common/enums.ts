@@ -68,3 +68,8 @@ export enum ConversationMessageType {
   VIDEO = 'VIDEO',
   SYSTEM = 'SYSTEM',
 }
+
+export enum TradeProgressStatus {
+  RESERVED = 'RESERVED',
+  COMPLETED = 'COMPLETED',
+}
