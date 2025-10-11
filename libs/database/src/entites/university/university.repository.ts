@@ -55,7 +55,7 @@ export class UniversityRepository extends EntityRepository<University> {
     }
 
     const results: University[] = await qb
-      .orderBy({ createdAt: 'DESC' })
+      .orderBy({ id: 'ASC' })
       .limit(params.pageRequest.getLimit() + 1)
       .offset(params.pageRequest.getOffset())
       .getResultList();
