@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
-import { Slice, PageRequest } from '@app/common';
+import { CursorSlice } from '@app/common';
 import type { UserBlock } from './user-block.entity';
 import { UserBlockWithUser } from './dto/user-block-with-user.dto';
 
@@ -16,11 +16,12 @@ export class UserBlockRepository extends EntityRepository<UserBlock> {
 
   async findPagedByBlockerId(params: {
     blockerId: number;
-    pageRequest: PageRequest;
-  }): Promise<Slice<UserBlockWithUser>> {
+    cursor?: number;
+    size: number;
+  }): Promise<CursorSlice<UserBlockWithUser>> {
     const knex = this.em.getKnex();
 
-    const results = await knex
+    let query = knex
       .select([
         'user_block.id',
         'user_block.blocker_id as blockerId',
@@ -34,15 +35,19 @@ export class UserBlockRepository extends EntityRepository<UserBlock> {
       .innerJoin('user', 'user_block.blocked_id', 'user.id')
       .where('user_block.blocker_id', params.blockerId)
       .where('user_block.is_deleted', false)
-      .where('user.is_deleted', false)
-      .orderBy('user_block.created_at', 'DESC')
-      .limit(params.pageRequest.getLimit() + 1)
-      .offset(params.pageRequest.getOffset());
+      .where('user.is_deleted', false);
 
-    const hasNext = results.length > params.pageRequest.getLimit();
-    const content = hasNext ? results.slice(0, -1) : results;
+    // 커서가 있으면 해당 ID보다 작은 것만 조회 (내림차순이므로)
+    if (params.cursor !== undefined) {
+      query = query.where('user_block.id', '<', params.cursor);
+    }
 
-    const mappedContent = content.map((row) =>
+    const results = await query
+      .orderBy('user_block.id', 'DESC')
+      .limit(params.size + 1);
+
+    // CursorSlice.fromData를 사용하여 결과 생성
+    const mappedResults = results.map((row) =>
       UserBlockWithUser.of({
         id: row.id,
         blockerId: row.blockerId,
@@ -54,7 +59,7 @@ export class UserBlockRepository extends EntityRepository<UserBlock> {
       }),
     );
 
-    return Slice.of(mappedContent, hasNext);
+    return CursorSlice.fromData(mappedResults, params.size, (item) => item.id);
   }
 
   async findByBlockedId(blockedId: number): Promise<UserBlock[]> {

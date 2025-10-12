@@ -16,7 +16,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
-import { PageRequest, Slice } from '@app/common';
+import { CursorSlice } from '@app/common';
 import { UserBlockService } from '../application/user-block.service';
 import { ErrorResponse } from '../../common/error-response';
 import { GetBlockedUsersRequestDto } from './dto/get-blocked-users.request.dto';
@@ -33,7 +33,8 @@ export class UserBlockController {
   @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '차단한 유저 목록 조회 API',
-    description: '내가 차단한 유저 목록을 페이지네이션하여 조회합니다.',
+    description:
+      '내가 차단한 유저 목록을 커서 기반 페이지네이션하여 조회합니다.',
   })
   @ApiResponse({
     status: 200,
@@ -54,10 +55,11 @@ export class UserBlockController {
     @Query() query: GetBlockedUsersRequestDto,
     @CurrentUser() userTokenInfo: UserTokenInfo,
   ): Promise<GetBlockedUsersResponseDto> {
-    const blockedUsersSlice: Slice<BlockedUserResultDto> =
+    const blockedUsersSlice: CursorSlice<BlockedUserResultDto> =
       await this.userBlockService.getBlockedUsers({
         userId: userTokenInfo.userId,
-        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
+        cursor: query.getCursor(),
+        size: query.getPageSize(),
       });
 
     return GetBlockedUsersResponseDto.of(blockedUsersSlice);

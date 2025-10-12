@@ -93,10 +93,14 @@ export class CursorSlice<T> {
   // 다음 페이지 존재 여부
   hasNext: boolean;
 
-  // 다음 커서 (없으면 마지막 페이지)
-  nextCursor?: any;
+  // 다음 커서 (없으면 null)
+  nextCursor: number | null;
 
-  protected constructor(contents: T[], hasNext: boolean, nextCursor?: any) {
+  protected constructor(
+    contents: T[],
+    hasNext: boolean,
+    nextCursor: number | null,
+  ) {
     this.contents = contents;
     this.hasNext = hasNext;
     this.nextCursor = nextCursor;
@@ -106,13 +110,13 @@ export class CursorSlice<T> {
    * CursorSlice 인스턴스를 생성합니다.
    * @param contents 결과 데이터 배열
    * @param hasNext 다음 페이지 존재 여부
-   * @param nextCursor 다음 커서 (없으면 마지막 페이지)
+   * @param nextCursor 다음 커서 (없으면 null)
    * @returns CursorSlice 인스턴스
    */
   static of<T>(
     contents: T[],
     hasNext: boolean,
-    nextCursor?: any,
+    nextCursor: number | null,
   ): CursorSlice<T> {
     return new CursorSlice<T>(contents, hasNext, nextCursor);
   }
@@ -122,7 +126,7 @@ export class CursorSlice<T> {
    * @returns 빈 CursorSlice 인스턴스
    */
   static empty<T>(): CursorSlice<T> {
-    return new CursorSlice<T>([], false, undefined);
+    return new CursorSlice<T>([], false, null);
   }
 
   /**
@@ -138,14 +142,12 @@ export class CursorSlice<T> {
     getCursor: (item: T) => any,
   ): CursorSlice<T> {
     if (data.length <= limit) {
-      return new CursorSlice<T>(data, false, undefined);
+      return new CursorSlice<T>(data, false, null);
     }
 
     const contents = data.slice(0, limit);
     const nextCursor =
-      contents.length > 0
-        ? getCursor(contents[contents.length - 1])
-        : undefined;
+      contents.length > 0 ? getCursor(contents[contents.length - 1]) : null;
 
     return new CursorSlice<T>(contents, true, nextCursor);
   }
