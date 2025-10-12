@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
 import { User } from '@app/database/entites/user/user.entity';
@@ -16,6 +17,7 @@ import {
   TradeType,
   MySalesFilter,
   UserSalesFilter,
+  TradeProgressStatus,
 } from '@app/database/common/enums';
 import { Transactional } from '@mikro-orm/core';
 import { UserRepository } from '@app/database/entites/user/user.repository';
@@ -31,9 +33,13 @@ import { ProductPostDetailWithRelations } from '@app/database/entites/product-po
 import { InterestRegionRepository } from '@app/database/entites/interest-region/interest-region.repository';
 import { InterestRegion } from '@app/database/entites/interest-region/interest-region.entity';
 import { ConversationRepository } from '@app/database/entites/conversation/conversation.repository';
+import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
+import { TradeProgressRepository } from '@app/database/entites/trade-progress/trade-progress.repository';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
+import { TradableUserResultDto } from './dto/tradable-user.result.dto';
+import { TradeProgressResultDto } from './dto/trade-progress.result.dto';
 
 @Injectable()
 export class ProductPostService {
@@ -45,6 +51,8 @@ export class ProductPostService {
     private readonly userBlockRepository: UserBlockRepository,
     private readonly interestRegionRepository: InterestRegionRepository,
     private readonly conversationRepository: ConversationRepository,
+    private readonly conversationParticipantRepository: ConversationParticipantRepository,
+    private readonly tradeProgressRepository: TradeProgressRepository,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -992,5 +1000,441 @@ export class ProductPostService {
     // 5. 게시글 소프트 삭제
     productPost.delete();
     await this.productPostRepository.persistAndFlush(productPost);
+  }
+
+  /**
+   * 거래 상태를 변경합니다.
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @param params.userId 현재 로그인한 유저 ID (판매자)
+   * @param params.tradeStatus 변경할 거래 상태
+   * @param params.buyerId 구매자 ID (RESERVED, COMPLETED 시 필수)
+   * @param params.conversationId 채팅방 ID (buyerId와 함께 제공되어야 함)
+   */
+  @Transactional()
+  async updateTradeStatus(params: {
+    productPostId: number;
+    userId: number;
+    tradeStatus: TradeStatus;
+    buyerId?: number;
+    conversationId?: number;
+  }): Promise<void> {
+    // 1. 상품 게시글 조회 및 권한 검증
+    const productPost = await this.validateProductPostForUpdate(
+      params.productPostId,
+      params.userId,
+    );
+
+    // 2. 현재 TradeProgress 조회
+    const currentTradeProgress =
+      await this.tradeProgressRepository.findByProductPostId(
+        params.productPostId,
+      );
+
+    // 3. 현재 상태에 따라 케이스 분기
+    const currentStatus = productPost.getTradeStatus();
+
+    // 케이스 1: FOR_SALE → RESERVED
+    if (
+      currentStatus === TradeStatus.FOR_SALE &&
+      params.tradeStatus === TradeStatus.RESERVED
+    ) {
+      if (!params.buyerId || !params.conversationId) {
+        throw new BadRequestException({
+          code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+          message: '예약 시 구매자 ID와 채팅방 ID가 필요합니다.',
+        });
+      }
+
+      // 구매자 검증
+      await this.validateUserHasChatWithProduct(
+        params.productPostId,
+        params.conversationId,
+        params.buyerId,
+      );
+
+      // 새 TradeProgress 생성
+      const tradeProgress = this.tradeProgressRepository.create({
+        productPostId: params.productPostId,
+        conversationId: params.conversationId,
+        buyerId: params.buyerId,
+        status: TradeProgressStatus.RESERVED,
+      });
+      await this.tradeProgressRepository.persist(tradeProgress);
+
+      productPost.setTradeStatus(TradeStatus.RESERVED);
+    }
+
+    // 케이스 2: FOR_SALE → COMPLETED
+    else if (
+      currentStatus === TradeStatus.FOR_SALE &&
+      params.tradeStatus === TradeStatus.COMPLETED
+    ) {
+      if (!params.buyerId || !params.conversationId) {
+        throw new BadRequestException({
+          code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+          message: '거래 완료 시 구매자 ID와 채팅방 ID가 필요합니다.',
+        });
+      }
+
+      // 구매자 검증
+      await this.validateUserHasChatWithProduct(
+        params.productPostId,
+        params.conversationId,
+        params.buyerId,
+      );
+
+      // 새 TradeProgress 생성
+      const tradeProgress = this.tradeProgressRepository.create({
+        productPostId: params.productPostId,
+        conversationId: params.conversationId,
+        buyerId: params.buyerId,
+        status: TradeProgressStatus.COMPLETED,
+      });
+      await this.tradeProgressRepository.persist(tradeProgress);
+
+      productPost.setTradeStatus(TradeStatus.COMPLETED);
+    }
+
+    // 케이스 3: RESERVED → FOR_SALE
+    else if (
+      currentStatus === TradeStatus.RESERVED &&
+      params.tradeStatus === TradeStatus.FOR_SALE
+    ) {
+      if (!currentTradeProgress) {
+        throw new NotFoundException({
+          code: ErrorCode.TRADE_PROGRESS_NOT_FOUND,
+          message: '거래 진행 정보를 찾을 수 없습니다.',
+        });
+      }
+
+      // 기존 TradeProgress 소프트 삭제
+      currentTradeProgress.delete();
+      await this.tradeProgressRepository.persist(currentTradeProgress);
+
+      productPost.setTradeStatus(TradeStatus.FOR_SALE);
+    }
+
+    // 케이스 4: RESERVED → RESERVED (구매자 변경)
+    else if (
+      currentStatus === TradeStatus.RESERVED &&
+      params.tradeStatus === TradeStatus.RESERVED
+    ) {
+      if (!params.buyerId || !params.conversationId) {
+        throw new BadRequestException({
+          code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+          message: '예약자 변경 시 구매자 ID와 채팅방 ID가 필요합니다.',
+        });
+      }
+
+      if (!currentTradeProgress) {
+        throw new NotFoundException({
+          code: ErrorCode.TRADE_PROGRESS_NOT_FOUND,
+          message: '거래 진행 정보를 찾을 수 없습니다.',
+        });
+      }
+
+      // 새 구매자 검증
+      await this.validateUserHasChatWithProduct(
+        params.productPostId,
+        params.conversationId,
+        params.buyerId,
+      );
+
+      // 기존 구매자와 동일한지 확인
+      if (currentTradeProgress.getBuyerId() === params.buyerId) {
+        throw new BadRequestException({
+          code: ErrorCode.INVALID_TRADE_PROGRESS_TRANSITION,
+          message: '동일한 구매자로 예약을 변경할 수 없습니다.',
+        });
+      }
+
+      // 기존 TradeProgress 소프트 삭제 후 새로 생성
+      currentTradeProgress.delete();
+      await this.tradeProgressRepository.persist(currentTradeProgress);
+
+      const newTradeProgress = this.tradeProgressRepository.create({
+        productPostId: params.productPostId,
+        conversationId: params.conversationId,
+        buyerId: params.buyerId,
+        status: TradeProgressStatus.RESERVED,
+      });
+      await this.tradeProgressRepository.persist(newTradeProgress);
+    }
+
+    // 케이스 5: RESERVED → COMPLETED
+    else if (
+      currentStatus === TradeStatus.RESERVED &&
+      params.tradeStatus === TradeStatus.COMPLETED
+    ) {
+      if (!currentTradeProgress) {
+        throw new NotFoundException({
+          code: ErrorCode.TRADE_PROGRESS_NOT_FOUND,
+          message: '거래 진행 정보를 찾을 수 없습니다.',
+        });
+      }
+
+      // buyerId가 제공된 경우 검증
+      if (params.buyerId) {
+        // 기존 예약자와 다른 구매자인 경우
+        if (currentTradeProgress.getBuyerId() !== params.buyerId) {
+          if (!params.conversationId) {
+            throw new BadRequestException({
+              code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+              message: '다른 구매자와 거래 완료 시 채팅방 ID가 필요합니다.',
+            });
+          }
+
+          // 새 구매자 검증
+          await this.validateUserHasChatWithProduct(
+            params.productPostId,
+            params.conversationId,
+            params.buyerId,
+          );
+
+          // 기존 TradeProgress 소프트 삭제 후 COMPLETED로 새로 생성
+          currentTradeProgress.delete();
+          await this.tradeProgressRepository.persist(currentTradeProgress);
+
+          const newTradeProgress = this.tradeProgressRepository.create({
+            productPostId: params.productPostId,
+            conversationId: params.conversationId,
+            buyerId: params.buyerId,
+            status: TradeProgressStatus.COMPLETED,
+          });
+          await this.tradeProgressRepository.persist(newTradeProgress);
+
+          productPost.setTradeStatus(TradeStatus.COMPLETED);
+        } else {
+          // 기존 예약자와 동일한 구매자로 거래 완료
+          currentTradeProgress.setStatus(TradeProgressStatus.COMPLETED);
+          await this.tradeProgressRepository.persist(currentTradeProgress);
+
+          productPost.setTradeStatus(TradeStatus.COMPLETED);
+        }
+      } else {
+        // buyerId 미제공 시 기존 예약자와 거래 완료
+        currentTradeProgress.setStatus(TradeProgressStatus.COMPLETED);
+        await this.tradeProgressRepository.persist(currentTradeProgress);
+
+        productPost.setTradeStatus(TradeStatus.COMPLETED);
+      }
+    }
+
+    // 케이스 6: COMPLETED → 다른 상태 (차단)
+    else if (currentStatus === TradeStatus.COMPLETED) {
+      throw new BadRequestException({
+        code: ErrorCode.INVALID_TRADE_PROGRESS_TRANSITION,
+        message: '거래 완료 상태에서는 상태를 변경할 수 없습니다.',
+      });
+    }
+
+    // 그 외 잘못된 전환
+    else {
+      throw new BadRequestException({
+        code: ErrorCode.INVALID_TRADE_PROGRESS_TRANSITION,
+        message: `${currentStatus}에서 ${params.tradeStatus}로 변경할 수 없습니다.`,
+      });
+    }
+
+    // ProductPost 저장 (TradeProgress도 함께 flush됨)
+    await this.productPostRepository.persistAndFlush(productPost);
+  }
+
+  /**
+   * 상품에 대해 거래 가능한 사용자 목록을 조회합니다.
+   * (상품 관련 채팅 중인 사용자들, 최신 대화순)
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @param params.userId 현재 로그인한 유저 ID (판매자)
+   * @returns 거래 가능한 사용자 목록
+   */
+  async getTradableUsers(params: {
+    productPostId: number;
+    userId: number;
+  }): Promise<TradableUserResultDto[]> {
+    const productPost = await this.productPostRepository.findById(
+      params.productPostId,
+    );
+
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    if (productPost.getUserId() !== params.userId) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '본인이 작성한 상품 게시글에 대해서만 조회할 수 있습니다.',
+      });
+    }
+
+    // 1. 판매자가 현재 대화 중인 채팅방 참여자 목록 조회 (최신순 정렬됨)
+    const sellerParticipants =
+      await this.conversationParticipantRepository.findActiveByProductIdAndUserId(
+        {
+          productPostId: params.productPostId,
+          userId: params.userId,
+        },
+      );
+
+    if (sellerParticipants.length === 0) {
+      return [];
+    }
+
+    // 2. 채팅방 ID 목록 추출
+    const conversationIds = sellerParticipants.map((p) =>
+      p.getConversationId(),
+    );
+
+    // 3. 각 채팅방의 상대방(구매자) 참여자 조회
+    const buyerParticipants =
+      await this.conversationParticipantRepository.findOtherParticipantsByConversationIds(
+        {
+          conversationIds,
+          excludeUserId: params.userId,
+        },
+      );
+
+    if (buyerParticipants.length === 0) {
+      return [];
+    }
+
+    // 4. 구매자 ID 목록 추출
+    const buyerIds = buyerParticipants.map((p) => p.getUserId());
+
+    // 5. 사용자 정보 조회
+    const users = await this.userRepository.findByIds(buyerIds);
+
+    // 6. 채팅방 ID를 키로 구매자 참여자 Map 생성
+    const buyerParticipantMap = new Map(
+      buyerParticipants.map((p) => [p.getConversationId(), p]),
+    );
+
+    // 7. 사용자 ID를 키로 하는 Map 생성
+    const userMap = new Map(users.map((user) => [user.getId(), user]));
+
+    // 8. 판매자 참여자 순서(최신순)대로 결과 조합
+    const tradableUsers: TradableUserResultDto[] = [];
+
+    for (const sellerParticipant of sellerParticipants) {
+      const conversationId = sellerParticipant.getConversationId();
+      const buyerParticipant = buyerParticipantMap.get(conversationId);
+
+      if (buyerParticipant) {
+        const user = userMap.get(buyerParticipant.getUserId());
+        if (user) {
+          tradableUsers.push(
+            TradableUserResultDto.of(
+              user.getId(),
+              user.getNickname(),
+              conversationId,
+            ),
+          );
+        }
+      }
+    }
+
+    return tradableUsers;
+  }
+
+  /**
+   * 상품의 거래 진행 현황을 조회합니다.
+   *
+   * @param params.productPostId 상품 게시글 ID
+   * @returns 거래 진행 현황 정보 (판매중이면 null)
+   */
+  async getTradeProgress(params: {
+    productPostId: number;
+    userId: number;
+  }): Promise<TradeProgressResultDto | null> {
+    const productPost = await this.productPostRepository.findById(
+      params.productPostId,
+    );
+
+    if (!productPost) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCT_POST_NOT_FOUND,
+        message: '상품 게시글을 찾을 수 없습니다.',
+      });
+    }
+
+    if (productPost.getUserId() !== params.userId) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '본인이 작성한 상품 게시글에 대해서만 조회할 수 있습니다.',
+      });
+    }
+
+    const tradeProgress =
+      await this.tradeProgressRepository.findByProductPostId(
+        params.productPostId,
+      );
+
+    if (!tradeProgress) {
+      return null;
+    }
+
+    // 구매자 정보 조회
+    const buyer = await this.userRepository.findById(
+      tradeProgress.getBuyerId(),
+    );
+
+    return TradeProgressResultDto.of(
+      tradeProgress.getBuyerId(),
+      tradeProgress.getConversationId(),
+      tradeProgress.getStatus(),
+      buyer?.getNickname(),
+    );
+  }
+
+  /**
+   * 구매자가 특정 상품의 특정 채팅방에 활성 참여 중인지 검증합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @param conversationId 채팅방 ID
+   * @param buyerId 구매자 ID
+   * @throws BadRequestException 검증 실패 시
+   */
+  private async validateUserHasChatWithProduct(
+    productPostId: number,
+    conversationId: number,
+    buyerId: number,
+  ): Promise<void> {
+    // 1. 채팅방이 해당 상품의 채팅방인지 확인
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new BadRequestException({
+        code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
+    }
+
+    if (conversation.getProductPostId() !== productPostId) {
+      throw new BadRequestException({
+        code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+        message: '해당 상품의 채팅방이 아닙니다.',
+      });
+    }
+
+    // 2. 구매자가 채팅방의 활성 참여자인지 확인
+    const participant =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId: buyerId,
+        },
+      );
+
+    if (!participant) {
+      throw new BadRequestException({
+        code: ErrorCode.BUYER_NO_ACTIVE_CHAT,
+        message: '해당 구매자와의 활성 채팅방이 존재하지 않습니다.',
+      });
+    }
   }
 }

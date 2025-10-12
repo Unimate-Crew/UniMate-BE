@@ -6,6 +6,7 @@ import { InterestRegion, User } from '@app/database';
 import { S3Module } from '@app/common/s3/s3.module';
 import { Like } from '@app/database/entites/like/like.entity';
 import { UserBlock } from '@app/database/entites/user-block/user-block.entity';
+import { TradeProgress } from '@app/database/entites/trade-progress/trade-progress.entity';
 import { ProductPostController } from './api/product-post.controller';
 import { ProductPostService } from './application/product-post.service';
 
@@ -18,6 +19,7 @@ import { ProductPostService } from './application/product-post.service';
       Like,
       UserBlock,
       InterestRegion,
+      TradeProgress,
     ]),
     S3Module,
   ],

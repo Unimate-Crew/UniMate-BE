@@ -19,6 +19,17 @@ export class UserRepository extends EntityRepository<User> {
     return this.findOne({ nickname });
   }
 
+  async findByIds(ids: number[]): Promise<User[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.find({
+      id: { $in: ids },
+      isDeleted: false,
+    });
+  }
+
   async persist(user: User): Promise<void> {
     await this.em.persist(user);
   }
