@@ -9,13 +9,17 @@ import { UserBlockRepository } from '@app/database/entites/user-block/user-block
 import { UserRepository } from '@app/database/entites/user/user.repository';
 import { UserBlock } from '@app/database/entites/user-block/user-block.entity';
 import { User } from '@app/database/entites/user/user.entity';
-import { ErrorCode } from '@app/common';
+import { ErrorCode, PageRequest, Slice } from '@app/common';
+import { S3Service } from '@app/common/s3/s3.service';
+import { UserBlockWithUser } from '@app/database/entites/user-block/dto/user-block-with-user.dto';
+import { BlockedUserResultDto } from './dto/blocked-user.result.dto';
 
 @Injectable()
 export class UserBlockService {
   constructor(
     private readonly userBlockRepository: UserBlockRepository,
     private readonly userRepository: UserRepository,
+    private readonly s3Service: S3Service,
   ) {}
 
   @Transactional()
@@ -90,5 +94,44 @@ export class UserBlockService {
     // 2. 차단 해제 (논리적 삭제)
     userBlock.delete();
     await this.userBlockRepository.persistAndFlush(userBlock);
+  }
+
+  /**
+   * 내가 차단한 유저 목록을 페이지네이션하여 조회합니다.
+   *
+   * @param params.userId 현재 로그인한 유저 ID
+   * @param params.pageRequest 페이지 요청 정보
+   * @returns 차단한 유저 목록과 다음 페이지 존재 여부
+   */
+  async getBlockedUsers(params: {
+    userId: number;
+    pageRequest: PageRequest;
+  }): Promise<Slice<BlockedUserResultDto>> {
+    // 1. Repository에서 이미 JOIN된 결과 조회
+    const userBlocksSlice: Slice<UserBlockWithUser> =
+      await this.userBlockRepository.findPagedByBlockerId({
+        blockerId: params.userId,
+        pageRequest: params.pageRequest,
+      });
+
+    // 2. S3 URL 생성 및 DTO 변환
+    const blockedUserResults: BlockedUserResultDto[] = await Promise.all(
+      userBlocksSlice.contents.map(async (userBlock) => {
+        let profileImageUrl: string | null = null;
+        if (userBlock.profileImageKey) {
+          profileImageUrl = await this.s3Service.generateGetPresignedUrl(
+            userBlock.profileImageKey,
+          );
+        }
+
+        return BlockedUserResultDto.of(
+          userBlock.userId,
+          userBlock.nickname,
+          profileImageUrl,
+        );
+      }),
+    );
+
+    return Slice.of(blockedUserResults, userBlocksSlice.hasNext);
   }
 }
