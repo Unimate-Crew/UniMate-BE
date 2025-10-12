@@ -1,15 +1,13 @@
-import { User } from '@app/database';
-
 export class UpdateUserProfileResultDto {
   private constructor(
-    readonly nickname: string,
-    readonly profileImageKey: string | undefined,
+    readonly nickname?: string,
+    readonly profileImageUrl?: string,
   ) {}
 
-  static from(user: User): UpdateUserProfileResultDto {
-    return new UpdateUserProfileResultDto(
-      user.getNickname(),
-      user.getProfileImageKey(),
-    );
+  static of(
+    nickname?: string,
+    profileImageUrl?: string,
+  ): UpdateUserProfileResultDto {
+    return new UpdateUserProfileResultDto(nickname, profileImageUrl);
   }
 }

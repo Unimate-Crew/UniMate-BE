@@ -405,28 +405,36 @@ export class UserService {
       });
     }
 
-    // 닉네임 중복 검사 (닉네임이 변경되는 경우에만)
+    // 변경된 값 추적
+    let updatedNickname: string | undefined;
+    let updatedProfileImageUrl: string | undefined;
+
     if (nickname && nickname !== user.getNickname()) {
       const existingUser = await this.userRepository.findByNickname(nickname);
+
       if (existingUser && existingUser.getId() !== userId) {
         throw new BadRequestException({
           code: ErrorCode.NICKNAME_ALREADY_EXISTS,
           message: '이미 사용 중인 닉네임입니다.',
         });
       }
+
+      user.setNickname(nickname);
+      updatedNickname = nickname;
     }
 
-    // 유저 정보 업데이트
-    if (nickname) {
-      user.setNickname(nickname);
-    }
-    if (profileImageKey) {
+    if (profileImageKey && profileImageKey !== user.getProfileImageKey()) {
       user.setProfileImageKey(profileImageKey);
+      updatedProfileImageUrl =
+        await this.s3Service.generateGetPresignedUrl(profileImageKey);
     }
 
     this.userRepository.persist(user);
     await this.userRepository.flush();
 
-    return UpdateUserProfileResultDto.from(user);
+    return UpdateUserProfileResultDto.of(
+      updatedNickname,
+      updatedProfileImageUrl,
+    );
   }
 }

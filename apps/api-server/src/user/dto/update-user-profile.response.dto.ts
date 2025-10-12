@@ -5,19 +5,21 @@ export class UpdateUserProfileResponseDto {
   @ApiProperty({
     description: '수정된 닉네임',
     example: 'Jason',
+    required: false,
   })
-  readonly nickname: string;
+  readonly nickname?: string;
 
   @ApiProperty({
-    description: '수정된 프로필 이미지 키',
-    example: 'user/1752992559501-1234567890.jpg',
-    nullable: true,
+    description: '수정된 프로필 이미지 URL',
+    example:
+      'https://s3.amazonaws.com/bucket/user/1752992559501-1234567890.jpg',
+    required: false,
   })
-  readonly profileImageKey: string | undefined;
+  readonly profileImageUrl?: string;
 
-  private constructor(nickname: string, profileImageKey: string | undefined) {
+  private constructor(nickname?: string, profileImageUrl?: string) {
     this.nickname = nickname;
-    this.profileImageKey = profileImageKey;
+    this.profileImageUrl = profileImageUrl;
   }
 
   static from(
@@ -25,7 +27,7 @@ export class UpdateUserProfileResponseDto {
   ): UpdateUserProfileResponseDto {
     return new UpdateUserProfileResponseDto(
       result.nickname,
-      result.profileImageKey,
+      result.profileImageUrl,
     );
   }
 }
