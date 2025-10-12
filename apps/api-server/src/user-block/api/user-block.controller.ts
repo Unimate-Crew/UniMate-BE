@@ -2,7 +2,9 @@ import {
   Controller,
   Post,
   Delete,
+  Get,
   Param,
+  Query,
   ParseIntPipe,
   HttpCode,
   UseGuards,
@@ -14,13 +16,54 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
+import { CursorSlice } from '@app/common';
 import { UserBlockService } from '../application/user-block.service';
 import { ErrorResponse } from '../../common/error-response';
+import { GetBlockedUsersRequestDto } from './dto/get-blocked-users.request.dto';
+import { GetBlockedUsersResponseDto } from './dto/get-blocked-users.response.dto';
+import { BlockedUserResultDto } from '../application/dto/blocked-user.result.dto';
 
 @ApiTags('유저 차단')
 @Controller({ path: 'user-blocks' })
 export class UserBlockController {
   constructor(private readonly userBlockService: UserBlockService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '차단한 유저 목록 조회 API',
+    description:
+      '내가 차단한 유저 목록을 커서 기반 페이지네이션하여 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '차단한 유저 목록 조회 성공',
+    type: GetBlockedUsersResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async getBlockedUsers(
+    @Query() query: GetBlockedUsersRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetBlockedUsersResponseDto> {
+    const blockedUsersSlice: CursorSlice<BlockedUserResultDto> =
+      await this.userBlockService.getBlockedUsers({
+        userId: userTokenInfo.userId,
+        cursor: query.getCursor(),
+        size: query.getPageSize(),
+      });
+
+    return GetBlockedUsersResponseDto.of(blockedUsersSlice);
+  }
 
   @Post('/:userId')
   @UseGuards(JwtAuthGuard)

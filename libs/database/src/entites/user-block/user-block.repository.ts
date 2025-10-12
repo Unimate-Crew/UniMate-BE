@@ -1,6 +1,8 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
+import { CursorSlice } from '@app/common';
 import type { UserBlock } from './user-block.entity';
+import { UserBlockWithUser } from './dto/user-block-with-user.dto';
 
 @Injectable()
 export class UserBlockRepository extends EntityRepository<UserBlock> {
@@ -10,6 +12,54 @@ export class UserBlockRepository extends EntityRepository<UserBlock> {
 
   async findByBlockerId(blockerId: number): Promise<UserBlock[]> {
     return this.find({ blockerId, isDeleted: false });
+  }
+
+  async findPagedByBlockerId(params: {
+    blockerId: number;
+    cursor?: number;
+    size: number;
+  }): Promise<CursorSlice<UserBlockWithUser>> {
+    const knex = this.em.getKnex();
+
+    let query = knex
+      .select([
+        'user_block.id',
+        'user_block.blocker_id as blockerId',
+        'user_block.blocked_id as blockedId',
+        'user_block.created_at as createdAt',
+        'user.id as userId',
+        'user.nickname',
+        'user.profile_image_key as profileImageKey',
+      ])
+      .from('user_block')
+      .innerJoin('user', 'user_block.blocked_id', 'user.id')
+      .where('user_block.blocker_id', params.blockerId)
+      .where('user_block.is_deleted', false)
+      .where('user.is_deleted', false);
+
+    // 커서가 있으면 해당 ID보다 작은 것만 조회 (내림차순이므로)
+    if (params.cursor !== undefined) {
+      query = query.where('user_block.id', '<', params.cursor);
+    }
+
+    const results = await query
+      .orderBy('user_block.id', 'DESC')
+      .limit(params.size + 1);
+
+    // CursorSlice.fromData를 사용하여 결과 생성
+    const mappedResults = results.map((row) =>
+      UserBlockWithUser.of({
+        id: row.id,
+        blockerId: row.blockerId,
+        blockedId: row.blockedId,
+        createdAt: row.createdAt,
+        userId: row.userId,
+        nickname: row.nickname,
+        profileImageKey: row.profileImageKey,
+      }),
+    );
+
+    return CursorSlice.fromData(mappedResults, params.size, (item) => item.id);
   }
 
   async findByBlockedId(blockedId: number): Promise<UserBlock[]> {
