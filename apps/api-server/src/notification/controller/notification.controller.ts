@@ -5,7 +5,7 @@ import {
   UseGuards,
   Delete,
   Body,
-  Put,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -129,7 +129,7 @@ export class NotificationController {
     return GetNotificationSettingsResponseDto.from(result);
   }
 
-  @Put('settings')
+  @Patch('settings')
   @ApiOperation({
     summary: '알림 설정 업데이트',
     description: '사용자의 알림 설정을 업데이트합니다.',
