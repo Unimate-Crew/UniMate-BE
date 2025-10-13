@@ -123,11 +123,11 @@ export class User extends BaseEntity {
     priceChangedNotificationEnabled?: boolean;
     saleEndedNotificationEnabled?: boolean;
   }): void {
-    if (settings.priceChangedNotificationEnabled) {
+    if (settings.priceChangedNotificationEnabled !== undefined) {
       this.priceChangedNotificationEnabled =
         settings.priceChangedNotificationEnabled;
     }
-    if (settings.saleEndedNotificationEnabled) {
+    if (settings.saleEndedNotificationEnabled !== undefined) {
       this.saleEndedNotificationEnabled = settings.saleEndedNotificationEnabled;
     }
   }
