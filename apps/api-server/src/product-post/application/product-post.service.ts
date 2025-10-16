@@ -40,6 +40,8 @@ import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
 import { TradableUserResultDto } from './dto/tradable-user.result.dto';
 import { TradeProgressResultDto } from './dto/trade-progress.result.dto';
+import { UniversityResultDto } from './dto/university-result.dto';
+import { University } from '@app/database/entites/university/university.entity';
 
 @Injectable()
 export class ProductPostService {
@@ -1436,5 +1438,52 @@ export class ProductPostService {
         message: '해당 구매자와의 활성 채팅방이 존재하지 않습니다.',
       });
     }
+  }
+
+  /**
+   * 사용자의 기본 관심 지역에 등록된 상품 게시글의 대학교 목록을 검색합니다.
+   *
+   * @param params.userId 사용자 ID
+   * @param params.searchKeyword 검색 키워드 (대학교 이름 기준, 옵셔널)
+   * @param params.pageRequest 페이지네이션 정보
+   * @returns 페이지네이션된 대학교 목록
+   */
+  async searchUniversitiesInPrimaryRegion(params: {
+    userId: number;
+    searchKeyword?: string;
+    pageRequest: PageRequest;
+  }): Promise<Slice<UniversityResultDto>> {
+    // 1. 사용자의 기본 관심 지역 조회
+    const primaryInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findPrimaryByUserId(params.userId);
+
+    // 2. 기본 관심 지역이 없으면 빈 결과 반환
+    if (!primaryInterestRegion) {
+      return Slice.of([], false);
+    }
+
+    // 3. regionId 추출
+    const regionId: string = primaryInterestRegion.getRegion().getId();
+
+    // 4. Repository에서 대학교 목록 조회
+    const universitySlice: Slice<University> =
+      await this.productPostRepository.searchUniversitiesByRegion({
+        regionId,
+        searchKeyword: params.searchKeyword,
+        pageRequest: params.pageRequest,
+      });
+
+    // 5. UniversityResultDto로 변환
+    const content: UniversityResultDto[] = universitySlice.contents.map(
+      (university) =>
+        new UniversityResultDto(
+          university.getId(),
+          university.getName(),
+          university.getDomain(),
+          university.getCountry(),
+        ),
+    );
+
+    return Slice.of(content, universitySlice.hasNext);
   }
 }

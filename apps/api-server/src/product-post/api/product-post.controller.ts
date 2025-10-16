@@ -49,6 +49,9 @@ import { GetTradableUsersResponseDto } from './dto/get-tradable-users.response.d
 import { GetTradeProgressResponseDto } from './dto/get-trade-progress.response.dto';
 import { TradableUserResultDto } from '../application/dto/tradable-user.result.dto';
 import { TradeProgressResultDto } from '../application/dto/trade-progress.result.dto';
+import { SearchUniversitiesInRegionRequestDto } from './dto/search-universities-in-region.request.dto';
+import { SearchUniversitiesInRegionResponseDto } from './dto/search-universities-in-region.response.dto';
+import { UniversityResultDto } from '../application/dto/university-result.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -121,6 +124,46 @@ export class ProductPostController {
       });
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
+  }
+
+  @Get('/universities/search')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 대학 필터 검색 API',
+    description:
+      '사용자의 기본 관심 지역에 등록된 상품 게시글들의 대학 목록 조회',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '대학 목록 조회 성공',
+    type: SearchUniversitiesInRegionResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async searchUniversitiesInRegion(
+    @Query() query: SearchUniversitiesInRegionRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<SearchUniversitiesInRegionResponseDto> {
+    const universitySlice: Slice<UniversityResultDto> =
+      await this.productPostService.searchUniversitiesInPrimaryRegion({
+        userId: userTokenInfo.userId,
+        searchKeyword: query.searchKeyword,
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
+      });
+
+    return SearchUniversitiesInRegionResponseDto.of(
+      universitySlice.contents,
+      universitySlice.hasNext,
+    );
   }
 
   @Get('/my/sales')
