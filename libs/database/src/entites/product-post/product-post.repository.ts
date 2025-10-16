@@ -7,6 +7,7 @@ import { ProductPost } from './product-post.entity';
 import { ProductPostWithRelations } from './dto/product-post-with-relations.dto';
 import { CategoryCountDto } from './dto/category-count.dto';
 import { ProductPostDetailWithRelations } from './dto/product-post-detail-with-relations.dto';
+import { University } from '../university/university.entity';
 
 @Injectable()
 export class ProductPostRepository extends EntityRepository<ProductPost> {
@@ -519,5 +520,70 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
           Number(row.count),
         ),
     );
+  }
+
+  /**
+   * 특정 지역에 등록된 상품 게시글의 대학교 목록을 검색합니다.
+   * DISTINCT로 중복을 제거하고, 선택적으로 검색 키워드로 필터링합니다.
+   *
+   * @param params.regionId 지역 ID
+   * @param params.searchKeyword 검색 키워드 (대학교 이름 기준, 옵셔널)
+   * @param params.pageRequest 페이지네이션 정보
+   * @returns 페이지네이션된 대학교 목록
+   */
+  async searchUniversitiesByRegion(params: {
+    regionId: string;
+    searchKeyword?: string;
+    pageRequest: PageRequest;
+  }): Promise<Slice<University>> {
+    const knex = this.em.getKnex();
+
+    const query = knex
+      .distinct([
+        'u.id',
+        'u.name',
+        'u.domain',
+        'u.country',
+        'u.is_deleted',
+        'u.created_at',
+        'u.updated_at',
+        'u.deleted_at',
+      ])
+      .from('product_post as pp')
+      .join('university as u', 'pp.university_id', 'u.id')
+      .where('pp.region_id', params.regionId)
+      .where('pp.is_deleted', false)
+      .where('pp.is_hidden', false)
+      .whereNotNull('pp.university_id')
+      .where('u.is_deleted', false);
+
+    // 검색 키워드로 대학교 이름 필터링
+    if (params.searchKeyword) {
+      query.where('u.name', 'like', `%${params.searchKeyword}%`);
+    }
+
+    const results = await query
+      .orderBy('u.name', 'asc')
+      .limit(params.pageRequest.getLimit() + 1)
+      .offset(params.pageRequest.getOffset());
+
+    const hasNext = results.length > params.pageRequest.getLimit();
+    const universities = hasNext ? results.slice(0, -1) : results;
+
+    // University 엔티티로 변환
+    const content = universities.map((row) =>
+      this.em.map(University, {
+        id: row.id,
+        name: row.name,
+        domain: row.domain,
+        country: row.country,
+        isDeleted: row.is_deleted,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        deletedAt: row.deleted_at,
+      }),
+    );
+
+    return Slice.of(content, hasNext);
   }
 }

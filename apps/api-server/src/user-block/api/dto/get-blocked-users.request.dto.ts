@@ -4,7 +4,8 @@ import { Type } from 'class-transformer';
 
 export class GetBlockedUsersRequestDto {
   @ApiProperty({
-    description: '커서 (이전 응답의 nextCursor 값, 첫 페이지는 없이 주면 됨)',
+    description:
+      '커서 (이전 응답의 nextCursor 값 (userBlockId), 첫 페이지는 없이 주면 됨)',
     required: false,
     example: 123,
   })
