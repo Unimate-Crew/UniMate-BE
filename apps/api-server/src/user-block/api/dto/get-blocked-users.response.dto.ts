@@ -29,6 +29,12 @@ export class BlockedUserItemDto {
   })
   profileImageUrl: string | null;
 
+  @ApiProperty({
+    description: '차단 여부',
+    example: true,
+  })
+  isBlocked: boolean = true;
+
   constructor(
     userBlockId: number,
     userId: number,
