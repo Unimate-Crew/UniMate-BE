@@ -73,3 +73,13 @@ export enum TradeProgressStatus {
   RESERVED = 'RESERVED',
   COMPLETED = 'COMPLETED',
 }
+
+export enum PlatformType {
+  IOS = 'IOS',
+  ANDROID = 'ANDROID',
+}
+
+export enum UpdateType {
+  FORCE = 'FORCE',
+  RECOMMEND = 'RECOMMEND',
+}

@@ -13,6 +13,7 @@ import { UniversityModule } from './university/university.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReviewModule } from './review/review.module';
 import { UserBlockModule } from './user-block/user-block.module';
+import { UpdatePopupModule } from './update-popup/update-popup.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserBlockModule } from './user-block/user-block.module';
     NotificationModule,
     ReviewModule,
     UserBlockModule,
+    UpdatePopupModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],
