@@ -4,13 +4,13 @@ import { GetNotificationsResultDto } from '../../service/dto/get-notifications-r
 
 export class GetNotificationsResponseDto {
   @ApiProperty({ description: '알림 목록', type: [NotificationDto] })
-  items: NotificationDto[];
+  contents: NotificationDto[];
 
   @ApiProperty({ description: '다음 페이지 존재 여부' })
   hasNext: boolean;
 
-  private constructor(items: NotificationDto[], hasNext: boolean) {
-    this.items = items;
+  private constructor(contents: NotificationDto[], hasNext: boolean) {
+    this.contents = contents;
     this.hasNext = hasNext;
   }
 
