@@ -5,6 +5,7 @@ import {
   Param,
   UsePipes,
   ValidationPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegionService } from './region.service';
@@ -45,7 +46,7 @@ export class RegionController {
     type: RegionInfo,
   })
   @ApiResponse({ status: 404, description: '지역을 찾을 수 없음' })
-  async getRegionById(@Param('id') id: string): Promise<RegionInfo> {
+  async getRegionById(@Param('id', ParseIntPipe) id: number): Promise<RegionInfo> {
     return this.regionService.getRegionById(id);
   }
 }

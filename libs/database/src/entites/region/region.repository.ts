@@ -6,11 +6,11 @@ import { CountryCode } from '../../common/enums';
 
 @Injectable()
 export class RegionRepository extends EntityRepository<Region> {
-  async findById(id: string): Promise<Region | null> {
+  async findById(id: number): Promise<Region | null> {
     return this.findOne({ id, isDeleted: false });
   }
 
-  async findByIds(ids: string[]): Promise<Region[]> {
+  async findByIds(ids: number[]): Promise<Region[]> {
     return this.find({
       id: { $in: ids },
       isDeleted: false,

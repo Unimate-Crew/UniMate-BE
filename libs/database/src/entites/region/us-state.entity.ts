@@ -4,7 +4,10 @@ import { UsStateRepository } from './us-state.repository';
 @Entity({ repository: () => UsStateRepository, tableName: 'us_state' })
 export class UsState {
   @PrimaryKey()
-  id!: string;
+  id!: number;
+
+  @Property()
+  geoid?: string;
 
   @Property()
   name!: string;
@@ -38,8 +41,16 @@ export class UsState {
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
   longitude?: number;
 
-  public getId(): string {
+  public getId(): number {
     return this.id;
+  }
+
+  public getGeoid(): string {
+    return this.geoid;
+  }
+
+  public setGeoid(geoid: string): void {
+    this.geoid = geoid;
   }
 
   public getName(): string {

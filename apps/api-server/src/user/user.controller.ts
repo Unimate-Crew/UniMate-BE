@@ -283,7 +283,7 @@ export class UserController {
   @HttpCode(204)
   async setPrimaryInterestRegion(
     @CurrentUser() userTokenInfo: UserTokenInfo,
-    @Param('regionId') regionId: string,
+    @Param('regionId', ParseIntPipe) regionId: number,
   ): Promise<void> {
     await this.userService.setPrimaryInterestRegion(
       userTokenInfo.userId,
@@ -312,7 +312,7 @@ export class UserController {
   @HttpCode(204)
   async deleteInterestRegion(
     @CurrentUser() userTokenInfo: UserTokenInfo,
-    @Param('regionId') regionId: string,
+    @Param('regionId', ParseIntPipe) regionId: number,
   ): Promise<void> {
     await this.userService.deleteInterestRegion(userTokenInfo.userId, regionId);
   }
