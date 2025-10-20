@@ -47,6 +47,18 @@ export function setupSwagger(
       },
       'accessToken',
     )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description:
+          'JWT Refresh token Authorization header using the Bearer scheme.',
+        in: 'header',
+      },
+      'refreshToken',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, documentBuilder);
