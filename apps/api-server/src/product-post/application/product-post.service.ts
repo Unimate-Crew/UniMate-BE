@@ -69,7 +69,7 @@ export class ProductPostService {
    */
   async findPagedProductPosts(params: {
     pageRequest: PageRequest;
-    regionId: string;
+    regionId: number;
     userId?: number;
   }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
@@ -169,7 +169,7 @@ export class ProductPostService {
       });
     }
 
-    const regionId: string = primaryInterestRegion.getRegion().getId();
+    const regionId: number = primaryInterestRegion.getRegion().getId();
 
     // 3. 상품 게시글 생성
     const productPost: ProductPost = this.productPostRepository.create({
@@ -249,7 +249,7 @@ export class ProductPostService {
     category?: string;
     tradeStatus?: string;
     sortDirection?: string;
-    regionId: string;
+    regionId: number;
     userId?: number;
   }): Promise<Slice<ProductPostResultDto>> {
     // 1. 내가 차단한 유저 목록 조회 (단방향 차단)
@@ -737,7 +737,7 @@ export class ProductPostService {
    * @param regionId 지역 ID (옵셔널)
    * @returns 카테고리 목록과 각 카테고리의 상품 개수
    */
-  async findCategories(regionId?: string): Promise<ProductCategoryResultDto[]> {
+  async findCategories(regionId?: number): Promise<ProductCategoryResultDto[]> {
     const categoryCounts: CategoryCountDto[] =
       await this.productPostRepository.findCategoryCounts(regionId);
 
@@ -1463,7 +1463,7 @@ export class ProductPostService {
     }
 
     // 3. regionId 추출
-    const regionId: string = primaryInterestRegion.getRegion().getId();
+    const regionId: number = primaryInterestRegion.getRegion().getId();
 
     // 4. Repository에서 대학교 목록 조회
     const universitySlice: Slice<University> =

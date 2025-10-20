@@ -7,7 +7,7 @@ export class InterestRegionInfoDto {
     description: '지역 ID',
     example: 1,
   })
-  regionId: string;
+  regionId: number;
 
   @ApiProperty({
     description: '지역명',
@@ -22,7 +22,7 @@ export class InterestRegionInfoDto {
   })
   isPrimary: boolean;
 
-  constructor(regionId: string, regionName: string, isPrimary: boolean) {
+  constructor(regionId: number, regionName: string, isPrimary: boolean) {
     this.regionId = regionId;
     this.regionName = regionName;
     this.isPrimary = isPrimary;

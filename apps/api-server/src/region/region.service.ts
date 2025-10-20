@@ -30,7 +30,7 @@ export class RegionService {
     return RegionListResponse.fromPagedResult(result);
   }
 
-  async getRegionById(id: string): Promise<RegionInfo> {
+  async getRegionById(id: number): Promise<RegionInfo> {
     const region = await this.regionRepository.findOne({ id } as any, {
       populate: { state: true, county: true } as any,
     });

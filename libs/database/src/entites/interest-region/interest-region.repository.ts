@@ -36,7 +36,7 @@ export class InterestRegionRepository extends EntityRepository<InterestRegion> {
       .getSingleResult();
   }
 
-  async findByRegionId(regionId: string): Promise<InterestRegion[]> {
+  async findByRegionId(regionId: number): Promise<InterestRegion[]> {
     return this.createQueryBuilder('ir')
       .select('*')
       .where({ 'ir.region_id': regionId, 'ir.is_deleted': false })
@@ -45,7 +45,7 @@ export class InterestRegionRepository extends EntityRepository<InterestRegion> {
 
   async findByUserIdAndRegionId(
     userId: number,
-    regionId: string,
+    regionId: number,
   ): Promise<InterestRegion | null> {
     return this.createQueryBuilder('ir')
       .select('*')
