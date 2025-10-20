@@ -52,4 +52,8 @@ export class NotificationRepository extends EntityRepository<Notification> {
 
     return result;
   }
+
+  async flush(): Promise<void> {
+    await this.em.flush();
+  }
 }

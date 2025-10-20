@@ -233,4 +233,37 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
       isDeleted: false,
     });
   }
+
+  /**
+   * 특정 상품에 대해 채팅한 유저 ID 목록을 조회합니다.
+   * 활성 참여자(아직 나가지 않았거나, 나간 후 다시 메시지가 온 경우)만 포함합니다.
+   *
+   * @param productPostId 상품 게시글 ID
+   * @returns 채팅한 유저 ID 목록
+   */
+  async findUserIdsByProductPostId(productPostId: number): Promise<number[]> {
+    const knex = this.em.getKnex();
+
+    const results = await knex
+      .select('cp.user_id')
+      .from('conversation_participant as cp')
+      .innerJoin('conversation as c', function () {
+        this.on('c.id', '=', 'cp.conversation_id').andOn(
+          'c.is_deleted',
+          '=',
+          knex.raw('false'),
+        );
+      })
+      .where('c.product_post_id', productPostId)
+      .andWhere('cp.is_deleted', false)
+      .andWhere(function () {
+        this.whereNull('cp.left_at').orWhere(
+          'cp.left_at',
+          '<',
+          knex.ref('c.last_sent_at'),
+        );
+      });
+
+    return results.map((row) => row.user_id);
+  }
 }

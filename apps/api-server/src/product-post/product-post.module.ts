@@ -9,6 +9,7 @@ import { UserBlock } from '@app/database/entites/user-block/user-block.entity';
 import { TradeProgress } from '@app/database/entites/trade-progress/trade-progress.entity';
 import { ProductPostController } from './api/product-post.controller';
 import { ProductPostService } from './application/product-post.service';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ProductPostService } from './application/product-post.service';
       TradeProgress,
     ]),
     S3Module,
+    NotificationModule,
   ],
   controllers: [ProductPostController],
   providers: [ProductPostService],

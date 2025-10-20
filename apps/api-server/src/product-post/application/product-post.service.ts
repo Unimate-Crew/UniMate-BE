@@ -35,13 +35,14 @@ import { InterestRegion } from '@app/database/entites/interest-region/interest-r
 import { ConversationRepository } from '@app/database/entites/conversation/conversation.repository';
 import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
 import { TradeProgressRepository } from '@app/database/entites/trade-progress/trade-progress.repository';
+import { University } from '@app/database/entites/university/university.entity';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
 import { TradableUserResultDto } from './dto/tradable-user.result.dto';
 import { TradeProgressResultDto } from './dto/trade-progress.result.dto';
 import { UniversityResultDto } from './dto/university-result.dto';
-import { University } from '@app/database/entites/university/university.entity';
+import { NotificationService } from '../../notification/service/notification.service';
 
 @Injectable()
 export class ProductPostService {
@@ -56,6 +57,7 @@ export class ProductPostService {
     private readonly conversationParticipantRepository: ConversationParticipantRepository,
     private readonly tradeProgressRepository: TradeProgressRepository,
     private readonly s3Service: S3Service,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -595,10 +597,29 @@ export class ProductPostService {
       params.userId,
     );
 
-    // 2. 상품 게시글 기본 정보 수정
+    // 2. 거래 상태 검증: 예약중이거나 거래완료된 글은 변경 불가
+    const tradeStatus = productPost.getTradeStatus();
+    const isHidden = productPost.getIsHidden();
+
+    if (
+      tradeStatus === TradeStatus.RESERVED ||
+      tradeStatus === TradeStatus.COMPLETED
+    ) {
+      throw new ForbiddenException({
+        code: ErrorCode.PRODUCT_POST_UPDATE_FORBIDDEN,
+        message: '예약중이거나 거래완료된 상품은 수정할 수 없습니다.',
+      });
+    }
+
+    // 3. 가격 변동 감지 (알림 발송용)
+    const oldPrice = productPost.getPrice();
+    const isPriceChanged =
+      params.price !== undefined && params.price !== oldPrice;
+
+    // 4. 상품 게시글 기본 정보 수정
     this.updateProductPostFields(productPost, params);
 
-    // 3. 이미지 수정 (제공된 경우)
+    // 5. 이미지 수정 (제공된 경우)
     if (params.imageKeys !== undefined && params.imageKeys.length > 0) {
       await this.updateProductPostImages(
         params.productPostId,
@@ -606,8 +627,17 @@ export class ProductPostService {
       );
     }
 
-    // 4. 변경사항 저장
+    // 6. 변경사항 저장
     await this.productPostRepository.persistAndFlush(productPost);
+
+    // 7. 가격 변동 알림 발송 (판매중이면서 가격이 변경되고 숨겨지지 않은 경우만)
+    if (isPriceChanged && tradeStatus === TradeStatus.FOR_SALE && !isHidden) {
+      await this.notificationService.notifyPriceChanged({
+        productPostId: params.productPostId,
+        sellerId: params.userId,
+        productTitle: productPost.getTitle(),
+      });
+    }
 
     return productPost.getId();
   }
@@ -1241,6 +1271,15 @@ export class ProductPostService {
 
     // ProductPost 저장 (TradeProgress도 함께 flush됨)
     await this.productPostRepository.persistAndFlush(productPost);
+
+    // 판매 종료 알림 발송 (거래 상태가 COMPLETED로 변경된 경우)
+    if (productPost.getTradeStatus() === TradeStatus.COMPLETED) {
+      await this.notificationService.notifySaleEnded({
+        productPostId: params.productPostId,
+        sellerId: params.userId,
+        productTitle: productPost.getTitle(),
+      });
+    }
   }
 
   /**
