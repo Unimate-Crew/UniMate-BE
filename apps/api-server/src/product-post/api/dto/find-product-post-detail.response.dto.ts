@@ -63,7 +63,7 @@ export class FindProductPostDetailResponseDto {
   sellerProfileImageUrl: string;
 
   @ApiProperty({ description: '지역 ID' })
-  regionId: string;
+  regionId: number;
 
   @ApiProperty({ description: '지역명', nullable: true })
   regionName: string | null;
@@ -96,7 +96,7 @@ export class FindProductPostDetailResponseDto {
     sellerId: number,
     sellerNickname: string,
     sellerProfileImageUrl: string,
-    regionId: string,
+    regionId: number,
     regionName: string | null,
     universityId: number | null,
     universityName: string | null,
