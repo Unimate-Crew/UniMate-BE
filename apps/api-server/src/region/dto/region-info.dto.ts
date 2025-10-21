@@ -4,7 +4,7 @@ import { CountryCode } from '@app/database/common/enums';
 
 export class RegionInfo {
   @ApiProperty({ description: '지역 ID' })
-  id: string;
+  id: number;
 
   @ApiProperty({ description: '지역 이름' })
   name: string;

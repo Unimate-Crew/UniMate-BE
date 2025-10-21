@@ -66,7 +66,7 @@ export class MySalesItemDto {
     description: '지역 ID',
     example: 1,
   })
-  regionId: string;
+  regionId: number;
 
   @ApiProperty({
     description: '거래 상태',
@@ -97,7 +97,7 @@ export class MySalesItemDto {
     currencyType: CurrencyType,
     likeCount: number,
     chatRoomCount: number,
-    regionId: string,
+    regionId: number,
     tradeStatus: TradeStatus,
     isHidden: boolean,
     isLiked: boolean,

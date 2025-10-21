@@ -6,7 +6,10 @@ import { BaseEntity } from '../../common/base.entity';
 @Entity({ repository: () => RegionRepository })
 export class Region extends BaseEntity {
   @PrimaryKey()
-  id!: string;
+  id!: number;
+
+  @Property()
+  geoid?: string;
 
   @Property()
   name!: string;
@@ -18,10 +21,10 @@ export class Region extends BaseEntity {
   admin1Code?: string; // 1차 행정구역 코드
 
   @Property()
-  stateId!: string;
+  stateId!: number;
 
   @Property()
-  countyId?: string;
+  countyId?: number;
 
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
   latitude?: number;
@@ -32,8 +35,16 @@ export class Region extends BaseEntity {
   @Property({ columnType: 'bigint', nullable: true })
   population?: number;
 
-  public getId(): string {
+  public getId(): number {
     return this.id;
+  }
+
+  public getGeoid(): string {
+    return this.geoid;
+  }
+
+  public setGeoid(geoid: string): void {
+    this.geoid = geoid;
   }
 
   public getName(): string {
@@ -60,19 +71,19 @@ export class Region extends BaseEntity {
     this.admin1Code = admin1Code;
   }
 
-  public getStateId(): string {
+  public getStateId(): number {
     return this.stateId;
   }
 
-  public setStateId(stateId: string): void {
+  public setStateId(stateId: number): void {
     this.stateId = stateId;
   }
 
-  public getCountyId(): string | undefined {
+  public getCountyId(): number | undefined {
     return this.countyId;
   }
 
-  public setCountyId(countyId: string): void {
+  public setCountyId(countyId: number): void {
     this.countyId = countyId;
   }
 

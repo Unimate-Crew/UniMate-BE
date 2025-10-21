@@ -105,8 +105,8 @@ export class SearchProductPostsRequestDto extends PageRequest {
     example: 1,
     required: false,
   })
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  @Type(() => String)
-  regionId: string;
+  @Type(() => Number)
+  regionId: number;
 }

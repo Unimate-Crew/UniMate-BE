@@ -92,7 +92,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     return this.find({ userId, isDeleted: false });
   }
 
-  async findByRegionId(regionId: string): Promise<ProductPost[]> {
+  async findByRegionId(regionId: number): Promise<ProductPost[]> {
     return this.find({ regionId, isDeleted: false });
   }
 
@@ -136,7 +136,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    */
   async findPagedProductPosts(params: {
     pageRequest: PageRequest;
-    regionId: string;
+    regionId: number;
     blockedUserIds?: number[];
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
@@ -233,7 +233,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     tradeStatus?: string;
     sortDirection?: string;
     pageRequest: PageRequest;
-    regionId: string;
+    regionId: number;
     blockedUserIds?: number[];
   }): Promise<Slice<ProductPostWithRelations>> {
     const knex = this.em.getKnex();
@@ -496,7 +496,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @param regionId 지역 ID (옵셔널)
    * @returns 카테고리별 상품 개수 배열
    */
-  async findCategoryCounts(regionId?: string): Promise<CategoryCountDto[]> {
+  async findCategoryCounts(regionId?: number): Promise<CategoryCountDto[]> {
     const knex = this.em.getKnex();
 
     const query = knex
@@ -507,7 +507,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       .groupBy('product_post.category');
 
     // 지역 필터링
-    if (regionId && regionId.trim() !== '') {
+    if (regionId) {
       query.where('product_post.region_id', regionId);
     }
 
@@ -532,7 +532,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @returns 페이지네이션된 대학교 목록
    */
   async searchUniversitiesByRegion(params: {
-    regionId: string;
+    regionId: number;
     searchKeyword?: string;
     pageRequest: PageRequest;
   }): Promise<Slice<University>> {

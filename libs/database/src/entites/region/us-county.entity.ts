@@ -4,13 +4,16 @@ import { UsCountyRepository } from './us-county.repository';
 @Entity({ repository: () => UsCountyRepository, tableName: 'us_county' })
 export class UsCounty {
   @PrimaryKey()
-  id!: string;
+  id!: number;
+
+  @Property()
+  geoid?: string;
 
   @Property()
   name!: string;
 
   @Property({ fieldName: 'state_id' })
-  stateId!: string;
+  stateId!: number;
 
   @Property({ fieldName: 'land_area', columnType: 'bigint', nullable: true })
   landArea?: number;
@@ -38,15 +41,23 @@ export class UsCounty {
   @Property({ columnType: 'decimal(10, 6)', nullable: true })
   longitude?: number;
 
-  public getId(): string {
+  public getId(): number {
     return this.id;
+  }
+
+  public getGeoid(): string {
+    return this.geoid;
+  }
+
+  public setGeoid(geoid: string): void {
+    this.geoid = geoid;
   }
 
   public getName(): string {
     return this.name;
   }
 
-  public getStateId(): string {
+  public getStateId(): number {
     return this.stateId;
   }
 

@@ -66,7 +66,7 @@ export class MyLikesItemDto {
     description: '지역 ID',
     example: 1,
   })
-  regionId: string;
+  regionId: number;
 
   @ApiProperty({
     description: '거래 상태',
@@ -91,7 +91,7 @@ export class MyLikesItemDto {
     currencyType: CurrencyType,
     likeCount: number,
     chatRoomCount: number,
-    regionId: string,
+    regionId: number,
     tradeStatus: TradeStatus,
     isLiked: boolean,
   ) {

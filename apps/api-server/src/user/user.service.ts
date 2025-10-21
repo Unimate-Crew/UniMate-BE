@@ -197,8 +197,8 @@ export class UserService {
   @Transactional()
   async saveInterestRegions(
     userId: number,
-    regionIds: string[],
-    primaryRegionId?: string,
+    regionIds: number[],
+    primaryRegionId?: number,
   ): Promise<void> {
     // 모든 지역 ID가 유효한지 확인
     const regions: Region[] = await this.regionRepository.findByIds(regionIds);
@@ -241,7 +241,7 @@ export class UserService {
   @Transactional()
   async setPrimaryInterestRegion(
     userId: number,
-    regionId: string,
+    regionId: number,
   ): Promise<void> {
     // 해당 지역이 유저의 관심 지역 목록에 있는지 확인
     const targetInterestRegion: InterestRegion | null =
@@ -271,7 +271,7 @@ export class UserService {
   }
 
   @Transactional()
-  async deleteInterestRegion(userId: number, regionId: string): Promise<void> {
+  async deleteInterestRegion(userId: number, regionId: number): Promise<void> {
     // 해당 지역이 유저의 관심 지역 목록에 있는지 확인
     const targetInterestRegion: InterestRegion | null =
       await this.interestRegionRepository.findByUserIdAndRegionId(
@@ -302,7 +302,7 @@ export class UserService {
 
   async setOnboardingInterestRegion(
     userId: number,
-    regionId: string,
+    regionId: number,
   ): Promise<void> {
     // 유저가 존재하는지 확인
     const user: User | null = await this.userRepository.findOne(userId);
@@ -345,7 +345,7 @@ export class UserService {
     await this.interestRegionRepository.flush();
   }
 
-  async saveInterestRegion(userId: number, regionId: string): Promise<void> {
+  async saveInterestRegion(userId: number, regionId: number): Promise<void> {
     // 지역 ID가 유효한지 확인
     const region: Region | null = await this.regionRepository.findOne(regionId);
 

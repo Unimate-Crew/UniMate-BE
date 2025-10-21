@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { S3Service } from '@app/common/s3/s3.service';
 import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
+import { User } from '@app/database';
 import { UserService } from './user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthService } from '../auth/auth.service';
@@ -92,13 +93,10 @@ export class UserController {
   })
   @Post('signin')
   async signIn(@Body() signInDto: SignInDto): Promise<SignInResponseDto> {
-    const user = await this.userService.signIn(signInDto);
-    const accessToken = await this.authService.generateAccessToken(
-      user.getId(),
-      user.getProvider(),
-    );
+    const user: User = await this.userService.signIn(signInDto);
+    const tokens: TokensDto = await this.authService.generateTokens(user);
 
-    return SignInResponseDto.of(accessToken, user.getRefreshToken());
+    return SignInResponseDto.of(tokens.accessToken, tokens.refreshToken);
   }
 
   @ApiOperation({
@@ -285,7 +283,7 @@ export class UserController {
   @HttpCode(204)
   async setPrimaryInterestRegion(
     @CurrentUser() userTokenInfo: UserTokenInfo,
-    @Param('regionId') regionId: string,
+    @Param('regionId', ParseIntPipe) regionId: number,
   ): Promise<void> {
     await this.userService.setPrimaryInterestRegion(
       userTokenInfo.userId,
@@ -314,7 +312,7 @@ export class UserController {
   @HttpCode(204)
   async deleteInterestRegion(
     @CurrentUser() userTokenInfo: UserTokenInfo,
-    @Param('regionId') regionId: string,
+    @Param('regionId', ParseIntPipe) regionId: number,
   ): Promise<void> {
     await this.userService.deleteInterestRegion(userTokenInfo.userId, regionId);
   }
