@@ -14,6 +14,7 @@ import { NotificationModule } from './notification/notification.module';
 import { ReviewModule } from './review/review.module';
 import { UserBlockModule } from './user-block/user-block.module';
 import { UpdatePopupModule } from './update-popup/update-popup.module';
+import { DeviceModule } from './device/device.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UpdatePopupModule } from './update-popup/update-popup.module';
     ReviewModule,
     UserBlockModule,
     UpdatePopupModule,
+    DeviceModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],

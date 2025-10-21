@@ -22,7 +22,7 @@ export class DeviceController {
   @ApiOperation({
     summary: '디바이스 토큰 등록',
     description:
-      '푸시 알림을 위한 디바이스 토큰을 등록합니다. 이미 등록된 토큰인 경우 갱신됩니다.',
+      '푸시 알림을 위한 디바이스 토큰을 등록합니다. 멀티 디바이스를 지원합니다.',
   })
   @ApiResponse({
     status: 201,
