@@ -75,7 +75,7 @@ export enum TradeProgressStatus {
 }
 
 export enum PlatformType {
-  IOS = 'IOS',
+  IOS = 'iOS',
   ANDROID = 'ANDROID',
 }
 
