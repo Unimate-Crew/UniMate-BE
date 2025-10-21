@@ -4,6 +4,7 @@ import { NotificationRepository } from '@app/database/entites/notification/notif
 import { UserRepository } from '@app/database/entites/user/user.repository';
 import { LikeRepository } from '@app/database/entites/like/like.repository';
 import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
+import { DeviceRepository } from '@app/database/entites/device/device.repository';
 import { PagedResult } from '@app/common/utils/pagination';
 import { Notification } from '@app/database/entites/notification/notification.entity';
 import { User } from '@app/database';
@@ -29,6 +30,7 @@ export class NotificationService {
     private readonly userRepository: UserRepository,
     private readonly likeRepository: LikeRepository,
     private readonly conversationParticipantRepository: ConversationParticipantRepository,
+    private readonly deviceRepository: DeviceRepository,
     private readonly sqsClient: SqsClient,
     private readonly configService: ConfigService,
   ) {}
@@ -193,7 +195,7 @@ export class NotificationService {
       `알림 대상: ${targetUserIds.length}명 (타입: ${params.notificationType}, 상품 ID: ${params.productPostId})`,
     );
 
-    // 3. 유저 정보를 IN 쿼리로 한 번에 조회
+    // 3. 유저 정보 일괄 조회
     const users = await this.userRepository.findByIds(targetUserIds);
     const userMap = new Map(users.map((user) => [user.id, user]));
 
@@ -254,17 +256,41 @@ export class NotificationService {
       return;
     }
 
-    const pushMessages = savedNotifications.map((notification) => ({
-      type: params.notificationType,
-      userId: notification.userId,
-      productPostId: params.productPostId,
-      productTitle: params.productTitle,
-      message: {
-        title: params.pushTitle,
-        body: params.pushBody,
-      },
-      timestamp: new Date().toISOString(),
-    }));
+    // 9. 디바이스 토큰 일괄 조회
+    const devices = await this.deviceRepository.findByUserIds(enabledUserIds);
+
+    // userId별 디바이스 토큰 매핑
+    const userDeviceTokensMap = new Map<number, string[]>();
+    devices.forEach((device) => {
+      const userId = device.getUserId();
+      const existing = userDeviceTokensMap.get(userId) || [];
+      userDeviceTokensMap.set(userId, [...existing, device.getDeviceToken()]);
+    });
+
+    // 10. SQS 메시지 생성 (디바이스 토큰 포함)
+    const pushMessages = savedNotifications
+      .map((notification) => {
+        const deviceTokens = userDeviceTokensMap.get(notification.userId) || [];
+
+        // 디바이스 토큰이 없으면 메시지 생성 안 함
+        if (deviceTokens.length === 0) {
+          return null;
+        }
+
+        return {
+          type: params.notificationType,
+          userId: notification.userId,
+          deviceTokens,
+          productPostId: params.productPostId,
+          productTitle: params.productTitle,
+          message: {
+            title: params.pushTitle,
+            body: params.pushBody,
+          },
+          timestamp: new Date().toISOString(),
+        };
+      })
+      .filter((msg) => msg !== null);
 
     try {
       await this.sqsClient.sendMessageBatch(queueUrl, pushMessages);

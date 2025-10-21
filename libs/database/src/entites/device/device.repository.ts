@@ -15,6 +15,20 @@ export class DeviceRepository extends EntityRepository<Device> {
   }
 
   /**
+   * 여러 유저의 디바이스 일괄 조회
+   */
+  async findByUserIds(userIds: number[]): Promise<Device[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    return this.find({
+      userId: { $in: userIds },
+      isDeleted: false,
+    });
+  }
+
+  /**
    * 디바이스 토큰으로 디바이스 조회
    */
   async findByDeviceToken(deviceToken: string): Promise<Device | null> {
