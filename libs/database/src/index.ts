@@ -29,4 +29,6 @@ export * from './entites/conversation-message/conversation-message.entity';
 export * from './entites/conversation-message/conversation-message.repository';
 export * from './entites/like/like.entity';
 export * from './entites/like/like.repository';
+export * from './entites/device/device.entity';
+export * from './entites/device/device.repository';
 export * from './common/enums';
