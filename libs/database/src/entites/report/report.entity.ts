@@ -1,6 +1,7 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, Enum } from '@mikro-orm/core';
 import { ReportRepository } from './report.repository';
 import { BaseEntity } from '../../common/base.entity';
+import { ReportReason } from '../../common/enums';
 
 @Entity({ repository: () => ReportRepository })
 export class Report extends BaseEntity {
@@ -13,11 +14,11 @@ export class Report extends BaseEntity {
   @Property()
   userId!: number;
 
-  @Property()
-  reason!: string;
+  @Enum(() => ReportReason)
+  reason!: ReportReason;
 
-  @Property({ nullable: true })
-  detail?: string;
+  @Property({ length: 300 })
+  detail!: string;
 
   public getId(): number {
     return this.id;
@@ -39,15 +40,15 @@ export class Report extends BaseEntity {
     this.userId = userId;
   }
 
-  public getReason(): string {
+  public getReason(): ReportReason {
     return this.reason;
   }
 
-  public setReason(reason: string): void {
+  public setReason(reason: ReportReason): void {
     this.reason = reason;
   }
 
-  public getDetail(): string | undefined {
+  public getDetail(): string {
     return this.detail;
   }
 

@@ -83,3 +83,11 @@ export enum UpdateType {
   FORCE = 'FORCE',
   RECOMMEND = 'RECOMMEND',
 }
+
+export enum ReportReason {
+  BAD_MANNER = 'BAD_MANNER', // 비매너
+  SCAM_SUSPICION = 'SCAM_SUSPICION', // 사기 의심
+  HATE_SPEECH = 'HATE_SPEECH', // 욕설, 비방, 혐오표현 사용
+  SEXUAL_HARASSMENT = 'SEXUAL_HARASSMENT', // 부적절한 성적 행위
+  ETC = 'ETC', // 기타
+}
