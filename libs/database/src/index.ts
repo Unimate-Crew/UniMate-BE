@@ -31,4 +31,6 @@ export * from './entites/like/like.entity';
 export * from './entites/like/like.repository';
 export * from './entites/device/device.entity';
 export * from './entites/device/device.repository';
+export * from './entites/report/report.entity';
+export * from './entites/report/report.repository';
 export * from './common/enums';

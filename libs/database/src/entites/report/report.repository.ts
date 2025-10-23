@@ -16,6 +16,13 @@ export class ReportRepository extends EntityRepository<Report> {
     return this.find({ targetUserId, isDeleted: false });
   }
 
+  async findByUserIdAndTargetUserId(
+    userId: number,
+    targetUserId: number,
+  ): Promise<Report | null> {
+    return this.findOne({ userId, targetUserId, isDeleted: false });
+  }
+
   async persist(report: Report): Promise<void> {
     await this.em.persist(report);
   }
