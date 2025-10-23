@@ -101,4 +101,14 @@ export class LikeRepository extends EntityRepository<Like> {
 
     return new Set(result.map((row) => row.product_id));
   }
+
+  /**
+   * 특정 상품을 찜한 유저 ID 목록을 조회합니다.
+   * @param productId 상품 ID
+   * @returns 상품을 찜한 유저 ID 목록
+   */
+  async findUserIdsByProductId(productId: number): Promise<number[]> {
+    const likes = await this.find({ productId }, { fields: ['userId'] });
+    return likes.map((like) => like.userId);
+  }
 }
