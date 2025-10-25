@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ProductImage } from '@app/database/entites/product-post/product-image.entity';
-import { InterestRegion, User } from '@app/database';
+import { InterestRegion, Review, User } from '@app/database';
 import { S3Module } from '@app/common/s3/s3.module';
 import { Like } from '@app/database/entites/like/like.entity';
 import { UserBlock } from '@app/database/entites/user-block/user-block.entity';
@@ -21,6 +21,7 @@ import { NotificationModule } from '../notification/notification.module';
       UserBlock,
       InterestRegion,
       TradeProgress,
+      Review,
     ]),
     S3Module,
     NotificationModule,

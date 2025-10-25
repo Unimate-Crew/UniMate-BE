@@ -586,4 +586,67 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
     return Slice.of(content, hasNext);
   }
+
+  /**
+   * 주어진 ID 목록에 해당하는 상품 게시글을 조회합니다.
+   * 삭제된 상품도 포함하여 조회합니다. (구매내역 조회용)
+   * 대학교 정보와 썸네일 URL을 포함하여 조회합니다.
+   *
+   * @param params.productPostIds 상품 게시글 ID 목록
+   * @returns ProductPostWithRelations 배열
+   */
+  async findByIdsIncludingDeleted(params: {
+    productPostIds: number[];
+  }): Promise<ProductPostWithRelations[]> {
+    if (params.productPostIds.length === 0) {
+      return [];
+    }
+
+    const knex = this.em.getKnex();
+
+    const results = await knex
+      .select([
+        'product_post.*',
+        'university.name as university_name',
+        'product_image.image_key as thumbnail_image_key',
+      ])
+      .from('product_post')
+      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('product_image', function () {
+        this.on('product_post.id', '=', 'product_image.product_id').andOn(
+          'product_image.is_thumbnail',
+          '=',
+          knex.raw('?', [true]),
+        );
+      })
+      .whereIn('product_post.id', params.productPostIds);
+    // isDeleted 필터 없음 - 삭제된 상품도 조회
+
+    return results.map(
+      (row) =>
+        new ProductPostWithRelations({
+          productPost: this.em.map(ProductPost, {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            userId: row.user_id,
+            price: row.price,
+            currencyType: row.currency_type,
+            category: row.category,
+            tradeStatus: row.trade_status,
+            tradeType: row.trade_type,
+            tradeTypeDescription: row.trade_type_description,
+            regionId: row.region_id,
+            universityId: row.university_id,
+            isDeleted: row.is_deleted,
+            isHidden: row.is_hidden,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+            deletedAt: row.deleted_at,
+          }),
+          universityName: row.university_name,
+          thumbnailImageKey: row.thumbnail_image_key,
+        }),
+    );
+  }
 }

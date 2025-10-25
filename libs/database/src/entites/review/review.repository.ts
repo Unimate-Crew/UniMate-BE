@@ -56,4 +56,26 @@ export class ReviewRepository extends EntityRepository<Review> {
 
     return ReviewStatsDto.of(averageRating, totalReviews);
   }
+
+  /**
+   * 특정 상품 목록에 대해 특정 유저가 작성한 리뷰를 조회합니다.
+   *
+   * @param productPostIds 상품 게시글 ID 목록
+   * @param reviewerId 리뷰 작성자 ID
+   * @returns 리뷰 목록
+   */
+  async findByProductIdsAndReviewerId(
+    productPostIds: number[],
+    reviewerId: number,
+  ): Promise<Review[]> {
+    if (productPostIds.length === 0) {
+      return [];
+    }
+
+    return this.find({
+      productPostId: { $in: productPostIds },
+      reviewerId,
+      isDeleted: false,
+    });
+  }
 }

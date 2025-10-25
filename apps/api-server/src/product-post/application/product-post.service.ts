@@ -36,12 +36,14 @@ import { ConversationRepository } from '@app/database/entites/conversation/conve
 import { ConversationParticipantRepository } from '@app/database/entites/conversation-participant/conversation-participant.repository';
 import { TradeProgressRepository } from '@app/database/entites/trade-progress/trade-progress.repository';
 import { University } from '@app/database/entites/university/university.entity';
+import { ReviewRepository } from '@app/database/entites/review/review.repository';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
 import { TradableUserResultDto } from './dto/tradable-user.result.dto';
 import { TradeProgressResultDto } from './dto/trade-progress.result.dto';
 import { UniversityResultDto } from './dto/university-result.dto';
+import { PurchaseHistoryResultDto } from './dto/purchase-history.result.dto';
 import { NotificationService } from '../../notification/service/notification.service';
 
 @Injectable()
@@ -56,6 +58,7 @@ export class ProductPostService {
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationParticipantRepository: ConversationParticipantRepository,
     private readonly tradeProgressRepository: TradeProgressRepository,
+    private readonly reviewRepository: ReviewRepository,
     private readonly s3Service: S3Service,
     private readonly notificationService: NotificationService,
   ) {}
@@ -1477,6 +1480,99 @@ export class ProductPostService {
         message: '해당 구매자와의 활성 채팅방이 존재하지 않습니다.',
       });
     }
+  }
+
+  /**
+   * 나의 구매내역 목록을 페이지네이션하여 조회합니다.
+   *
+   * @param params.pageRequest 페이지네이션 정보
+   * @param params.userId 현재 로그인한 유저 ID (구매자)
+   * @returns 페이지네이션된 구매내역 목록과 다음 페이지 존재 여부
+   */
+  async findMyPurchases(params: {
+    pageRequest: PageRequest;
+    userId: number;
+  }): Promise<Slice<PurchaseHistoryResultDto>> {
+    // 1. TradeProgress에서 구매 완료 내역 조회 (페이지네이션)
+    const tradeProgressSlice =
+      await this.tradeProgressRepository.findPagedPurchaseHistories({
+        pageRequest: params.pageRequest,
+        userId: params.userId,
+      });
+
+    if (tradeProgressSlice.contents.length === 0) {
+      return Slice.of([], false);
+    }
+
+    // 2. productPostId 목록 추출
+    const productPostIds = tradeProgressSlice.contents.map(
+      (tp) => tp.productPostId,
+    );
+
+    // 3. ProductPost 조회 (삭제된 것 포함)
+    const productPostsWithRelations =
+      await this.productPostRepository.findByIdsIncludingDeleted({
+        productPostIds,
+      });
+
+    // productPostId 순서 보존을 위한 Map
+    const productPostMap = new Map(
+      productPostsWithRelations.map((p) => [p.productPost.id, p]),
+    );
+
+    // 4. 좋아요, 채팅방 수, 거래후기 병렬 조회
+    const [likeCountMap, likedProductIds, conversationCountMap, reviews] =
+      await Promise.all([
+        this.likeRepository.countByProductIds(productPostIds),
+        this.likeRepository.findLikedProductIdsByUserIdAndProductIds(
+          params.userId,
+          productPostIds,
+        ),
+        this.conversationRepository.countByProductIds(productPostIds),
+        this.reviewRepository.findByProductIdsAndReviewerId(
+          productPostIds,
+          params.userId,
+        ),
+      ]);
+
+    // 거래후기 Map 생성 (O(1) 조회)
+    const reviewMap = new Map(reviews.map((r) => [r.productPostId, true]));
+
+    // 5. 순서 보존하며 결과 조합 (thumbnailUrl 생성 포함)
+    const contents: PurchaseHistoryResultDto[] = await Promise.all(
+      tradeProgressSlice.contents.map(async (tp) => {
+        const productPostWithRelations = productPostMap.get(tp.productPostId);
+        if (!productPostWithRelations) {
+          return null; // 예외 상황
+        }
+
+        // 썸네일 URL 생성
+        let thumbnailUrl = '';
+        if (productPostWithRelations.thumbnailImageKey) {
+          thumbnailUrl = await this.s3Service.generateGetPresignedUrl(
+            productPostWithRelations.thumbnailImageKey,
+          );
+        }
+
+        return new PurchaseHistoryResultDto(
+          productPostWithRelations.productPost,
+          productPostWithRelations.universityName,
+          thumbnailUrl,
+          likeCountMap.get(tp.productPostId) || 0,
+          conversationCountMap.get(tp.productPostId) || 0,
+          likedProductIds.has(tp.productPostId),
+          reviewMap.get(tp.productPostId) || false,
+          tp.updatedAt, // TradeProgress.updatedAt (구매 완료 시간)
+        );
+      }),
+    );
+
+    // null 제거
+    const filteredContents = contents.filter(
+      (item) => item !== null,
+    ) as PurchaseHistoryResultDto[];
+
+    return Slice.of(filteredContents, tradeProgressSlice.hasNext);
   }
 
   /**

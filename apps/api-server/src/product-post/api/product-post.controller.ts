@@ -40,6 +40,8 @@ import { CreateProductPostResponseDto } from './dto/create-product-post.response
 
 import { FindMySalesRequestDto } from './dto/find-my-sales.request.dto';
 import { FindMySalesResponseDto } from './dto/find-my-sales.response.dto';
+import { FindMyPurchasesRequestDto } from './dto/find-my-purchases.request.dto';
+import { FindMyPurchasesResponseDto } from './dto/find-my-purchases.response.dto';
 import { FindUserSalesRequestDto } from './dto/find-user-sales.request.dto';
 import { FindUserSalesResponseDto } from './dto/find-user-sales.response.dto';
 import { FindMyLikesRequestDto } from './dto/find-my-likes.request.dto';
@@ -48,6 +50,7 @@ import { UpdateTradeStatusRequestDto } from './dto/update-trade-status.request.d
 import { GetTradableUsersResponseDto } from './dto/get-tradable-users.response.dto';
 import { GetTradeProgressResponseDto } from './dto/get-trade-progress.response.dto';
 import { TradableUserResultDto } from '../application/dto/tradable-user.result.dto';
+import { PurchaseHistoryResultDto } from '../application/dto/purchase-history.result.dto';
 import { TradeProgressResultDto } from '../application/dto/trade-progress.result.dto';
 import { SearchUniversitiesInRegionRequestDto } from './dto/search-universities-in-region.request.dto';
 import { SearchUniversitiesInRegionResponseDto } from './dto/search-universities-in-region.response.dto';
@@ -197,6 +200,42 @@ export class ProductPostController {
       });
 
     return FindMySalesResponseDto.of(productPostInfoSlice);
+  }
+
+  @Get('/my/purchases')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '나의 구매내역 목록 조회 API',
+    description:
+      '구매 완료한 상품 목록을 최근 구매순으로 조회합니다. 삭제된 상품도 포함됩니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '구매내역 목록 조회 성공',
+    type: FindMyPurchasesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  async findMyPurchases(
+    @Query() query: FindMyPurchasesRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<FindMyPurchasesResponseDto> {
+    const purchaseHistorySlice: Slice<PurchaseHistoryResultDto> =
+      await this.productPostService.findMyPurchases({
+        pageRequest: PageRequest.of(query.getPageNumber(), query.getPageSize()),
+        userId: userTokenInfo.userId,
+      });
+
+    return FindMyPurchasesResponseDto.of(purchaseHistorySlice);
   }
 
   @Get('/user/:userId/sales')
