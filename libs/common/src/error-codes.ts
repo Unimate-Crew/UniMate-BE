@@ -83,6 +83,9 @@ export enum ErrorCode {
   REPORT_SELF_NOT_ALLOWED = 'RP001',
   REPORT_ALREADY_EXISTS = 'RP002',
   REPORT_TARGET_USER_NOT_FOUND = 'RP003',
+
+  // 알림
+  NOTIFICATION_NOT_FOUND = 'NT001',
 }
 
 export const ErrorMessage = {
