@@ -238,6 +238,58 @@ export class ProductPostController {
     return FindMyPurchasesResponseDto.of(purchaseHistorySlice);
   }
 
+  @Delete('/my/purchases/:purchaseHistoryId')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '구매내역 삭제 API',
+    description: '구매내역을 삭제합니다.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '구매내역 삭제 성공',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (본인의 구매내역만 삭제 가능)',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'TP004', description: '에러 코드' },
+        message: {
+          type: 'string',
+          example: '본인의 구매내역만 삭제할 수 있습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '구매내역을 찾을 수 없음',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'TP001', description: '에러 코드' },
+        message: {
+          type: 'string',
+          example: '구매내역을 찾을 수 없습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async deletePurchaseHistory(
+    @Param('purchaseHistoryId', ParseIntPipe) purchaseHistoryId: number,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.productPostService.deletePurchaseHistory({
+      purchaseHistoryId,
+      userId: userTokenInfo.userId,
+    });
+  }
+
   @Get('/user/:userId/sales')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('accessToken')

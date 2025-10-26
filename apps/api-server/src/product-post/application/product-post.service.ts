@@ -1555,6 +1555,7 @@ export class ProductPostService {
         }
 
         return new PurchaseHistoryResultDto(
+          tp.id, // purchaseHistoryId
           productPostWithRelations.productPost,
           productPostWithRelations.universityName,
           thumbnailUrl,
@@ -1573,6 +1574,40 @@ export class ProductPostService {
     ) as PurchaseHistoryResultDto[];
 
     return Slice.of(filteredContents, tradeProgressSlice.hasNext);
+  }
+
+  /**
+   * 구매내역을 삭제합니다.
+   *
+   * @param params.purchaseHistoryId 구매내역 ID (TradeProgress ID)
+   * @param params.userId 현재 로그인한 유저 ID (구매자)
+   */
+  async deletePurchaseHistory(params: {
+    purchaseHistoryId: number;
+    userId: number;
+  }): Promise<void> {
+    // 1. 구매내역 조회
+    const tradeProgress = await this.tradeProgressRepository.findById(
+      params.purchaseHistoryId,
+    );
+
+    if (!tradeProgress) {
+      throw new NotFoundException({
+        code: ErrorCode.TRADE_PROGRESS_NOT_FOUND,
+        message: '구매내역을 찾을 수 없습니다.',
+      });
+    }
+
+    // 2. 본인의 구매내역인지 확인
+    if (tradeProgress.getBuyerId() !== params.userId) {
+      throw new ForbiddenException({
+        code: ErrorCode.TRADE_PROGRESS_DELETE_FORBIDDEN,
+        message: '본인의 구매내역만 삭제할 수 있습니다.',
+      });
+    }
+
+    // 3. 구매내역 소프트 삭제
+    await this.tradeProgressRepository.softDelete(tradeProgress);
   }
 
   /**

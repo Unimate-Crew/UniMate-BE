@@ -1,6 +1,8 @@
 import { ProductPost } from '@app/database/entites/product-post/product-post.entity';
 
 export class PurchaseHistoryResultDto {
+  purchaseHistoryId: number;
+
   productPost: ProductPost;
 
   universityName: string;
@@ -18,6 +20,7 @@ export class PurchaseHistoryResultDto {
   purchasedAt: Date;
 
   constructor(
+    purchaseHistoryId: number,
     productPost: ProductPost,
     universityName: string,
     thumbnailUrl: string,
@@ -27,6 +30,7 @@ export class PurchaseHistoryResultDto {
     hasReview: boolean,
     purchasedAt: Date,
   ) {
+    this.purchaseHistoryId = purchaseHistoryId;
     this.productPost = productPost;
     this.universityName = universityName;
     this.thumbnailUrl = thumbnailUrl;

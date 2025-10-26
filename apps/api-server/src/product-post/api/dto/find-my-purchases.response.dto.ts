@@ -6,10 +6,16 @@ import { PurchaseHistoryResultDto } from '../../application/dto/purchase-history
 
 export class MyPurchaseItemDto {
   @ApiProperty({
-    description: '상품 게시글 ID',
+    description: '구매내역 ID',
     example: 1,
   })
-  id: number;
+  purchaseHistoryId: number;
+
+  @ApiProperty({
+    description: '상품 게시글 ID',
+    example: 2,
+  })
+  productPostId: number;
 
   @ApiProperty({
     description: '상품 게시글 제목',
@@ -82,7 +88,8 @@ export class MyPurchaseItemDto {
   purchasedAt: string;
 
   constructor(
-    id: number,
+    purchaseHistoryId: number,
+    productPostId: number,
     title: string,
     thumbnailUrl: string,
     tradeStatus: TradeStatus,
@@ -95,7 +102,8 @@ export class MyPurchaseItemDto {
     hasReview: boolean,
     purchasedAt: string,
   ) {
-    this.id = id;
+    this.purchaseHistoryId = purchaseHistoryId;
+    this.productPostId = productPostId;
     this.title = title;
     this.thumbnailUrl = thumbnailUrl;
     this.tradeStatus = tradeStatus;
@@ -135,6 +143,7 @@ export class FindMyPurchasesResponseDto {
       purchaseHistorySlice.contents.map(
         (purchaseHistory) =>
           new MyPurchaseItemDto(
+            purchaseHistory.purchaseHistoryId,
             purchaseHistory.productPost.getId(),
             purchaseHistory.productPost.getTitle(),
             purchaseHistory.thumbnailUrl,
