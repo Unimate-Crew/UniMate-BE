@@ -6,6 +6,10 @@ import {
   Delete,
   Body,
   Patch,
+  Param,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -59,6 +63,30 @@ export class NotificationController {
       await this.notificationService.getNotifications(params);
 
     return GetNotificationsResponseDto.fromResult(result);
+  }
+
+  @Patch(':id/read')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: '알림 읽음 처리',
+    description: '특정 알림을 읽음 상태로 변경합니다.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '알림 읽음 처리 성공',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '알림을 찾을 수 없음',
+  })
+  async markNotificationAsRead(
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+    @Param('id', ParseIntPipe) notificationId: number,
+  ): Promise<void> {
+    await this.notificationService.markNotificationAsRead({
+      userId: userTokenInfo.userId,
+      notificationId,
+    });
   }
 
   @Delete()

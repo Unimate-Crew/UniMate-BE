@@ -68,6 +68,28 @@ export class NotificationService {
     return DeleteNotificationsResultDto.of(deletedCount);
   }
 
+  async markNotificationAsRead(params: {
+    userId: number;
+    notificationId: number;
+  }): Promise<void> {
+    const notification = await this.notificationRepository.findOne({
+      id: params.notificationId,
+      isDeleted: false,
+    });
+
+    if (!notification || notification.userId !== params.userId) {
+      throw new NotFoundException({
+        code: ErrorCode.NOTIFICATION_NOT_FOUND,
+        message: '알림을 찾을 수 없습니다.',
+      });
+    }
+
+    if (!notification.isRead) {
+      notification.isRead = true;
+      await this.notificationRepository.flush();
+    }
+  }
+
   async getNotificationSettings(
     userId: number,
   ): Promise<GetNotificationSettingsResultDto> {
