@@ -62,6 +62,7 @@ export class RegionRepository extends EntityRepository<Region> {
     const [entities, totalCount] = await this.findAndCount(whereCondition, {
       limit,
       offset: (page - 1) * limit,
+      orderBy: { name: 'ASC' },
     });
 
     return {
