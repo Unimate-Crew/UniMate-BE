@@ -37,7 +37,7 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
     }
 
     if (exception instanceof WsException) {
-      return this.handleWsException(exception);
+      return this.handleWsException(exception, data, client);
     }
 
     return this.handleGenericException(exception, data, client);
@@ -57,13 +57,27 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
     return { errorCode, errorMessage };
   }
 
-  private handleWsException(exception: WsException): {
+  private handleWsException(
+    exception: WsException,
+    data: any,
+    client: Socket,
+  ): {
     errorCode: string;
     errorMessage: string;
   } {
     const error = exception.getError();
 
     if (typeof error === 'string') {
+      this.logger.error(
+        'WsException with string error (INTERNAL_SERVER_ERROR):',
+        {
+          error,
+          stack: exception.stack,
+          data,
+          socketId: client.id,
+        },
+      );
+
       return {
         errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
         errorMessage: error,
@@ -71,14 +85,38 @@ export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
     }
 
     if (typeof error === 'object' && error !== null) {
+      const errorCode = (error as any).code || ErrorCode.INTERNAL_SERVER_ERROR;
+
+      if (errorCode === ErrorCode.INTERNAL_SERVER_ERROR) {
+        this.logger.error(
+          'WsException without error code (INTERNAL_SERVER_ERROR):',
+          {
+            error,
+            stack: exception.stack,
+            data,
+            socketId: client.id,
+          },
+        );
+      }
+
       return {
-        errorCode: (error as any).code || ErrorCode.INTERNAL_SERVER_ERROR,
+        errorCode,
         errorMessage:
           (error as any).message ||
           ErrorMessage[(error as any).code] ||
           'Internal server error occurred',
       };
     }
+
+    this.logger.error(
+      'WsException with invalid error format (INTERNAL_SERVER_ERROR):',
+      {
+        error,
+        stack: exception.stack,
+        data,
+        socketId: client.id,
+      },
+    );
 
     return {
       errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
