@@ -17,7 +17,7 @@ import {
   ReviewRepository,
   ReviewStatsDto,
 } from '@app/database';
-import { ErrorCode } from '@app/common';
+import { ErrorCode, USER_CONSTANTS } from '@app/common';
 import { S3Service } from '@app/common/s3/s3.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SnsServiceFactory } from '../sns/sns.service.factory';
@@ -29,8 +29,6 @@ import { GetUserProfileResultDto } from './dto/get-user-profile-result.dto';
 import { UniversityInfoDto } from './dto/university-info.dto';
 import { UpdateUserProfileResultDto } from './dto/update-user-profile-result.dto';
 import { ReviewStatsResultDto } from './dto/review-stats-result.dto';
-
-const INTEREST_REGIONS_MAX_COUNT = 3;
 
 @Injectable()
 export class UserService {
@@ -84,7 +82,8 @@ export class UserService {
         provider,
         providerId,
         nickname,
-        profileImageKey,
+        profileImageKey:
+          profileImageKey || USER_CONSTANTS.DEFAULT_PROFILE_IMAGE_KEY,
       });
       await this.userRepository.flush();
     }
@@ -373,10 +372,12 @@ export class UserService {
     }
 
     // 개수 제한 확인
-    if (currentInterestRegions.length >= INTEREST_REGIONS_MAX_COUNT) {
+    if (
+      currentInterestRegions.length >= USER_CONSTANTS.INTEREST_REGIONS_MAX_COUNT
+    ) {
       throw new NotFoundException({
         code: ErrorCode.INTEREST_REGION_LIMIT_EXCEEDED,
-        message: `관심지역은 최대 ${INTEREST_REGIONS_MAX_COUNT}개까지 등록할 수 있습니다.`,
+        message: `관심지역은 최대 ${USER_CONSTANTS.INTEREST_REGIONS_MAX_COUNT}개까지 등록할 수 있습니다.`,
       });
     }
 
