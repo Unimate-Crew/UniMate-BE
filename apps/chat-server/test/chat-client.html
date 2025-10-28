@@ -499,7 +499,10 @@
                     requestId
                 };
 
-                this.socket.emit('joinRoom', data);
+                this.socket.emit('joinRoom', data, (ack) => {
+                    console.log('JOIN ROOM ACK:', ack);
+                    this.log('received', `JOIN ROOM ACK: ${JSON.stringify(ack)}`);
+                });
                 this.currentConversationId = conversationId;
                 this.log('sent', `JOIN ROOM: ${JSON.stringify(data)}`);
                 this.addMessage('system', `채팅방 ${conversationId}에 입장 요청`);
@@ -518,7 +521,10 @@
                     requestId
                 };
 
-                this.socket.emit('leaveRoom', data);
+                this.socket.emit('leaveRoom', data, (ack) => {
+                    console.log('LEAVE ROOM ACK:', ack);
+                    this.log('received', `LEAVE ROOM ACK: ${JSON.stringify(ack)}`);
+                });
                 this.log('sent', `LEAVE ROOM: ${JSON.stringify(data)}`);
                 this.addMessage('system', `채팅방 ${conversationId}에서 나가기 요청`);
             }
@@ -541,7 +547,10 @@
                     requestId
                 };
 
-                this.socket.emit('sendMessage', data);
+                this.socket.emit('sendMessage', data, (ack) => {
+                    console.log('SEND MESSAGE ACK:', ack);
+                    this.log('received', `SEND MESSAGE ACK: ${JSON.stringify(ack)}`);
+                });
                 this.log('sent', `SEND MESSAGE: ${JSON.stringify(data)}`);
 
                 // 메시지 타입에 따라 표시 방식 다르게
@@ -575,7 +584,10 @@
                     requestId
                 };
 
-                this.socket.emit('markMessagesAsRead', data);
+                this.socket.emit('markMessagesAsRead', data, (ack) => {
+                    console.log('MARK AS READ ACK:', ack);
+                    this.log('received', `MARK AS READ ACK: ${JSON.stringify(ack)}`);
+                });
                 this.log('sent', `MARK AS READ: ${JSON.stringify(data)}`);
                 this.addMessage('system', `메시지 #${lastReadMessageNumber}까지 읽음 처리 요청`);
             }

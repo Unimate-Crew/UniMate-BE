@@ -25,6 +25,9 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true, // WebSocket에서도 타입 자동 변환
+      },
       whitelist: true,
       forbidNonWhitelisted: true,
     }),

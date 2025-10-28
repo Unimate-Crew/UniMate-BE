@@ -1,11 +1,27 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
+import { LockMode } from '@mikro-orm/core';
 import { Conversation } from './conversation.entity';
 
 @Injectable()
 export class ConversationRepository extends EntityRepository<Conversation> {
   async findById(id: number): Promise<Conversation | null> {
     return this.findOne({ id, isDeleted: false });
+  }
+
+  /**
+   * 비관적 락(FOR UPDATE)을 사용하여 대화방을 조회합니다.
+   * 동시성 제어가 필요한 경우 사용합니다.
+   *
+   * @param id 대화방 ID
+   * @returns 대화방 엔티티
+   */
+  async findByIdWithLock(id: number): Promise<Conversation | null> {
+    return this.em
+      .createQueryBuilder(Conversation)
+      .where({ id, isDeleted: false })
+      .setLockMode(LockMode.PESSIMISTIC_WRITE)
+      .getSingleResult();
   }
 
   /**
