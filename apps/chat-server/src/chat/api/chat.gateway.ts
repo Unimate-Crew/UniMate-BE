@@ -30,12 +30,12 @@ import {
   WebSocketUser,
 } from '../../common/decorators/websocket-user.decorator';
 import { WebSocketAuthMiddleware } from '../../common/middleware/websocket-auth.middleware';
-import { WebSocketSuccessResponseInterceptor } from '../../common/interceptors/websocket-success-response.interceptor';
-import { WebSocketExceptionFilter } from '../../common/websocket-exception.filter';
+import { WebSocketRequestContextInterceptor } from '../../common/interceptors/websocket-request-context.interceptor';
+import { WebSocketAckExceptionFilter } from '../../common/filters/websocket-ack-exception.filter';
 
 @Injectable()
-@UseFilters(WebSocketExceptionFilter)
-@UseInterceptors(WebSocketSuccessResponseInterceptor)
+@UseFilters(WebSocketAckExceptionFilter)
+@UseInterceptors(WebSocketRequestContextInterceptor)
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -96,7 +96,7 @@ export class ChatGateway
     @MessageBody() data: JoinRoomRequestDto,
     @WsUser() user: WebSocketUser,
     @ConnectedSocket() client: Socket,
-  ): Promise<void> {
+  ): Promise<{ isSuccess: true }> {
     const roomName = `conversation_${data.conversationId}`;
     client.join(roomName);
 
@@ -107,6 +107,9 @@ export class ChatGateway
     });
 
     this.logger.log(`Client ${client.id} joined room ${roomName}`);
+
+    // ACK 응답: 단순 성공 확인
+    return { isSuccess: true };
   }
 
   @UseGuards(WebSocketJwtGuard)
@@ -115,7 +118,7 @@ export class ChatGateway
     @MessageBody() data: JoinRoomRequestDto,
     @WsUser() user: WebSocketUser,
     @ConnectedSocket() client: Socket,
-  ): Promise<void> {
+  ): Promise<{ isSuccess: true }> {
     const roomName = `conversation_${data.conversationId}`;
     client.leave(roomName);
 
@@ -126,6 +129,9 @@ export class ChatGateway
     });
 
     this.logger.log(`Client ${client.id} left room ${roomName}`);
+
+    // ACK 응답: 단순 성공 확인
+    return { isSuccess: true };
   }
 
   @UseGuards(WebSocketJwtGuard)
@@ -133,7 +139,7 @@ export class ChatGateway
   async handleSendMessage(
     @MessageBody() data: SendMessageRequestDto,
     @WsUser() user: WebSocketUser,
-  ): Promise<void> {
+  ): Promise<{ isSuccess: true }> {
     const result: MessageEmissionResultDto = await this.chatService.sendMessage(
       {
         conversationId: data.conversationId,
@@ -144,12 +150,17 @@ export class ChatGateway
       },
     );
 
-    // WebSocket 이벤트 전송 처리
+    // 모든 참여자에게 브로드캐스트 (요청자 포함)
+    // 요청자도 user_${userId} 방에 join되어 있으므로 자동으로 받음
     result.emissions.forEach((emission) => {
       this.server
         .to(`user_${emission.userId}`)
         .emit(emission.event, emission.data);
     });
+
+    // ACK 응답: 단순 성공 확인
+    // 실제 메시지 데이터는 위 브로드캐스트 이벤트로 받음
+    return { isSuccess: true };
   }
 
   @UseGuards(WebSocketJwtGuard)
@@ -157,7 +168,7 @@ export class ChatGateway
   async handleMarkMessagesAsRead(
     @MessageBody() data: MarkMessagesAsReadRequestDto,
     @WsUser() user: WebSocketUser,
-  ): Promise<void> {
+  ): Promise<{ isSuccess: true }> {
     const result: ReadEmissionResultDto =
       await this.chatService.markMessagesAsRead({
         userId: user.userId,
@@ -165,11 +176,15 @@ export class ChatGateway
         lastReadMessageNumber: data.lastReadMessageNumber,
       });
 
-    // WebSocket 이벤트 전송 처리
+    // 모든 참여자에게 브로드캐스트 (요청자 포함)
     result.emissions.forEach((emission) => {
       this.server
         .to(`user_${emission.userId}`)
         .emit(emission.event, emission.data);
     });
+
+    // ACK 응답: 단순 성공 확인
+    // 실제 읽음 상태 데이터는 위 브로드캐스트 이벤트로 받음
+    return { isSuccess: true };
   }
 }
