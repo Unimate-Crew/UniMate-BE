@@ -55,6 +55,9 @@ import { TradeProgressResultDto } from '../application/dto/trade-progress.result
 import { SearchUniversitiesInRegionRequestDto } from './dto/search-universities-in-region.request.dto';
 import { SearchUniversitiesInRegionResponseDto } from './dto/search-universities-in-region.response.dto';
 import { UniversityResultDto } from '../application/dto/university-result.dto';
+import { GetPriceRangeRequestDto } from './dto/get-price-range.request.dto';
+import { GetPriceRangeResponseDto } from './dto/get-price-range.response.dto';
+import { PriceRangeResultDto } from '../application/dto/price-range.result.dto';
 
 @ApiTags('상품 게시글')
 @Controller({ path: 'product-posts' })
@@ -127,6 +130,61 @@ export class ProductPostController {
       });
 
     return FindPagedProductPostsResponseDto.of(productPostInfoSlice);
+  }
+
+  @Get('/price-range')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상품 게시글 가격 범위 조회 API',
+    description:
+      '사용자의 기본 관심 지역 및 검색어에 해당하는 상품들의 통화별 최소/최대 가격을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '가격 범위 조회 성공',
+    type: GetPriceRangeResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '기본 관심도시가 설정되지 않음',
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'IR001',
+          description: '에러 코드',
+        },
+        message: {
+          type: 'string',
+          example: '기본 관심도시가 설정되지 않았습니다.',
+          description: '에러 메시지',
+        },
+      },
+    },
+  })
+  async getPriceRange(
+    @Query() query: GetPriceRangeRequestDto,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetPriceRangeResponseDto> {
+    const priceRangeResult: PriceRangeResultDto =
+      await this.productPostService.getPriceRange({
+        userId: userTokenInfo.userId,
+        searchKeyword: query.searchKeyword,
+      });
+
+    return GetPriceRangeResponseDto.of(priceRangeResult);
   }
 
   @Get('/universities/search')
