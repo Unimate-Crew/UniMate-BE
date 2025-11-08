@@ -1,11 +1,12 @@
 import { EntityRepository } from '@mikro-orm/mysql';
 import { Injectable } from '@nestjs/common';
 import { Slice, PageRequest } from '@app/common';
-import { TradeStatus, ProductCategory } from '../../common/enums';
+import { TradeStatus, ProductCategory, CurrencyType } from '../../common/enums';
 // eslint-disable-next-line import/no-cycle
 import { ProductPost } from './product-post.entity';
 import { ProductPostWithRelations } from './dto/product-post-with-relations.dto';
 import { CategoryCountDto } from './dto/category-count.dto';
+import { CurrencyPriceRangeDto } from './dto/currency-price-range.dto';
 import { ProductPostDetailWithRelations } from './dto/product-post-detail-with-relations.dto';
 import { University } from '../university/university.entity';
 
@@ -647,6 +648,54 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
           universityName: row.university_name,
           thumbnailImageKey: row.thumbnail_image_key,
         }),
+    );
+  }
+
+  /**
+   * 특정 지역의 상품 게시글 통화별 가격 범위를 조회합니다.
+   * 검색 키워드와 차단된 사용자를 고려하여 필터링합니다.
+   *
+   * @param params.regionId 지역 ID
+   * @param params.searchKeyword 검색 키워드 (제목 기준, 옵셔널)
+   * @param params.blockedUserIds 차단된 유저 ID 목록 (옵셔널)
+   * @returns 통화별 최소/최대 가격 정보
+   */
+  async findPriceRangeByRegion(params: {
+    regionId: number;
+    searchKeyword?: string;
+    blockedUserIds?: number[];
+  }): Promise<CurrencyPriceRangeDto[]> {
+    const knex = this.em.getKnex();
+
+    const query = knex
+      .select([
+        'product_post.currency_type',
+        knex.raw('MIN(product_post.price) as min_price'),
+        knex.raw('MAX(product_post.price) as max_price'),
+      ])
+      .from('product_post')
+      .where('product_post.region_id', params.regionId)
+      .where('product_post.is_deleted', false)
+      .where('product_post.is_hidden', false)
+      .groupBy('product_post.currency_type');
+
+    if (params.searchKeyword) {
+      query.where('product_post.title', 'like', `%${params.searchKeyword}%`);
+    }
+
+    if (params.blockedUserIds && params.blockedUserIds.length > 0) {
+      query.whereNotIn('product_post.user_id', params.blockedUserIds);
+    }
+
+    const results = await query;
+
+    return results.map(
+      (row) =>
+        new CurrencyPriceRangeDto(
+          row.currency_type as CurrencyType,
+          Number(row.min_price),
+          Number(row.max_price),
+        ),
     );
   }
 }

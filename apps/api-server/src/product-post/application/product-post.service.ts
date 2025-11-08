@@ -28,6 +28,7 @@ import { Slice, PageRequest, ErrorCode } from '@app/common';
 import { ProductPostWithRelations } from '@app/database/entites/product-post/dto/product-post-with-relations.dto';
 import { UserBlockRepository } from '@app/database/entites/user-block/user-block.repository';
 import { CategoryCountDto } from '@app/database/entites/product-post/dto/category-count.dto';
+import { CurrencyPriceRangeDto } from '@app/database/entites/product-post/dto/currency-price-range.dto';
 import { Like } from '@app/database/entites/like/like.entity';
 import { ProductPostDetailWithRelations } from '@app/database/entites/product-post/dto/product-post-detail-with-relations.dto';
 import { InterestRegionRepository } from '@app/database/entites/interest-region/interest-region.repository';
@@ -37,6 +38,7 @@ import { ConversationParticipantRepository } from '@app/database/entites/convers
 import { TradeProgressRepository } from '@app/database/entites/trade-progress/trade-progress.repository';
 import { University } from '@app/database/entites/university/university.entity';
 import { ReviewRepository } from '@app/database/entites/review/review.repository';
+import { UserBlock } from '@app/database/entites/user-block/user-block.entity';
 import { ProductPostResultDto } from './dto/product-post.result.dto';
 import { ProductCategoryResultDto } from './dto/Product-category.result.dto';
 import { ProductPostDetailResultDto } from './dto/product-post-detail.result.dto';
@@ -44,6 +46,10 @@ import { TradableUserResultDto } from './dto/tradable-user.result.dto';
 import { TradeProgressResultDto } from './dto/trade-progress.result.dto';
 import { UniversityResultDto } from './dto/university-result.dto';
 import { PurchaseHistoryResultDto } from './dto/purchase-history.result.dto';
+import {
+  PriceRangeResultDto,
+  PriceRangeItemDto,
+} from './dto/price-range.result.dto';
 import { NotificationService } from '../../notification/service/notification.service';
 
 @Injectable()
@@ -1655,5 +1661,57 @@ export class ProductPostService {
     );
 
     return Slice.of(content, universitySlice.hasNext);
+  }
+
+  /**
+   * 사용자의 기본 관심 지역 및 검색어에 해당하는 상품들의 통화별 가격 범위를 조회합니다.
+   *
+   * @param params.userId 현재 로그인한 유저 ID
+   * @param params.searchKeyword 검색 키워드 (제목 기준, 옵셔널)
+   * @returns 통화별 최소/최대 가격 정보
+   */
+  async getPriceRange(params: {
+    userId: number;
+    searchKeyword?: string;
+  }): Promise<PriceRangeResultDto> {
+    // 1. 사용자 기본 관심 지역 조회
+    const primaryInterestRegion: InterestRegion | null =
+      await this.interestRegionRepository.findPrimaryByUserId(params.userId);
+
+    if (!primaryInterestRegion) {
+      throw new NotFoundException({
+        code: ErrorCode.PRIMARY_INTEREST_REGION_NOT_FOUND,
+        message: '기본 관심도시가 설정되지 않았습니다.',
+      });
+    }
+
+    const regionId: number = primaryInterestRegion.getRegion().getId();
+
+    // 2. 차단한 사용자 목록 조회
+    const blockedByMe: UserBlock[] =
+      await this.userBlockRepository.findByBlockerId(params.userId);
+    const blockedUserIds: number[] = blockedByMe.map((block) =>
+      block.getBlockedId(),
+    );
+
+    // 3. 가격 범위 조회 (Repository DTO 반환)
+    const priceRanges: CurrencyPriceRangeDto[] =
+      await this.productPostRepository.findPriceRangeByRegion({
+        regionId,
+        searchKeyword: params.searchKeyword,
+        blockedUserIds,
+      });
+
+    // 4. Repository DTO → Result DTO 변환
+    const currencyRanges = new Map<CurrencyType, PriceRangeItemDto>();
+
+    priceRanges.forEach((range) => {
+      currencyRanges.set(
+        range.currencyType,
+        new PriceRangeItemDto(range.minPrice, range.maxPrice),
+      );
+    });
+
+    return new PriceRangeResultDto(currencyRanges);
   }
 }
