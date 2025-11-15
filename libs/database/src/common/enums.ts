@@ -40,6 +40,7 @@ export enum NotificationProductStatus {
 export enum NotificationType {
   SALE_ENDED = 'SALE_ENDED',
   PRICE_CHANGED = 'PRICE_CHANGED',
+  NEW_CHAT_MESSAGE = 'NEW_CHAT_MESSAGE',
 }
 
 export enum SortDirection {

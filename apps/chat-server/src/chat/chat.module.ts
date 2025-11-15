@@ -6,8 +6,11 @@ import {
   Conversation,
   ConversationParticipant,
   ConversationMessage,
+  User,
+  Device,
 } from '@app/database';
 import { RedisModule } from '@app/redis';
+import { SqsModule } from '@app/common';
 import { ChatGateway } from './api/chat.gateway';
 import { ChatService } from './application/chat.service';
 import { WebSocketAuthMiddleware } from '../common/middleware/websocket-auth.middleware';
@@ -18,8 +21,11 @@ import { WebSocketAuthMiddleware } from '../common/middleware/websocket-auth.mid
       Conversation,
       ConversationParticipant,
       ConversationMessage,
+      User,
+      Device,
     ]),
     RedisModule,
+    SqsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

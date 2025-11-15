@@ -38,9 +38,7 @@ export class CheckUpdatePopupResponseDto {
     this.content = content;
   }
 
-  static of(
-    resultDto: UpdatePopupCheckResultDto,
-  ): CheckUpdatePopupResponseDto {
+  static of(resultDto: UpdatePopupCheckResultDto): CheckUpdatePopupResponseDto {
     return new CheckUpdatePopupResponseDto(
       resultDto.isForceUpdate,
       resultDto.showPopup,
