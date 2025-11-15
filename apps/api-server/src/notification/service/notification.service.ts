@@ -144,7 +144,6 @@ export class NotificationService {
     await this.notifyProductPostUpdate({
       productPostId: params.productPostId,
       sellerId: params.sellerId,
-      productTitle: params.productTitle,
       notificationType: NotificationType.SALE_ENDED,
       notificationContent: `'${params.productTitle}'의 판매가 종료되었어요.`,
       pushTitle: `'${params.productTitle}'의 판매가 종료되었어요.`,
@@ -169,7 +168,6 @@ export class NotificationService {
     await this.notifyProductPostUpdate({
       productPostId: params.productPostId,
       sellerId: params.sellerId,
-      productTitle: params.productTitle,
       notificationType: NotificationType.PRICE_CHANGED,
       notificationContent: `'${params.productTitle}'의 가격이 변동됐어요!`,
       pushTitle: `'${params.productTitle}'의 가격이 변동됐어요!`,
@@ -185,7 +183,6 @@ export class NotificationService {
   private async notifyProductPostUpdate(params: {
     productPostId: number;
     sellerId: number;
-    productTitle: string;
     notificationType: NotificationType;
     notificationContent: string;
     pushTitle: string;
@@ -304,7 +301,6 @@ export class NotificationService {
           userId: notification.userId,
           deviceTokens,
           productPostId: params.productPostId,
-          productTitle: params.productTitle,
           message: {
             title: params.pushTitle,
             body: params.pushBody,
