@@ -8,9 +8,12 @@ export class RoomOnlineCacheRepository {
 
   private readonly ROOM_ONLINE_PREFIX = 'room:online';
 
+  private readonly ROOM_ONLINE_TTL = 86400; // 24시간
+
   async addUserToRoom(conversationId: number, userId: number): Promise<void> {
     const key = buildRedisKey(this.ROOM_ONLINE_PREFIX, conversationId);
     await this.redisClient.addToSet(key, userId.toString());
+    await this.redisClient.expire(key, this.ROOM_ONLINE_TTL);
   }
 
   async removeUserFromRoom(
@@ -31,19 +34,6 @@ export class RoomOnlineCacheRepository {
     const key = buildRedisKey(this.ROOM_ONLINE_PREFIX, conversationId);
     const result = await this.redisClient.isSetMember(key, userId.toString());
     return result === 1;
-  }
-
-  async removeUserFromAllRooms(userId: number): Promise<void> {
-    const pattern = buildRedisKey(this.ROOM_ONLINE_PREFIX, '*');
-    const keys = await this.redisClient.keys(pattern);
-
-    if (keys.length > 0) {
-      const pipeline = this.redisClient.pipeline();
-      keys.forEach((key) => {
-        pipeline.srem(key, userId.toString());
-      });
-      await pipeline.exec();
-    }
   }
 
   async getRoomCount(conversationId: number): Promise<number> {

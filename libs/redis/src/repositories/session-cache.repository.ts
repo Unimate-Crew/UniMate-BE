@@ -10,6 +10,8 @@ export class SessionCacheRepository {
 
   private readonly SOCKET_USER_PREFIX = 'socket';
 
+  private readonly SESSION_TTL = 86400; // 24시간
+
   async setUserSocket(userId: number, socketId: string): Promise<void> {
     const userSocketKey = buildRedisKey(
       this.USER_SOCKET_PREFIX,
@@ -23,8 +25,8 @@ export class SessionCacheRepository {
     );
 
     await Promise.all([
-      this.redisClient.set(userSocketKey, socketId),
-      this.redisClient.set(socketUserKey, userId.toString()),
+      this.redisClient.set(userSocketKey, socketId, this.SESSION_TTL),
+      this.redisClient.set(socketUserKey, userId.toString(), this.SESSION_TTL),
     ]);
   }
 

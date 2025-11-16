@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   Conversation,
   ConversationParticipant,
@@ -7,14 +8,19 @@ import {
   ConversationRepository,
   ConversationParticipantRepository,
   ConversationMessageRepository,
+  UserRepository,
+  DeviceRepository,
+  NotificationType,
 } from '@app/database';
 import {
   SessionCacheRepository,
   RoomOnlineCacheRepository,
   ParticipantCacheRepository,
   ConversationParticipantCache,
+  UserOnlineRoomsCacheRepository,
 } from '@app/redis';
 import { ErrorCode } from '@app/common';
+import { SqsClient } from '@app/common/sqs/sqs.client';
 import { WebSocketChatException } from '../../common/exceptions/websocket-chat.exception';
 import { MessageResultDto } from './dto/message.result.dto';
 import {
@@ -27,6 +33,8 @@ import { CachedConversationParticipantDto } from './dto/cached-conversation-part
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
+  private readonly MAX_PUSH_MESSAGE_LENGTH = 100;
+
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly participantRepository: ConversationParticipantRepository,
@@ -34,6 +42,11 @@ export class ChatService {
     private readonly sessionCacheRepository: SessionCacheRepository,
     private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
     private readonly participantCacheRepository: ParticipantCacheRepository,
+    private readonly userOnlineRoomsCacheRepository: UserOnlineRoomsCacheRepository,
+    private readonly userRepository: UserRepository,
+    private readonly deviceRepository: DeviceRepository,
+    private readonly sqsClient: SqsClient,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -67,32 +80,35 @@ export class ChatService {
       params.socketId,
     );
 
-    if (userIdNum) {
-      // 2. 모든 채팅방에서 사용자 제거
-      await this.removeUserFromAllOnlineConversations({ userId: userIdNum });
-
-      // 3. 모든 관련 Redis 키 삭제
-      await this.sessionCacheRepository.clearUserSession(
-        userIdNum,
-        params.socketId,
-      );
-
-      this.logger.log(`User ${userIdNum} disconnected`);
+    if (!userIdNum) {
+      return;
     }
-  }
 
-  /**
-   * 사용자를 모든 온라인 대화방에서 제거합니다.
-   *
-   * @param params.userId 사용자 ID
-   */
-  async removeUserFromAllOnlineConversations(params: {
-    userId: number;
-  }): Promise<void> {
-    await this.roomOnlineCacheRepository.removeUserFromAllRooms(params.userId);
+    // 2. 사용자가 접속한 모든 대화방 목록 조회 (KEYS 대신 사용자별 목록 사용)
+    const onlineRooms =
+      await this.userOnlineRoomsCacheRepository.getUserOnlineRooms(userIdNum);
+
+    // 3. 각 대화방에서 사용자 제거
+    await Promise.all(
+      onlineRooms.map((conversationId) =>
+        this.roomOnlineCacheRepository.removeUserFromRoom(
+          conversationId,
+          userIdNum,
+        ),
+      ),
+    );
+
+    // 4. 사용자 온라인 룸 목록 삭제
+    await this.userOnlineRoomsCacheRepository.clearUserOnlineRooms(userIdNum);
+
+    // 5. 세션 정리
+    await this.sessionCacheRepository.clearUserSession(
+      userIdNum,
+      params.socketId,
+    );
 
     this.logger.log(
-      `User ${params.userId} removed from all online conversations`,
+      `User ${userIdNum} disconnected from ${onlineRooms.length} rooms`,
     );
   }
 
@@ -113,15 +129,51 @@ export class ChatService {
    *
    * @param params.conversationId 대화방 ID
    * @param params.userId 사용자 ID
+   * @throws WebSocketChatException 사용자가 대화방 참여자가 아닌 경우
    */
   async addUserToOnlineConversation(params: {
     conversationId: number;
     userId: number;
   }): Promise<void> {
-    await this.roomOnlineCacheRepository.addUserToRoom(
-      params.conversationId,
-      params.userId,
-    );
+    // 1. 참여자 검증: 캐시에서 먼저 확인
+    const cachedParticipants = await this.getCachedConversationParticipants({
+      conversationId: params.conversationId,
+    });
+
+    let isParticipant: boolean;
+
+    if (cachedParticipants) {
+      // 캐시에 있으면 캐시에서 확인
+      isParticipant = cachedParticipants.some(
+        (p) => p.userId === params.userId,
+      );
+    } else {
+      // 캐시에 없으면 DB에서 확인
+      const participant = await this.participantRepository.findOne({
+        conversationId: params.conversationId,
+        userId: params.userId,
+        isDeleted: false,
+      });
+      isParticipant = participant !== null;
+    }
+
+    // 2. 참여자가 아니면 예외 발생
+    if (!isParticipant) {
+      throw WebSocketChatException.withCode(ErrorCode.PARTICIPANT_NOT_FOUND);
+    }
+
+    // 3. 온라인 사용자로 추가
+    await Promise.all([
+      this.roomOnlineCacheRepository.addUserToRoom(
+        params.conversationId,
+        params.userId,
+      ),
+      this.userOnlineRoomsCacheRepository.addRoomToUser(
+        params.userId,
+        params.conversationId,
+      ),
+    ]);
+
     this.logger.log(
       `User ${params.userId} added to online conversation ${params.conversationId}`,
     );
@@ -137,10 +189,16 @@ export class ChatService {
     conversationId: number;
     userId: number;
   }): Promise<void> {
-    await this.roomOnlineCacheRepository.removeUserFromRoom(
-      params.conversationId,
-      params.userId,
-    );
+    await Promise.all([
+      this.roomOnlineCacheRepository.removeUserFromRoom(
+        params.conversationId,
+        params.userId,
+      ),
+      this.userOnlineRoomsCacheRepository.removeRoomFromUser(
+        params.userId,
+        params.conversationId,
+      ),
+    ]);
     this.logger.log(
       `User ${params.userId} removed from online conversation ${params.conversationId}`,
     );
@@ -233,13 +291,15 @@ export class ChatService {
         params.userId,
       );
 
-    if (participantCache) {
-      participantCache.setLastReadMessageNumber(params.lastReadMessageNumber);
-      await this.participantCacheRepository.updateParticipant(
-        params.conversationId,
-        participantCache,
-      );
+    if (!participantCache) {
+      return;
     }
+
+    participantCache.setLastReadMessageNumber(params.lastReadMessageNumber);
+    await this.participantCacheRepository.updateParticipant(
+      params.conversationId,
+      participantCache,
+    );
   }
 
   /**
@@ -258,144 +318,38 @@ export class ChatService {
     type: ConversationMessageType;
     requestId?: string;
   }): Promise<MessageEmissionResultDto> {
-    // 1. 트랜잭션 밖에서 캐시 조회 및 검증 수행
-    let participants: CachedConversationParticipantDto[] | null =
-      await this.getCachedConversationParticipants({
-        conversationId: params.conversationId,
-      });
+    // 1. 참여자 정보 로드 (캐시 또는 DB)
+    const participants = await this.loadParticipants(params.conversationId);
 
-    if (!participants) {
-      // DB에서 참여자 정보 조회 후 캐시에 저장
-      const dbParticipants: ConversationParticipant[] =
-        await this.participantRepository.findByConversationId(
-          params.conversationId,
-        );
+    // 2. 발신자가 상대방을 차단했는지 검증
+    this.validateSenderNotBlocking(participants, params.senderId);
 
-      const cachedParticipants: CachedConversationParticipantDto[] =
-        dbParticipants.map((p) =>
-          CachedConversationParticipantDto.from({
-            userId: p.getUserId(),
-            lastReadMessageNumber: p.getLastReadMessageNumber(),
-            isBlockingOther: p.getIsBlockingOther(),
-            isMuted: p.getIsMuted(),
-          }),
-        );
+    // 3. 메시지 저장 (트랜잭션)
+    const message = await this.saveMessage(params);
 
-      await this.cacheConversationParticipants({
-        conversationId: params.conversationId,
-        participants: cachedParticipants,
-      });
-
-      participants = cachedParticipants;
-    }
-
-    // 2. 발신자가 상대방을 차단했는지 확인
-    const senderParticipant = participants.find(
-      (p) => p.userId === params.senderId,
-    );
-    if (senderParticipant?.isBlockingOther) {
-      throw WebSocketChatException.withCode(
-        ErrorCode.CONVERSATION_MESSAGE_BLOCKED,
-      );
-    }
-
-    // 3. 트랜잭션: 메시지 저장만 포함 (최소화!)
-    const message: ConversationMessage = await this.conversationRepository
-      .getEntityManager()
-      .transactional(async () => {
-        // 비관적 락으로 conversation 조회 (FOR UPDATE)
-        const conversation: Conversation | null =
-          await this.conversationRepository.findByIdWithLock(
-            params.conversationId,
-          );
-
-        if (!conversation) {
-          throw WebSocketChatException.withCode(
-            ErrorCode.CONVERSATION_NOT_FOUND,
-          );
-        }
-
-        const nextMessageNumber: number =
-          (conversation.getLastMessageNumber() || 0) + 1;
-
-        const newMessage: ConversationMessage = this.messageRepository.create({
-          conversationId: params.conversationId,
-          senderId: params.senderId,
-          content: params.content,
-          messageNumber: nextMessageNumber,
-          type: params.type,
-        });
-
-        conversation.setLastMessageNumber(nextMessageNumber);
-        conversation.setLastSentAt(new Date());
-
-        await this.messageRepository.persistAndFlush(newMessage);
-        await this.conversationRepository.persistAndFlush(conversation);
-
-        return newMessage;
-      });
-
-    // 4. 트랜잭션 밖에서 온라인 사용자 조회 및 이벤트 생성
-    const onlineUsers: number[] = await this.getOnlineUsersInConversation({
+    // 4. 온라인 사용자 조회 및 이벤트 생성
+    const onlineUsers = await this.getOnlineUsersInConversation({
       conversationId: params.conversationId,
     });
 
-    const nextMessageNumber = message.getMessageNumber();
-    const emissions = participants
-      .map((participant) => {
-        if (onlineUsers.includes(participant.userId)) {
-          // 온라인 사용자에게 실시간 메시지 전송
-          // 단, 해당 참여자가 발신자를 차단했다면 메시지 미전송
-          if (
-            participant.userId !== params.senderId &&
-            participant.isBlockingOther
-          ) {
-            return null; // 차단된 사용자는 메시지 받지 않음
-          }
+    const emissions = this.createEmissions(
+      participants,
+      onlineUsers,
+      message,
+      params,
+    );
 
-          return {
-            userId: participant.userId,
-            event: 'newMessage',
-            data: {
-              id: message.getId(),
-              conversationId: params.conversationId,
-              senderId: params.senderId,
-              content: params.content,
-              messageNumber: nextMessageNumber,
-              createdAt: message.createdAt,
-              type: message.getType(),
-              requestId: params.requestId,
-            },
-          };
-        }
+    // 5. 오프라인 사용자에게 푸시알림 발송
+    await this.sendPushNotificationsToOfflineUsers(
+      participants,
+      onlineUsers,
+      params,
+    );
 
-        // 오프라인 사용자에게는 발송자 제외하고 채팅방 업데이트 알림
-        if (participant.userId === params.senderId) {
-          return null;
-        }
+    // 6. 참여자 캐시 TTL 갱신 (활성 대화방 유지)
+    await this.participantCacheRepository.refreshTTL(params.conversationId);
 
-        // 오프라인이지만 발신자를 차단한 경우 알림 미전송
-        if (participant.isBlockingOther) {
-          return null;
-        }
-
-        return {
-          userId: participant.userId,
-          event: 'chatRoomUpdated',
-          data: {
-            conversationId: params.conversationId,
-            lastMessage: params.content,
-            lastSentAt: new Date(),
-            unreadCount: Math.max(
-              0,
-              nextMessageNumber - (participant.lastReadMessageNumber || 0),
-            ),
-            lastMessageNumber: nextMessageNumber,
-          },
-        };
-      })
-      .filter((emission) => emission !== null);
-
+    // 7. 로깅 및 반환
     this.logger.log(
       `Message sent in conversation ${params.conversationId} by user ${params.senderId}`,
     );
@@ -465,6 +419,9 @@ export class ChatService {
             },
           }));
 
+        // 6. 참여자 캐시 TTL 갱신 (활성 대화방 유지)
+        await this.participantCacheRepository.refreshTTL(params.conversationId);
+
         this.logger.log(
           `User ${params.userId} marked messages as read up to ${params.lastReadMessageNumber} in conversation ${params.conversationId}`,
         );
@@ -473,5 +430,417 @@ export class ChatService {
           emissions,
         };
       });
+  }
+
+  /**
+   * 대화방 참여자 정보를 로드합니다 (캐시 또는 DB).
+   *
+   * @param conversationId 대화방 ID
+   * @returns 참여자 정보 목록
+   */
+  private async loadParticipants(
+    conversationId: number,
+  ): Promise<CachedConversationParticipantDto[]> {
+    // 캐시에서 참여자 정보 조회
+    const participants = await this.getCachedConversationParticipants({
+      conversationId,
+    });
+
+    if (participants) {
+      return participants;
+    }
+
+    // 캐시에 없으면 DB에서 조회 후 캐시에 저장
+    const dbParticipants: ConversationParticipant[] =
+      await this.participantRepository.findByConversationId(conversationId);
+
+    const cachedParticipants: CachedConversationParticipantDto[] =
+      dbParticipants.map((p) =>
+        CachedConversationParticipantDto.from({
+          userId: p.getUserId(),
+          lastReadMessageNumber: p.getLastReadMessageNumber(),
+          isBlockingOther: p.getIsBlockingOther(),
+          isMuted: p.getIsMuted(),
+        }),
+      );
+
+    await this.cacheConversationParticipants({
+      conversationId,
+      participants: cachedParticipants,
+    });
+
+    return cachedParticipants;
+  }
+
+  /**
+   * 발신자가 상대방을 차단했는지 검증합니다.
+   *
+   * @param participants 참여자 목록
+   * @param senderId 발신자 ID
+   * @throws WebSocketChatException 발신자가 상대방을 차단한 경우
+   */
+  private validateSenderNotBlocking(
+    participants: CachedConversationParticipantDto[],
+    senderId: number,
+  ): void {
+    const senderParticipant = participants.find((p) => p.userId === senderId);
+
+    if (senderParticipant?.isBlockingOther) {
+      throw WebSocketChatException.withCode(
+        ErrorCode.CONVERSATION_MESSAGE_BLOCKED,
+      );
+    }
+  }
+
+  /**
+   * 메시지를 저장합니다 (트랜잭션).
+   *
+   * @param params 메시지 저장 파라미터
+   * @returns 저장된 메시지
+   */
+  private async saveMessage(params: {
+    conversationId: number;
+    senderId: number;
+    content: string;
+    type: ConversationMessageType;
+  }): Promise<ConversationMessage> {
+    return this.conversationRepository
+      .getEntityManager()
+      .transactional(async () => {
+        // 비관적 락으로 conversation 조회 (FOR UPDATE)
+        const conversation: Conversation | null =
+          await this.conversationRepository.findByIdWithLock(
+            params.conversationId,
+          );
+
+        if (!conversation) {
+          throw WebSocketChatException.withCode(
+            ErrorCode.CONVERSATION_NOT_FOUND,
+          );
+        }
+
+        const nextMessageNumber: number =
+          (conversation.getLastMessageNumber() || 0) + 1;
+
+        const newMessage: ConversationMessage = this.messageRepository.create({
+          conversationId: params.conversationId,
+          senderId: params.senderId,
+          content: params.content,
+          messageNumber: nextMessageNumber,
+          type: params.type,
+        });
+
+        conversation.setLastMessageNumber(nextMessageNumber);
+        conversation.setLastSentAt(new Date());
+
+        await this.messageRepository.persistAndFlush(newMessage);
+        await this.conversationRepository.persistAndFlush(conversation);
+
+        return newMessage;
+      });
+  }
+
+  /**
+   * 온라인 사용자에 대한 WebSocket emission을 생성합니다.
+   *
+   * @param participant 참여자 정보
+   * @param message 메시지
+   * @param params 메시지 파라미터
+   * @returns WebSocket emission (차단된 경우 null)
+   */
+  private createEmissionForOnlineUser(
+    participant: CachedConversationParticipantDto,
+    message: ConversationMessage,
+    params: {
+      conversationId: number;
+      senderId: number;
+      content: string;
+      requestId?: string;
+    },
+  ): { userId: number; event: string; data: any } | null {
+    // 온라인 사용자 중 발신자가 아닌데 발신자를 차단한 경우 null 반환
+    if (participant.userId !== params.senderId && participant.isBlockingOther) {
+      return null;
+    }
+
+    return {
+      userId: participant.userId,
+      event: 'newMessage',
+      data: {
+        id: message.getId(),
+        conversationId: params.conversationId,
+        senderId: params.senderId,
+        content: params.content,
+        messageNumber: message.getMessageNumber(),
+        createdAt: message.createdAt,
+        type: message.getType(),
+        requestId: params.requestId,
+      },
+    };
+  }
+
+  /**
+   * 오프라인 사용자에 대한 WebSocket emission을 생성합니다.
+   *
+   * @param participant 참여자 정보
+   * @param nextMessageNumber 다음 메시지 번호
+   * @param params 메시지 파라미터
+   * @returns WebSocket emission (발신자이거나 차단된 경우 null)
+   */
+  private createEmissionForOfflineUser(
+    participant: CachedConversationParticipantDto,
+    nextMessageNumber: number,
+    params: {
+      conversationId: number;
+      senderId: number;
+      content: string;
+    },
+  ): { userId: number; event: string; data: any } | null {
+    // 발신자는 제외
+    if (participant.userId === params.senderId) {
+      return null;
+    }
+
+    // 발신자를 차단한 경우 제외
+    if (participant.isBlockingOther) {
+      return null;
+    }
+
+    return {
+      userId: participant.userId,
+      event: 'chatRoomUpdated',
+      data: {
+        conversationId: params.conversationId,
+        lastMessage: params.content,
+        lastSentAt: new Date(),
+        unreadCount: Math.max(
+          0,
+          nextMessageNumber - (participant.lastReadMessageNumber || 0),
+        ),
+        lastMessageNumber: nextMessageNumber,
+      },
+    };
+  }
+
+  /**
+   * 모든 참여자에 대한 WebSocket emissions를 생성합니다.
+   *
+   * @param participants 참여자 목록
+   * @param onlineUsers 온라인 사용자 ID 목록
+   * @param message 메시지
+   * @param params 메시지 파라미터
+   * @returns WebSocket emissions
+   */
+  private createEmissions(
+    participants: CachedConversationParticipantDto[],
+    onlineUsers: number[],
+    message: ConversationMessage,
+    params: {
+      conversationId: number;
+      senderId: number;
+      content: string;
+      requestId?: string;
+    },
+  ): Array<{ userId: number; event: string; data: any }> {
+    const nextMessageNumber = message.getMessageNumber();
+
+    return participants
+      .map((participant) => {
+        if (onlineUsers.includes(participant.userId)) {
+          return this.createEmissionForOnlineUser(participant, message, params);
+        }
+
+        return this.createEmissionForOfflineUser(
+          participant,
+          nextMessageNumber,
+          params,
+        );
+      })
+      .filter(
+        (emission): emission is { userId: number; event: string; data: any } =>
+          emission !== null,
+      );
+  }
+
+  /**
+   * 오프라인 사용자들의 푸시알림 메시지를 생성합니다.
+   *
+   * @param offlineUserIds 오프라인 사용자 ID 목록
+   * @param senderId 발신자 ID
+   * @param conversationId 대화방 ID
+   * @param messageType 메시지 타입
+   * @param content 메시지 내용
+   * @returns SQS 푸시 메시지 배열
+   */
+  private async buildPushMessages(
+    offlineUserIds: number[],
+    senderId: number,
+    conversationId: number,
+    messageType: ConversationMessageType,
+    content: string,
+  ): Promise<any[]> {
+    // 발신자 정보 조회 (닉네임)
+    const sender = await this.userRepository.findOne({
+      id: senderId,
+    });
+
+    if (!sender) {
+      return [];
+    }
+
+    const senderNickname = sender.getNickname();
+
+    // 오프라인 사용자들의 디바이스 토큰 조회
+    const devices = await this.deviceRepository.findByUserIds(offlineUserIds);
+
+    // userId별 디바이스 토큰 매핑
+    const userDeviceTokensMap = new Map<number, string[]>();
+    devices.forEach((device) => {
+      const userId = device.getUserId();
+      const existing = userDeviceTokensMap.get(userId) || [];
+      userDeviceTokensMap.set(userId, [...existing, device.getDeviceToken()]);
+    });
+
+    // SQS 메시지 생성
+    return offlineUserIds
+      .map((userId) => {
+        const deviceTokens = userDeviceTokensMap.get(userId) || [];
+
+        // 디바이스 토큰이 없으면 메시지 생성 안 함
+        if (deviceTokens.length === 0) {
+          return null;
+        }
+
+        return {
+          type: NotificationType.NEW_CHAT_MESSAGE,
+          userId,
+          deviceTokens,
+          conversationId,
+          message: {
+            title: `${senderNickname}님이 메시지를 보냈어요`,
+            body: this.getPushMessageBody(messageType, content),
+          },
+          timestamp: new Date().toISOString(),
+        };
+      })
+      .filter((msg): msg is Exclude<typeof msg, null> => msg !== null);
+  }
+
+  /**
+   * SQS에 푸시 메시지를 발송합니다.
+   *
+   * @param pushMessages 푸시 메시지 배열
+   * @param queueUrl SQS Queue URL
+   * @param conversationId 대화방 ID
+   */
+  private async sendPushMessagesToSqs(
+    pushMessages: any[],
+    queueUrl: string,
+    conversationId: number,
+  ): Promise<void> {
+    if (pushMessages.length === 0) {
+      this.logger.log(
+        `오프라인 사용자 중 디바이스 토큰이 없는 사용자만 있음 (대화방: ${conversationId})`,
+      );
+      return;
+    }
+
+    await this.sqsClient.sendMessageBatch(queueUrl, pushMessages);
+    this.logger.log(
+      `푸시알림 ${pushMessages.length}개 발송 완료 (대화방: ${conversationId})`,
+    );
+  }
+
+  /**
+   * 오프라인 사용자에게 푸시알림을 발송합니다.
+   *
+   * @param participants 참여자 목록
+   * @param onlineUsers 온라인 사용자 ID 목록
+   * @param params 메시지 파라미터
+   */
+  private async sendPushNotificationsToOfflineUsers(
+    participants: CachedConversationParticipantDto[],
+    onlineUsers: number[],
+    params: {
+      conversationId: number;
+      senderId: number;
+      content: string;
+      type: ConversationMessageType;
+    },
+  ): Promise<void> {
+    // 오프라인 사용자 필터링
+    const offlineUserIds = participants
+      .filter(
+        (p) =>
+          !onlineUsers.includes(p.userId) &&
+          p.userId !== params.senderId &&
+          !p.isBlockingOther,
+      )
+      .map((p) => p.userId);
+
+    if (offlineUserIds.length === 0) {
+      return;
+    }
+
+    // Queue URL 확인
+    const queueUrl = this.configService.get<string>(
+      'PUSH_NOTIFICATION_QUEUE_URL',
+    );
+
+    if (!queueUrl) {
+      this.logger.warn(
+        'PUSH_NOTIFICATION_QUEUE_URL이 설정되지 않아 푸시알림을 전송하지 않습니다.',
+      );
+      return;
+    }
+
+    try {
+      const pushMessages = await this.buildPushMessages(
+        offlineUserIds,
+        params.senderId,
+        params.conversationId,
+        params.type,
+        params.content,
+      );
+
+      await this.sendPushMessagesToSqs(
+        pushMessages,
+        queueUrl,
+        params.conversationId,
+      );
+    } catch (error) {
+      this.logger.error(
+        `푸시알림 발송 실패 (대화방: ${params.conversationId}): ${error.message}`,
+        error.stack,
+      );
+      // 푸시알림 실패해도 메시지 전송은 정상 처리
+    }
+  }
+
+  /**
+   * 메시지 타입에 따른 푸시알림 본문을 생성합니다.
+   *
+   * @param messageType 메시지 타입
+   * @param content 메시지 내용
+   * @returns 푸시알림 본문
+   */
+  private getPushMessageBody(
+    messageType: ConversationMessageType,
+    content: string,
+  ): string {
+    switch (messageType) {
+      case ConversationMessageType.TEXT:
+        return content.length > this.MAX_PUSH_MESSAGE_LENGTH
+          ? `${content.substring(0, this.MAX_PUSH_MESSAGE_LENGTH)}...`
+          : content;
+      case ConversationMessageType.IMAGE:
+        return '사진을 보냈습니다';
+      case ConversationMessageType.VIDEO:
+        return '동영상을 보냈습니다';
+      case ConversationMessageType.SYSTEM:
+        return content;
+      default:
+        return content;
+    }
   }
 }
