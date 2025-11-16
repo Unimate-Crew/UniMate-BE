@@ -430,6 +430,15 @@ export class ConversationService {
             isDeleted: false,
           });
 
+        // 모든 참가자가 나간 경우 캐시 삭제
+        if (updatedParticipants.length === 0) {
+          await this.participantCacheRepository.clearParticipants(
+            conversationId,
+          );
+          return;
+        }
+
+        // 남은 참가자가 있는 경우 캐시 재생성
         const cachedParticipants = updatedParticipants.map((p) => ({
           userId: p.getUserId(),
           lastReadMessageNumber: p.getLastReadMessageNumber(),

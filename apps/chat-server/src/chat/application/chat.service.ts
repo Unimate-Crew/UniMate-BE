@@ -17,6 +17,7 @@ import {
   RoomOnlineCacheRepository,
   ParticipantCacheRepository,
   ConversationParticipantCache,
+  UserOnlineRoomsCacheRepository,
 } from '@app/redis';
 import { ErrorCode } from '@app/common';
 import { SqsClient } from '@app/common/sqs/sqs.client';
@@ -41,6 +42,7 @@ export class ChatService {
     private readonly sessionCacheRepository: SessionCacheRepository,
     private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
     private readonly participantCacheRepository: ParticipantCacheRepository,
+    private readonly userOnlineRoomsCacheRepository: UserOnlineRoomsCacheRepository,
     private readonly userRepository: UserRepository,
     private readonly deviceRepository: DeviceRepository,
     private readonly sqsClient: SqsClient,
@@ -82,30 +84,31 @@ export class ChatService {
       return;
     }
 
-    // 2. 모든 채팅방에서 사용자 제거
-    await this.removeUserFromAllOnlineConversations({ userId: userIdNum });
+    // 2. 사용자가 접속한 모든 대화방 목록 조회 (KEYS 대신 사용자별 목록 사용)
+    const onlineRooms =
+      await this.userOnlineRoomsCacheRepository.getUserOnlineRooms(userIdNum);
 
-    // 3. 모든 관련 Redis 키 삭제
+    // 3. 각 대화방에서 사용자 제거
+    await Promise.all(
+      onlineRooms.map((conversationId) =>
+        this.roomOnlineCacheRepository.removeUserFromRoom(
+          conversationId,
+          userIdNum,
+        ),
+      ),
+    );
+
+    // 4. 사용자 온라인 룸 목록 삭제
+    await this.userOnlineRoomsCacheRepository.clearUserOnlineRooms(userIdNum);
+
+    // 5. 세션 정리
     await this.sessionCacheRepository.clearUserSession(
       userIdNum,
       params.socketId,
     );
 
-    this.logger.log(`User ${userIdNum} disconnected`);
-  }
-
-  /**
-   * 사용자를 모든 온라인 대화방에서 제거합니다.
-   *
-   * @param params.userId 사용자 ID
-   */
-  async removeUserFromAllOnlineConversations(params: {
-    userId: number;
-  }): Promise<void> {
-    await this.roomOnlineCacheRepository.removeUserFromAllRooms(params.userId);
-
     this.logger.log(
-      `User ${params.userId} removed from all online conversations`,
+      `User ${userIdNum} disconnected from ${onlineRooms.length} rooms`,
     );
   }
 
@@ -131,10 +134,16 @@ export class ChatService {
     conversationId: number;
     userId: number;
   }): Promise<void> {
-    await this.roomOnlineCacheRepository.addUserToRoom(
-      params.conversationId,
-      params.userId,
-    );
+    await Promise.all([
+      this.roomOnlineCacheRepository.addUserToRoom(
+        params.conversationId,
+        params.userId,
+      ),
+      this.userOnlineRoomsCacheRepository.addRoomToUser(
+        params.userId,
+        params.conversationId,
+      ),
+    ]);
     this.logger.log(
       `User ${params.userId} added to online conversation ${params.conversationId}`,
     );
@@ -150,10 +159,16 @@ export class ChatService {
     conversationId: number;
     userId: number;
   }): Promise<void> {
-    await this.roomOnlineCacheRepository.removeUserFromRoom(
-      params.conversationId,
-      params.userId,
-    );
+    await Promise.all([
+      this.roomOnlineCacheRepository.removeUserFromRoom(
+        params.conversationId,
+        params.userId,
+      ),
+      this.userOnlineRoomsCacheRepository.removeRoomFromUser(
+        params.userId,
+        params.conversationId,
+      ),
+    ]);
     this.logger.log(
       `User ${params.userId} removed from online conversation ${params.conversationId}`,
     );
@@ -301,7 +316,10 @@ export class ChatService {
       params,
     );
 
-    // 6. 로깅 및 반환
+    // 6. 참여자 캐시 TTL 갱신 (활성 대화방 유지)
+    await this.participantCacheRepository.refreshTTL(params.conversationId);
+
+    // 7. 로깅 및 반환
     this.logger.log(
       `Message sent in conversation ${params.conversationId} by user ${params.senderId}`,
     );
@@ -370,6 +388,9 @@ export class ChatService {
               lastReadMessageNumber: params.lastReadMessageNumber,
             },
           }));
+
+        // 6. 참여자 캐시 TTL 갱신 (활성 대화방 유지)
+        await this.participantCacheRepository.refreshTTL(params.conversationId);
 
         this.logger.log(
           `User ${params.userId} marked messages as read up to ${params.lastReadMessageNumber} in conversation ${params.conversationId}`,

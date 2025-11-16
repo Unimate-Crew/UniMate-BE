@@ -9,6 +9,8 @@ export class ParticipantCacheRepository {
 
   private readonly PARTICIPANT_PREFIX = 'conversation:participants';
 
+  private readonly PARTICIPANT_TTL = 86400; // 24시간
+
   async setParticipants(
     conversationId: number,
     participants: ConversationParticipantCache[],
@@ -18,6 +20,7 @@ export class ParticipantCacheRepository {
     await this.redisClient.del(key);
     if (serializedParticipants.length > 0) {
       await this.redisClient.addToSet(key, ...serializedParticipants);
+      await this.redisClient.expire(key, this.PARTICIPANT_TTL);
     }
   }
 
@@ -37,6 +40,7 @@ export class ParticipantCacheRepository {
   ): Promise<void> {
     const key = buildRedisKey(this.PARTICIPANT_PREFIX, conversationId);
     await this.redisClient.addToSet(key, participant.serialize());
+    await this.redisClient.expire(key, this.PARTICIPANT_TTL);
   }
 
   async removeParticipant(
@@ -60,6 +64,7 @@ export class ParticipantCacheRepository {
   ): Promise<void> {
     await this.removeParticipant(conversationId, participant.getUserId());
     await this.addParticipant(conversationId, participant);
+    // addParticipant에서 이미 TTL을 갱신하므로 추가 호출 불필요
   }
 
   async getParticipant(
@@ -86,5 +91,10 @@ export class ParticipantCacheRepository {
   async getParticipantCount(conversationId: number): Promise<number> {
     const key = buildRedisKey(this.PARTICIPANT_PREFIX, conversationId);
     return this.redisClient.getSetSize(key);
+  }
+
+  async refreshTTL(conversationId: number): Promise<void> {
+    const key = buildRedisKey(this.PARTICIPANT_PREFIX, conversationId);
+    await this.redisClient.expire(key, this.PARTICIPANT_TTL);
   }
 }
