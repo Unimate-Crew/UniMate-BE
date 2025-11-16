@@ -215,7 +215,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
    * @param params.currencyType 통화 타입
    * @param params.minPrice 최소 가격
    * @param params.maxPrice 최대 가격
-   * @param params.category 상품 카테고리
+   * @param params.categories 상품 카테고리 배열 (다중 선택)
    * @param params.tradeStatus 거래 상태
    * @param params.sortDirection 정렬 방향
    * @param params.page 페이지 번호 (1부터 시작)
@@ -230,7 +230,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
     currencyType?: string;
     minPrice?: number;
     maxPrice?: number;
-    category?: string;
+    categories?: string[];
     tradeStatus?: string;
     sortDirection?: string;
     pageRequest: PageRequest;
@@ -278,9 +278,9 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       query.where('product_post.price', '<=', params.maxPrice);
     }
 
-    // 카테고리 필터링
-    if (params.category) {
-      query.where('product_post.category', params.category);
+    // 카테고리 필터링 (다중 선택)
+    if (params.categories && params.categories.length > 0) {
+      query.whereIn('product_post.category', params.categories);
     }
 
     // 거래 상태 필터링

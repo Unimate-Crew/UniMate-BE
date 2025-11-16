@@ -243,7 +243,7 @@ export class ProductPostService {
    * @param currencyType 통화 타입
    * @param minPrice 최소 가격
    * @param maxPrice 최대 가격
-   * @param category 상품 카테고리
+   * @param categories 상품 카테고리 배열 (다중 선택)
    * @param tradeStatus 거래 상태
    * @param sortDirection 정렬 방향
    * @param regionId 지역 ID
@@ -257,7 +257,7 @@ export class ProductPostService {
     currencyType?: string;
     minPrice?: number;
     maxPrice?: number;
-    category?: string;
+    categories?: string[];
     tradeStatus?: string;
     sortDirection?: string;
     regionId: number;
@@ -282,7 +282,7 @@ export class ProductPostService {
         currencyType: params.currencyType,
         minPrice: params.minPrice,
         maxPrice: params.maxPrice,
-        category: params.category,
+        categories: params.categories,
         tradeStatus: params.tradeStatus,
         sortDirection: params.sortDirection,
         pageRequest: params.pageRequest,

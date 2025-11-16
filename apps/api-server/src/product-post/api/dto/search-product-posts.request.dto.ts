@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -8,7 +9,7 @@ import {
   IsString,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import {
   CurrencyType,
   ProductCategory,
@@ -70,14 +71,20 @@ export class SearchProductPostsRequestDto extends PageRequest {
   currencyType?: CurrencyType;
 
   @ApiProperty({
-    description: '카테고리 필터',
+    description: '카테고리 필터 (다중 선택 가능)',
     enum: ProductCategory,
-    example: ProductCategory.ELECTRONICS,
+    isArray: true,
+    example: [ProductCategory.ELECTRONICS, ProductCategory.BOOKS_RECORDS],
     required: false,
   })
-  @IsEnum(ProductCategory)
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    return value ? [value] : undefined;
+  })
+  @IsEnum(ProductCategory, { each: true })
+  @IsArray()
   @IsOptional()
-  category?: ProductCategory;
+  categories?: ProductCategory[];
 
   @ApiProperty({
     description: '거래 상태 필터',

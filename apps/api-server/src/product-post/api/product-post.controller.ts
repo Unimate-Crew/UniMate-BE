@@ -98,7 +98,7 @@ export class ProductPostController {
   @ApiOperation({
     summary: '상품 게시글 검색 API',
     description:
-      '제목 기준으로 키워드 검색, 대학교/가격/카테고리/거래 상태 필터링, 생성일 기준 정렬 기능 제공',
+      '제목 기준으로 키워드 검색, 대학교/가격/다중 카테고리/거래 상태 필터링, 생성일 기준 정렬 기능 제공',
   })
   @ApiResponse({
     status: 200,
@@ -122,7 +122,7 @@ export class ProductPostController {
         currencyType: query.currencyType,
         minPrice: query.minPrice,
         maxPrice: query.maxPrice,
-        category: query.category,
+        categories: query.categories,
         tradeStatus: query.tradeStatus,
         sortDirection: query.sortDirection || SortDirection.DESC,
         regionId: query.regionId,
