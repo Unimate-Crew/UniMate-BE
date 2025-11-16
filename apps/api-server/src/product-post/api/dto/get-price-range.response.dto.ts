@@ -29,22 +29,18 @@ export class GetPriceRangeResponseDto {
   @ApiProperty({
     description: '원화(KRW) 가격 범위',
     type: CurrencyPriceRangeItemDto,
-    nullable: true,
-    required: false,
   })
-  krw?: CurrencyPriceRangeItemDto | null;
+  krw: CurrencyPriceRangeItemDto;
 
   @ApiProperty({
     description: '달러(USD) 가격 범위',
     type: CurrencyPriceRangeItemDto,
-    nullable: true,
-    required: false,
   })
-  usd?: CurrencyPriceRangeItemDto | null;
+  usd: CurrencyPriceRangeItemDto;
 
   constructor(
-    krw: CurrencyPriceRangeItemDto | null,
-    usd: CurrencyPriceRangeItemDto | null,
+    krw: CurrencyPriceRangeItemDto,
+    usd: CurrencyPriceRangeItemDto,
   ) {
     this.krw = krw;
     this.usd = usd;
@@ -57,10 +53,10 @@ export class GetPriceRangeResponseDto {
     return new GetPriceRangeResponseDto(
       krwRange
         ? new CurrencyPriceRangeItemDto(krwRange.minPrice, krwRange.maxPrice)
-        : null,
+        : new CurrencyPriceRangeItemDto(0, 100),
       usdRange
         ? new CurrencyPriceRangeItemDto(usdRange.minPrice, usdRange.maxPrice)
-        : null,
+        : new CurrencyPriceRangeItemDto(0, 1000),
     );
   }
 }
