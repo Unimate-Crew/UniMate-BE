@@ -129,11 +129,40 @@ export class ChatService {
    *
    * @param params.conversationId 대화방 ID
    * @param params.userId 사용자 ID
+   * @throws WebSocketChatException 사용자가 대화방 참여자가 아닌 경우
    */
   async addUserToOnlineConversation(params: {
     conversationId: number;
     userId: number;
   }): Promise<void> {
+    // 1. 참여자 검증: 캐시에서 먼저 확인
+    const cachedParticipants = await this.getCachedConversationParticipants({
+      conversationId: params.conversationId,
+    });
+
+    let isParticipant: boolean;
+
+    if (cachedParticipants) {
+      // 캐시에 있으면 캐시에서 확인
+      isParticipant = cachedParticipants.some(
+        (p) => p.userId === params.userId,
+      );
+    } else {
+      // 캐시에 없으면 DB에서 확인
+      const participant = await this.participantRepository.findOne({
+        conversationId: params.conversationId,
+        userId: params.userId,
+        isDeleted: false,
+      });
+      isParticipant = participant !== null;
+    }
+
+    // 2. 참여자가 아니면 예외 발생
+    if (!isParticipant) {
+      throw WebSocketChatException.withCode(ErrorCode.PARTICIPANT_NOT_FOUND);
+    }
+
+    // 3. 온라인 사용자로 추가
     await Promise.all([
       this.roomOnlineCacheRepository.addUserToRoom(
         params.conversationId,
@@ -144,6 +173,7 @@ export class ChatService {
         params.conversationId,
       ),
     ]);
+
     this.logger.log(
       `User ${params.userId} added to online conversation ${params.conversationId}`,
     );
