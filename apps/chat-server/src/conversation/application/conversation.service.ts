@@ -13,7 +13,7 @@ import { UserRepository } from '@app/database/entites/user/user.repository';
 import { Conversation } from '@app/database/entites/conversation/conversation.entity';
 import { ConversationParticipant } from '@app/database/entites/conversation-participant/conversation-participant.entity';
 import { TradeStatus } from '@app/database/common/enums';
-import { Slice, PageRequest, ErrorCode } from '@app/common';
+import { Slice, PageRequest, ErrorCode, S3Service } from '@app/common';
 import {
   RoomOnlineCacheRepository,
   ParticipantCacheRepository,
@@ -34,6 +34,7 @@ export class ConversationService {
     private readonly userRepository: UserRepository,
     private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
     private readonly participantCacheRepository: ParticipantCacheRepository,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createConversation(params: {
@@ -135,23 +136,37 @@ export class ConversationService {
         pageRequest,
       });
 
-    const resultDtos = rawSlice.contents.map((row) => {
-      const unreadCount = row.lastMessageNumber - row.lastReadMessageNumber;
+    const resultDtos = await Promise.all(
+      rawSlice.contents.map(async (row) => {
+        const unreadCount = row.lastMessageNumber - row.lastReadMessageNumber;
 
-      return GetConversationsResultDto.of({
-        conversationId: row.conversationId,
-        productPostId: row.productPostId,
-        productTitle: row.productTitle || null,
-        productThumbnailKey: row.productThumbnailKey || null,
-        otherUserId: row.otherUserId,
-        otherUserNickname: row.otherUserNickname || null,
-        otherUserProfileImageKey: row.otherUserProfileImageKey || null,
-        lastMessageContent: row.lastMessageContent || null,
-        lastMessageSenderId: row.lastMessageSenderId || null,
-        lastSentAt: row.lastSentAt || null,
-        unreadCount,
-      });
-    });
+        const productThumbnailUrl = row.productThumbnailKey
+          ? await this.s3Service.generateGetPresignedUrl(
+              row.productThumbnailKey,
+            )
+          : null;
+
+        const otherUserProfileImageUrl = row.otherUserProfileImageKey
+          ? await this.s3Service.generateGetPresignedUrl(
+              row.otherUserProfileImageKey,
+            )
+          : null;
+
+        return GetConversationsResultDto.of({
+          conversationId: row.conversationId,
+          productPostId: row.productPostId,
+          productTitle: row.productTitle || null,
+          productThumbnailUrl,
+          otherUserId: row.otherUserId,
+          otherUserNickname: row.otherUserNickname || null,
+          otherUserProfileImageUrl,
+          lastMessageContent: row.lastMessageContent || null,
+          lastMessageSenderId: row.lastMessageSenderId || null,
+          lastSentAt: row.lastSentAt || null,
+          unreadCount,
+        });
+      }),
+    );
 
     return Slice.of(resultDtos, rawSlice.hasNext);
   }

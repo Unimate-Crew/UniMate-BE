@@ -20,10 +20,10 @@ export class ConversationSummaryDto {
   productTitle?: string | null;
 
   @ApiPropertyOptional({
-    description: '상품 썸네일 이미지 키 (게시글이 삭제된 경우 null)',
-    example: 'product-thumbnail.jpg',
+    description: '상품 썸네일 이미지 URL (게시글이 삭제된 경우 null)',
+    example: 'https://example.com/product-thumbnail.jpg',
   })
-  productThumbnailKey?: string | null;
+  productThumbnailUrl?: string | null;
 
   @ApiProperty({
     description: '채팅 상대방 사용자 ID',
@@ -38,10 +38,10 @@ export class ConversationSummaryDto {
   otherUserNickname?: string | null;
 
   @ApiPropertyOptional({
-    description: '채팅 상대방 프로필 이미지 키 (탈퇴한 경우 null)',
-    example: 'profile-image.jpg',
+    description: '채팅 상대방 프로필 이미지 URL (탈퇴한 경우 null)',
+    example: 'https://example.com/profile-image.jpg',
   })
-  otherUserProfileImageKey?: string | null;
+  otherUserProfileImageUrl?: string | null;
 
   @ApiPropertyOptional({
     description: '마지막 메시지 내용',
@@ -71,10 +71,10 @@ export class ConversationSummaryDto {
     conversationId: number,
     productPostId: number,
     productTitle: string | null,
-    productThumbnailKey: string | null,
+    productThumbnailUrl: string | null,
     otherUserId: number,
     otherUserNickname: string | null,
-    otherUserProfileImageKey: string | null,
+    otherUserProfileImageUrl: string | null,
     lastMessageContent: string | null,
     lastMessageSenderId: number | null,
     lastSentAt: Date | null,
@@ -83,10 +83,10 @@ export class ConversationSummaryDto {
     this.conversationId = conversationId;
     this.productPostId = productPostId;
     this.productTitle = productTitle;
-    this.productThumbnailKey = productThumbnailKey;
+    this.productThumbnailUrl = productThumbnailUrl;
     this.otherUserId = otherUserId;
     this.otherUserNickname = otherUserNickname;
-    this.otherUserProfileImageKey = otherUserProfileImageKey;
+    this.otherUserProfileImageUrl = otherUserProfileImageUrl;
     this.lastMessageContent = lastMessageContent;
     this.lastMessageSenderId = lastMessageSenderId;
     this.lastSentAt = lastSentAt;
@@ -97,10 +97,10 @@ export class ConversationSummaryDto {
     conversationId: number;
     productPostId: number;
     productTitle: string | null;
-    productThumbnailKey: string | null;
+    productThumbnailUrl: string | null;
     otherUserId: number;
     otherUserNickname: string | null;
-    otherUserProfileImageKey: string | null;
+    otherUserProfileImageUrl: string | null;
     lastMessageContent: string | null;
     lastMessageSenderId: number | null;
     lastSentAt: Date | null;
@@ -110,10 +110,10 @@ export class ConversationSummaryDto {
       params.conversationId,
       params.productPostId,
       params.productTitle,
-      params.productThumbnailKey,
+      params.productThumbnailUrl,
       params.otherUserId,
       params.otherUserNickname,
-      params.otherUserProfileImageKey,
+      params.otherUserProfileImageUrl,
       params.lastMessageContent,
       params.lastMessageSenderId,
       params.lastSentAt,
