@@ -17,6 +17,14 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
   }
 
   /**
+   * ID로 상품 게시글을 조회합니다. (삭제된 것 포함)
+   * 채팅 발송 권한 체크 등에서 사용합니다.
+   */
+  async findByIdIncludingDeleted(id: number): Promise<ProductPost | null> {
+    return this.findOne({ id });
+  }
+
+  /**
    * 상품 게시글 상세 정보를 조회합니다.
    * 판매자 정보와 이미지 정보를 포함하여 조회합니다.
    *
