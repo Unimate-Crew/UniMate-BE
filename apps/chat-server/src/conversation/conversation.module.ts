@@ -8,6 +8,7 @@ import {
   TradeProgress,
 } from '@app/database';
 import { RedisModule } from '@app/redis';
+import { S3Module } from '@app/common';
 import { ConversationController } from './api/conversation.controller';
 import { ConversationService } from './application/conversation.service';
 
@@ -21,6 +22,7 @@ import { ConversationService } from './application/conversation.service';
       TradeProgress,
     ]),
     RedisModule,
+    S3Module,
   ],
   controllers: [ConversationController],
   providers: [ConversationService],

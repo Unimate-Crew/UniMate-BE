@@ -5,13 +5,13 @@ export class GetConversationsResultDto {
 
   productTitle: string | null;
 
-  productThumbnailKey: string | null;
+  productThumbnailUrl: string | null;
 
   otherUserId: number;
 
   otherUserNickname: string | null;
 
-  otherUserProfileImageKey: string | null;
+  otherUserProfileImageUrl: string | null;
 
   lastMessageContent: string | null;
 
@@ -25,10 +25,10 @@ export class GetConversationsResultDto {
     conversationId: number;
     productPostId: number;
     productTitle: string | null;
-    productThumbnailKey: string | null;
+    productThumbnailUrl: string | null;
     otherUserId: number;
     otherUserNickname: string | null;
-    otherUserProfileImageKey: string | null;
+    otherUserProfileImageUrl: string | null;
     lastMessageContent: string | null;
     lastMessageSenderId: number | null;
     lastSentAt: Date | null;
@@ -37,10 +37,10 @@ export class GetConversationsResultDto {
     this.conversationId = params.conversationId;
     this.productPostId = params.productPostId;
     this.productTitle = params.productTitle;
-    this.productThumbnailKey = params.productThumbnailKey;
+    this.productThumbnailUrl = params.productThumbnailUrl;
     this.otherUserId = params.otherUserId;
     this.otherUserNickname = params.otherUserNickname;
-    this.otherUserProfileImageKey = params.otherUserProfileImageKey;
+    this.otherUserProfileImageUrl = params.otherUserProfileImageUrl;
     this.lastMessageContent = params.lastMessageContent;
     this.lastMessageSenderId = params.lastMessageSenderId;
     this.lastSentAt = params.lastSentAt;
@@ -51,10 +51,10 @@ export class GetConversationsResultDto {
     conversationId: number;
     productPostId: number;
     productTitle: string | null;
-    productThumbnailKey: string | null;
+    productThumbnailUrl: string | null;
     otherUserId: number;
     otherUserNickname: string | null;
-    otherUserProfileImageKey: string | null;
+    otherUserProfileImageUrl: string | null;
     lastMessageContent: string | null;
     lastMessageSenderId: number | null;
     lastSentAt: Date | null;
