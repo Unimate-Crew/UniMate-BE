@@ -29,6 +29,7 @@ import { UnmuteConversationRequestDto } from './dto/unmute-conversation-request.
 import { LeaveConversationRequestDto } from './dto/leave-conversation-request.dto';
 import { GetMessagesRequestDto } from './dto/get-messages-request.dto';
 import { GetMessagesResponseDto } from './dto/get-messages-response.dto';
+import { CheckSendPermissionResponseDto } from './dto/check-send-permission-response.dto';
 
 @ApiTags('채팅방')
 @ApiBearerAuth('accessToken')
@@ -178,5 +179,31 @@ export class ConversationController {
       userId: userTokenInfo.userId,
       conversationId: Number(leaveConversationDto.conversationId),
     });
+  }
+
+  @ApiOperation({
+    summary: '채팅 발송 가능 여부 조회',
+    description:
+      '채팅방에서 현재 사용자가 메시지를 발송할 수 있는지 확인합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: CheckSendPermissionResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '인증 토큰이 유효하지 않음' })
+  @ApiResponse({ status: 403, description: '권한 없음 (채팅방 참여자가 아님)' })
+  @ApiResponse({ status: 404, description: '채팅방을 찾을 수 없음' })
+  @Get(':conversationId/send-permission')
+  async checkSendPermission(
+    @Param('conversationId', ParseIntPipe) conversationId: number,
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<CheckSendPermissionResponseDto> {
+    const result = await this.conversationService.checkSendMessagePermission({
+      conversationId,
+      userId: userTokenInfo.userId,
+    });
+
+    return CheckSendPermissionResponseDto.from(result);
   }
 }
