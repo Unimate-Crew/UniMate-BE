@@ -27,6 +27,8 @@ export * from './entites/conversation-participant/conversation-participant.entit
 export * from './entites/conversation-participant/conversation-participant.repository';
 export * from './entites/conversation-message/conversation-message.entity';
 export * from './entites/conversation-message/conversation-message.repository';
+export * from './entites/trade-progress/trade-progress.entity';
+export * from './entites/trade-progress/trade-progress.repository';
 export * from './entites/like/like.entity';
 export * from './entites/like/like.repository';
 export * from './entites/device/device.entity';

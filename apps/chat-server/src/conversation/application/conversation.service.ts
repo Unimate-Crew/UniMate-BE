@@ -10,6 +10,7 @@ import { ConversationParticipantRepository } from '@app/database/entites/convers
 import { ConversationMessageRepository } from '@app/database/entites/conversation-message/conversation-message.repository';
 import { ProductPostRepository } from '@app/database/entites/product-post/product-post.repository';
 import { UserRepository } from '@app/database/entites/user/user.repository';
+import { TradeProgressRepository } from '@app/database/entites/trade-progress/trade-progress.repository';
 import { Conversation } from '@app/database/entites/conversation/conversation.entity';
 import { ConversationParticipant } from '@app/database/entites/conversation-participant/conversation-participant.entity';
 import { TradeStatus } from '@app/database/common/enums';
@@ -23,6 +24,7 @@ import { CreateConversationResultDto } from './dto/create-conversation-result.dt
 import { GetConversationsResultDto } from './dto/get-conversations-result.dto';
 import { GetMessagesResultDto } from './dto/get-messages-result.dto';
 import { MessageDto } from './dto/message.dto';
+import { CheckSendPermissionResultDto } from './dto/check-send-permission-result.dto';
 
 @Injectable()
 export class ConversationService {
@@ -34,6 +36,7 @@ export class ConversationService {
     private readonly userRepository: UserRepository,
     private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
     private readonly participantCacheRepository: ParticipantCacheRepository,
+    private readonly tradeProgressRepository: TradeProgressRepository,
   ) {}
 
   async createConversation(params: {
@@ -460,5 +463,83 @@ export class ConversationService {
           participantCaches,
         );
       });
+  }
+
+  async checkSendMessagePermission(params: {
+    conversationId: number;
+    userId: number;
+  }): Promise<CheckSendPermissionResultDto> {
+    const { conversationId, userId } = params;
+
+    // 1. 채팅방 조회
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
+
+    if (!conversation) {
+      throw new NotFoundException({
+        code: ErrorCode.CONVERSATION_NOT_FOUND,
+        message: '채팅방을 찾을 수 없습니다.',
+      });
+    }
+
+    // 2. 참여자 확인
+    const participant =
+      await this.conversationParticipantRepository.findByConversationIdAndUserId(
+        {
+          conversationId,
+          userId,
+        },
+      );
+
+    if (!participant) {
+      throw new ForbiddenException({
+        code: ErrorCode.PARTICIPANT_NOT_FOUND,
+        message: '채팅방에 참가하지 않은 사용자입니다.',
+      });
+    }
+
+    // 3. 상품 게시글 조회 (삭제된 것 포함)
+    const productPost =
+      await this.productPostRepository.findByIdIncludingDeleted(
+        conversation.getProductPostId(),
+      );
+
+    // 4. 상품 게시글이 없는 경우 (hard delete) → 무조건 발송 불가
+    if (!productPost) {
+      return CheckSendPermissionResultDto.of(false);
+    }
+
+    // 5. 판매자 탈퇴 여부 확인
+    const seller = await this.userRepository.findById(productPost.getUserId());
+
+    // 탈퇴한 유저의 게시글 → 무조건 발송 불가
+    if (!seller || seller.isUserDeleted()) {
+      return CheckSendPermissionResultDto.of(false);
+    }
+
+    // 6. 판매자 여부 확인
+    const isSeller = productPost.getUserId() === userId;
+
+    // 7. TradeProgress 조회 (구매자 확인용)
+    const tradeProgress =
+      await this.tradeProgressRepository.findByProductPostId(
+        conversation.getProductPostId(),
+      );
+
+    // 8. 현재 사용자가 구매자인지 확인
+    const isBuyer = tradeProgress && tradeProgress.getBuyerId() === userId;
+
+    // 9. 삭제(soft delete)/숨김/판매완료 상태 → 판매자 또는 구매자만 발송 가능
+    const tradeStatus = productPost.getTradeStatus();
+    if (
+      productPost.isProductPostDeleted() ||
+      productPost.getIsHidden() ||
+      tradeStatus === TradeStatus.COMPLETED
+    ) {
+      return CheckSendPermissionResultDto.of(isSeller || isBuyer);
+    }
+
+    // 10. 판매중 또는 예약중 → 모든 참여자 발송 가능
+    return CheckSendPermissionResultDto.of(true);
   }
 }
