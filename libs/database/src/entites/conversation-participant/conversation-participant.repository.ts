@@ -266,4 +266,16 @@ export class ConversationParticipantRepository extends EntityRepository<Conversa
 
     return results.map((row) => row.user_id);
   }
+
+  /**
+   * 특정 사용자의 모든 채팅 참여 기록을 소프트 딜리트 처리합니다.
+   * @param userId 사용자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByUserId(userId: number): Promise<number> {
+    return this.nativeUpdate(
+      { userId, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
 }

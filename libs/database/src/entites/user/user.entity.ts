@@ -13,7 +13,7 @@ export class User extends BaseEntity {
   @PrimaryKey()
   id!: number;
 
-  @Property({ unique: true })
+  @Property()
   nickname!: string;
 
   @Property({ nullable: true })

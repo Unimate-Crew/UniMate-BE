@@ -88,4 +88,16 @@ export class UserBlockRepository extends EntityRepository<UserBlock> {
   async persistAndFlush(userBlock: UserBlock): Promise<void> {
     await this.em.persistAndFlush(userBlock);
   }
+
+  /**
+   * 특정 사용자가 차단한 모든 기록을 소프트 딜리트 처리합니다.
+   * @param blockerId 차단자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByBlockerId(blockerId: number): Promise<number> {
+    return this.nativeUpdate(
+      { blockerId, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
 }

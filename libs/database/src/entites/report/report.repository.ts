@@ -34,4 +34,16 @@ export class ReportRepository extends EntityRepository<Report> {
   async persistAndFlush(report: Report): Promise<void> {
     await this.em.persistAndFlush(report);
   }
+
+  /**
+   * 특정 사용자가 작성한 모든 신고를 소프트 딜리트 처리합니다.
+   * @param userId 신고 작성자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByUserId(userId: number): Promise<number> {
+    return this.nativeUpdate(
+      { userId, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
 }

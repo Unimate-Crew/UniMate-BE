@@ -16,6 +16,14 @@ import {
   UniversityRepository,
   ReviewRepository,
   ReviewStatsDto,
+  ProductPostRepository,
+  ProductImageRepository,
+  ConversationParticipantRepository,
+  NotificationRepository,
+  LikeRepository,
+  ReportRepository,
+  UserBlockRepository,
+  DeviceRepository,
 } from '@app/database';
 import { ErrorCode, USER_CONSTANTS } from '@app/common';
 import { S3Service } from '@app/common/s3/s3.service';
@@ -40,6 +48,14 @@ export class UserService {
     private readonly universityRepository: UniversityRepository,
     private readonly reviewRepository: ReviewRepository,
     private readonly s3Service: S3Service,
+    private readonly productPostRepository: ProductPostRepository,
+    private readonly productImageRepository: ProductImageRepository,
+    private readonly conversationParticipantRepository: ConversationParticipantRepository,
+    private readonly notificationRepository: NotificationRepository,
+    private readonly likeRepository: LikeRepository,
+    private readonly reportRepository: ReportRepository,
+    private readonly userBlockRepository: UserBlockRepository,
+    private readonly deviceRepository: DeviceRepository,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -388,6 +404,44 @@ export class UserService {
       isPrimary: false,
     });
     await this.interestRegionRepository.flush();
+  }
+
+  @Transactional()
+  async withdrawUser(userId: number): Promise<void> {
+    // 1. 사용자 존재 확인
+    const user = await this.userRepository.findOne(userId);
+
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '유저가 존재하지 않습니다.',
+      });
+    }
+
+    // 2. 사용자의 상품 게시글 ID 조회 (ProductImage 삭제용)
+    const productPosts = await this.productPostRepository.findByUserId(userId);
+    const productPostIds = productPosts.map((post) => post.getId());
+
+    // 3. 연관 데이터 soft delete (병렬 처리)
+    await Promise.all([
+      this.productPostRepository.softDeleteByUserId(userId),
+      productPostIds.length > 0
+        ? this.productImageRepository.softDeleteByProductIds(productPostIds)
+        : Promise.resolve(0),
+      this.conversationParticipantRepository.softDeleteByUserId(userId),
+      this.notificationRepository.softDeleteByUserId(userId),
+      this.likeRepository.softDeleteByUserId(userId),
+      this.reviewRepository.softDeleteByReviewerId(userId),
+      this.reportRepository.softDeleteByUserId(userId),
+      this.userBlockRepository.softDeleteByBlockerId(userId),
+      this.deviceRepository.softDeleteByUserId(userId),
+      this.interestRegionRepository.softDeleteByUserId(userId),
+    ]);
+
+    // 4. 사용자 soft delete (refreshToken 무효화)
+    user.changeRefreshToken('');
+    user.delete();
+    this.userRepository.persist(user);
   }
 
   async updateUserProfile(params: {

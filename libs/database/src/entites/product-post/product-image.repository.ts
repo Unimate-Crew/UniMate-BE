@@ -41,4 +41,19 @@ export class ProductImageRepository extends EntityRepository<ProductImage> {
       { isDeleted: true, deletedAt: new Date() },
     );
   }
+
+  /**
+   * 여러 상품의 이미지들을 단일 쿼리로 소프트 딜리트 처리합니다.
+   * @param productIds 상품 게시글 ID 목록
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByProductIds(productIds: number[]): Promise<number> {
+    if (productIds.length === 0) {
+      return 0;
+    }
+    return this.nativeUpdate(
+      { productId: { $in: productIds }, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
 }
