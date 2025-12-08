@@ -68,4 +68,17 @@ export class InterestRegionRepository extends EntityRepository<InterestRegion> {
   async persistAndFlush(interestRegion: InterestRegion): Promise<void> {
     await this.em.persistAndFlush(interestRegion);
   }
+
+  /**
+   * 특정 사용자의 모든 관심 지역을 소프트 딜리트 처리합니다.
+   * @param userId 사용자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByUserId(userId: number): Promise<number> {
+    const result = await this.createQueryBuilder('ir')
+      .update({ isDeleted: true, deletedAt: new Date() })
+      .where({ 'ir.user_id': userId, 'ir.is_deleted': false })
+      .execute();
+    return result.affectedRows;
+  }
 }

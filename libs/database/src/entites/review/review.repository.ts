@@ -78,4 +78,16 @@ export class ReviewRepository extends EntityRepository<Review> {
       isDeleted: false,
     });
   }
+
+  /**
+   * 특정 사용자가 작성한 모든 리뷰를 소프트 딜리트 처리합니다.
+   * @param reviewerId 리뷰 작성자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByReviewerId(reviewerId: number): Promise<number> {
+    return this.nativeUpdate(
+      { reviewerId, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
 }

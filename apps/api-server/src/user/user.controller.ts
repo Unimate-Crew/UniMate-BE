@@ -376,6 +376,27 @@ export class UserController {
     );
   }
 
+  @Delete('/me')
+  @ApiOperation({
+    summary: '회원 탈퇴',
+    description: '로그인한 사용자의 계정과 관련 데이터를 삭제합니다.',
+  })
+  @ApiResponse({ status: 204, description: '회원 탈퇴 성공' })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음)',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async withdrawUser(
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<void> {
+    await this.userService.withdrawUser(userTokenInfo.userId);
+  }
+
   @Patch('/me')
   @ApiOperation({
     summary: '내 프로필 수정',

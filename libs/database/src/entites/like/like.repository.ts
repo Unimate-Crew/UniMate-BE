@@ -111,4 +111,16 @@ export class LikeRepository extends EntityRepository<Like> {
     const likes = await this.find({ productId }, { fields: ['userId'] });
     return likes.map((like) => like.userId);
   }
+
+  /**
+   * 특정 사용자의 모든 좋아요를 소프트 딜리트 처리합니다.
+   * @param userId 사용자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByUserId(userId: number): Promise<number> {
+    return this.nativeUpdate(
+      { userId, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
 }

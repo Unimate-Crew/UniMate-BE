@@ -660,6 +660,18 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
   }
 
   /**
+   * 특정 사용자의 모든 상품 게시글을 소프트 딜리트 처리합니다.
+   * @param userId 사용자 ID
+   * @returns 업데이트된 행 수
+   */
+  async softDeleteByUserId(userId: number): Promise<number> {
+    return this.nativeUpdate(
+      { userId, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+    );
+  }
+
+  /**
    * 특정 지역의 상품 게시글 통화별 가격 범위를 조회합니다.
    * 검색 키워드와 차단된 사용자를 고려하여 필터링합니다.
    *

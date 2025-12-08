@@ -1,8 +1,9 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import { LikeRepository } from './like.repository';
+import { BaseEntity } from '../../common/base.entity';
 
 @Entity({ repository: () => LikeRepository })
-export class Like {
+export class Like extends BaseEntity {
   @PrimaryKey()
   id!: number;
 
@@ -11,9 +12,6 @@ export class Like {
 
   @Property()
   userId!: number;
-
-  @Property()
-  createdAt: Date = new Date();
 
   public getId(): number {
     return this.id;
@@ -33,9 +31,5 @@ export class Like {
 
   public setUserId(userId: number): void {
     this.userId = userId;
-  }
-
-  public getCreatedAt(): Date {
-    return this.createdAt;
   }
 }

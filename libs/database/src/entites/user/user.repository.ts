@@ -16,7 +16,7 @@ export class UserRepository extends EntityRepository<User> {
   }
 
   async findByNickname(nickname: string): Promise<User | null> {
-    return this.findOne({ nickname });
+    return this.findOne({ nickname, isDeleted: false });
   }
 
   async findByIds(ids: number[]): Promise<User[]> {
