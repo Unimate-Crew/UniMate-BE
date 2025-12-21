@@ -64,7 +64,7 @@ export class ProductPostDetailResultDto {
       sellerProfileImageUrl,
       productPost.getRegionId(),
       productPostDetail.regionName,
-      productPost.getUniversityId(),
+      productPostDetail.universityId,
       productPostDetail.universityName,
       productPost.getIsHidden(),
     );
