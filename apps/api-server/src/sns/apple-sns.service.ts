@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-import jwksClient from 'jwks-rsa';
+import { JwksClient } from 'jwks-rsa';
 import { ErrorCode } from '@app/common';
 import { SnsService, SnsUserInfo } from './sns.service.interface';
 
@@ -25,14 +25,14 @@ export class AppleSnsService implements SnsService {
 
   private readonly APPLE_ISSUER = 'https://appleid.apple.com';
 
-  private readonly jwksClient: jwksClient.JwksClient;
+  private readonly jwksClient: JwksClient;
 
   private readonly clientId: string;
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.getOrThrow<string>('APPLE_CLIENT_ID');
 
-    this.jwksClient = jwksClient({
+    this.jwksClient = new JwksClient({
       jwksUri: this.APPLE_JWKS_URL,
       cache: true,
       cacheMaxEntries: 5,
