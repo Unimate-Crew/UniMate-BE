@@ -39,6 +39,14 @@ export class ConversationParticipantCache {
     this.lastReadMessageNumber = messageNumber;
   }
 
+  public setIsMuted(isMuted: boolean): void {
+    this.isMuted = isMuted;
+  }
+
+  public setIsBlockingOther(isBlockingOther: boolean): void {
+    this.isBlockingOther = isBlockingOther;
+  }
+
   public checkIsBlockingOther(): boolean {
     return this.isBlockingOther;
   }

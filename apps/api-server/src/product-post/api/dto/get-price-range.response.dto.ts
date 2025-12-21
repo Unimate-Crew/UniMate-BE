@@ -38,10 +38,7 @@ export class GetPriceRangeResponseDto {
   })
   usd: CurrencyPriceRangeItemDto;
 
-  constructor(
-    krw: CurrencyPriceRangeItemDto,
-    usd: CurrencyPriceRangeItemDto,
-  ) {
+  constructor(krw: CurrencyPriceRangeItemDto, usd: CurrencyPriceRangeItemDto) {
     this.krw = krw;
     this.usd = usd;
   }

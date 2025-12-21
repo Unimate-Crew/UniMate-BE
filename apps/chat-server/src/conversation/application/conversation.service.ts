@@ -340,6 +340,9 @@ export class ConversationService {
     participant.setIsMuted(true);
 
     await this.conversationParticipantRepository.persistAndFlush(participant);
+
+    // 캐시 동기화
+    await this.updateParticipantMutedCache(conversationId, userId, true);
   }
 
   async unmuteConversation(params: {
@@ -390,6 +393,9 @@ export class ConversationService {
     participant.setIsMuted(false);
 
     await this.conversationParticipantRepository.persistAndFlush(participant);
+
+    // 캐시 동기화
+    await this.updateParticipantMutedCache(conversationId, userId, false);
   }
 
   async leaveConversation(params: {
@@ -556,5 +562,34 @@ export class ConversationService {
 
     // 10. 판매중 또는 예약중 → 모든 참여자 발송 가능
     return CheckSendPermissionResultDto.of(true);
+  }
+
+  /**
+   * 참여자의 뮤트 상태를 캐시에 업데이트합니다.
+   *
+   * @param conversationId 대화방 ID
+   * @param userId 사용자 ID
+   * @param isMuted 뮤트 상태
+   */
+  private async updateParticipantMutedCache(
+    conversationId: number,
+    userId: number,
+    isMuted: boolean,
+  ): Promise<void> {
+    const participantCache =
+      await this.participantCacheRepository.getParticipant(
+        conversationId,
+        userId,
+      );
+
+    if (!participantCache) {
+      return;
+    }
+
+    participantCache.setIsMuted(isMuted);
+    await this.participantCacheRepository.updateParticipant(
+      conversationId,
+      participantCache,
+    );
   }
 }

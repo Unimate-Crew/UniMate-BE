@@ -16,6 +16,7 @@ import {
   UseInterceptors,
   UseFilters,
 } from '@nestjs/common';
+import { ErrorCode, ErrorMessage } from '@app/common';
 import { ChatService } from '../application/chat.service';
 import { SendMessageRequestDto } from './dto/send-message.request.dto';
 import { MarkMessagesAsReadRequestDto } from './dto/mark-messages-as-read.request.dto';
@@ -62,18 +63,30 @@ export class ChatGateway
   }
 
   async handleConnection(client: Socket): Promise<void> {
-    // User is already authenticated at this point via middleware
-    const user = (client as any).user as WebSocketUser;
+    try {
+      // User is already authenticated at this point via middleware
+      const user = (client as any).user as WebSocketUser;
 
-    await this.chatService.registerUserSession({
-      userId: user.userId,
-      socketId: client.id,
-    });
+      await this.chatService.registerUserSession({
+        userId: user.userId,
+        socketId: client.id,
+      });
 
-    // Join user-specific room for cross-instance messaging
-    client.join(`user_${user.userId}`);
+      // Join user-specific room for cross-instance messaging
+      client.join(`user_${user.userId}`);
 
-    this.logger.log(`User ${user.userId} connected with socket ${client.id}`);
+      this.logger.log(`User ${user.userId} connected with socket ${client.id}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to register user session: ${error.message}`,
+        error.stack,
+      );
+      client.emit('connectionError', {
+        code: ErrorCode.SESSION_REGISTRATION_FAILED,
+        message: ErrorMessage[ErrorCode.SESSION_REGISTRATION_FAILED],
+      });
+      client.disconnect();
+    }
   }
 
   async handleDisconnect(client: Socket): Promise<void> {

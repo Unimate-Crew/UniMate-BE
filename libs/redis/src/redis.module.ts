@@ -5,6 +5,7 @@ import { RoomOnlineCacheRepository } from './repositories/room-online-cache.repo
 import { ParticipantCacheRepository } from './repositories/participant-cache.repository';
 import { VerificationCodeCacheRepository } from './repositories/verification-code-cache.repository';
 import { UserOnlineRoomsCacheRepository } from './repositories/user-online-rooms-cache.repository';
+import { MessageRequestCacheRepository } from './repositories/message-request-cache.repository';
 
 @Global()
 @Module({
@@ -15,6 +16,7 @@ import { UserOnlineRoomsCacheRepository } from './repositories/user-online-rooms
     ParticipantCacheRepository,
     VerificationCodeCacheRepository,
     UserOnlineRoomsCacheRepository,
+    MessageRequestCacheRepository,
   ],
   exports: [
     RedisClient,
@@ -23,6 +25,7 @@ import { UserOnlineRoomsCacheRepository } from './repositories/user-online-rooms
     ParticipantCacheRepository,
     VerificationCodeCacheRepository,
     UserOnlineRoomsCacheRepository,
+    MessageRequestCacheRepository,
   ],
 })
 export class RedisModule {}
