@@ -7,6 +7,7 @@ export class ProductPostDetailWithRelations {
     public readonly sellerNickname: string,
     public readonly sellerProfileImageKey: string | null,
     public readonly regionName: string | null,
+    public readonly universityId: number | null,
     public readonly universityName: string | null,
     public readonly imageKeys: string[],
   ) {}
@@ -17,6 +18,7 @@ export class ProductPostDetailWithRelations {
     sellerNickname: string;
     sellerProfileImageKey: string | null;
     regionName: string | null;
+    universityId: number | null;
     universityName: string | null;
     imageKeys: string[];
   }): ProductPostDetailWithRelations {
@@ -26,6 +28,7 @@ export class ProductPostDetailWithRelations {
       data.sellerNickname,
       data.sellerProfileImageKey,
       data.regionName,
+      data.universityId,
       data.universityName,
       data.imageKeys,
     );

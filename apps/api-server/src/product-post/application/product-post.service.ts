@@ -194,7 +194,6 @@ export class ProductPostService {
       regionId,
       userId: params.userId,
       tradeStatus: TradeStatus.FOR_SALE,
-      universityId: user.getUniversityId(),
     });
     await this.productPostRepository.persistAndFlush(productPost);
 

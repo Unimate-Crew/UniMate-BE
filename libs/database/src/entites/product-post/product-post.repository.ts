@@ -42,13 +42,14 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'user.id as seller_id',
         'user.nickname as seller_nickname',
         'user.profile_image_key as seller_profile_image_key',
+        'user.university_id as user_university_id',
         'region.name as region_name',
         'university.name as university_name',
       ])
       .from('product_post')
       .leftJoin('user', 'product_post.user_id', 'user.id')
       .leftJoin('region', 'product_post.region_id', 'region.id')
-      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('university', 'user.university_id', 'university.id')
       .where('product_post.id', id)
       .where('product_post.is_deleted', false)
       .first();
@@ -78,7 +79,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       tradeType: result.trade_type,
       tradeTypeDescription: result.trade_type_description,
       regionId: result.region_id,
-      universityId: result.university_id,
       isDeleted: result.is_deleted,
       isHidden: result.is_hidden,
       createdAt: result.created_at,
@@ -92,6 +92,7 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       sellerNickname: result.seller_nickname,
       sellerProfileImageKey: result.seller_profile_image_key,
       regionName: result.region_name,
+      universityId: result.user_university_id,
       universityName: result.university_name,
       imageKeys: imageKeys.map((img) => img.image_key),
     });
@@ -103,10 +104,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
 
   async findByRegionId(regionId: number): Promise<ProductPost[]> {
     return this.find({ regionId, isDeleted: false });
-  }
-
-  async findByUniversityId(universityId: number): Promise<ProductPost[]> {
-    return this.find({ universityId, isDeleted: false });
   }
 
   async findByTradeStatus(tradeStatus: TradeStatus): Promise<ProductPost[]> {
@@ -157,7 +154,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
-      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('user', 'product_post.user_id', 'user.id')
+      .leftJoin('university', 'user.university_id', 'university.id')
       .leftJoin('product_image', function () {
         this.on('product_post.id', '=', 'product_image.product_id')
           .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
@@ -199,7 +197,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             tradeType: row.trade_type,
             tradeTypeDescription: row.trade_type_description,
             regionId: row.region_id,
-            universityId: row.university_id,
             isDeleted: row.is_deleted,
             isHidden: row.is_hidden,
             createdAt: row.created_at,
@@ -254,7 +251,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
-      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('user', 'product_post.user_id', 'user.id')
+      .leftJoin('university', 'user.university_id', 'university.id')
       .leftJoin('product_image', function () {
         this.on('product_post.id', '=', 'product_image.product_id')
           .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
@@ -268,9 +266,9 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
       query.where('product_post.title', 'like', `%${params.searchKeyword}%`);
     }
 
-    // 대학교 필터링
+    // 대학교 필터링 (User의 universityId 기준)
     if (params.universityId) {
-      query.where('product_post.university_id', params.universityId);
+      query.where('user.university_id', params.universityId);
     }
 
     // 통화 타입 필터링
@@ -330,7 +328,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             tradeType: row.trade_type,
             tradeTypeDescription: row.trade_type_description,
             regionId: row.region_id,
-            universityId: row.university_id,
             isDeleted: row.is_deleted,
             isHidden: row.is_hidden,
             createdAt: row.created_at,
@@ -370,7 +367,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
-      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('user', 'product_post.user_id', 'user.id')
+      .leftJoin('university', 'user.university_id', 'university.id')
       .leftJoin('product_image', function () {
         this.on('product_post.id', '=', 'product_image.product_id')
           .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
@@ -413,7 +411,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             tradeType: row.trade_type,
             tradeTypeDescription: row.trade_type_description,
             regionId: row.region_id,
-            universityId: row.university_id,
             isDeleted: row.is_deleted,
             isHidden: row.is_hidden,
             createdAt: row.created_at,
@@ -449,7 +446,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
-      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('user', 'product_post.user_id', 'user.id')
+      .leftJoin('university', 'user.university_id', 'university.id')
       .leftJoin('product_image', function () {
         this.on('product_post.id', '=', 'product_image.product_id')
           .andOn('product_image.is_thumbnail', '=', knex.raw('?', [true]))
@@ -484,7 +482,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             tradeType: row.trade_type,
             tradeTypeDescription: row.trade_type_description,
             regionId: row.region_id,
-            universityId: row.university_id,
             isDeleted: row.is_deleted,
             isHidden: row.is_hidden,
             createdAt: row.created_at,
@@ -559,11 +556,12 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'u.deleted_at',
       ])
       .from('product_post as pp')
-      .join('university as u', 'pp.university_id', 'u.id')
+      .join('user as usr', 'pp.user_id', 'usr.id')
+      .join('university as u', 'usr.university_id', 'u.id')
       .where('pp.region_id', params.regionId)
       .where('pp.is_deleted', false)
       .where('pp.is_hidden', false)
-      .whereNotNull('pp.university_id')
+      .whereNotNull('usr.university_id')
       .where('u.is_deleted', false);
 
     // 검색 키워드로 대학교 이름 필터링
@@ -620,7 +618,8 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
         'product_image.image_key as thumbnail_image_key',
       ])
       .from('product_post')
-      .leftJoin('university', 'product_post.university_id', 'university.id')
+      .leftJoin('user', 'product_post.user_id', 'user.id')
+      .leftJoin('university', 'user.university_id', 'university.id')
       .leftJoin('product_image', function () {
         this.on('product_post.id', '=', 'product_image.product_id').andOn(
           'product_image.is_thumbnail',
@@ -646,7 +645,6 @@ export class ProductPostRepository extends EntityRepository<ProductPost> {
             tradeType: row.trade_type,
             tradeTypeDescription: row.trade_type_description,
             regionId: row.region_id,
-            universityId: row.university_id,
             isDeleted: row.is_deleted,
             isHidden: row.is_hidden,
             createdAt: row.created_at,

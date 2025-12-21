@@ -3,7 +3,7 @@ import { Migration } from '@mikro-orm/migrations';
 export class Migration20251208135220 extends Migration {
 
   override async up(): Promise<void> {
-    this.addSql(`alter table \`like\` add \`is_deleted\` tinyint(1) not null default false, add \`updated_at\` datetime not null, add \`deleted_at\` datetime null;`);
+    this.addSql(`alter table \`like\` add \`is_deleted\` tinyint(1) not null default false, add \`updated_at\` datetime not null default CURRENT_TIMESTAMP, add \`deleted_at\` datetime null;`);
 
     this.addSql(`alter table \`notification\` modify \`notification_type\` enum('SALE_ENDED', 'PRICE_CHANGED', 'NEW_CHAT_MESSAGE') not null;`);
 

@@ -44,9 +44,6 @@ export class ProductPost extends BaseEntity {
   @Property()
   regionId!: number;
 
-  @Property({ nullable: true })
-  universityId?: number;
-
   @Property({ default: false })
   isHidden!: boolean;
 
@@ -140,14 +137,6 @@ export class ProductPost extends BaseEntity {
 
   public isProductPostDeleted(): boolean {
     return this.isDeleted;
-  }
-
-  public getUniversityId(): number | undefined {
-    return this.universityId;
-  }
-
-  public setUniversityId(universityId: number): void {
-    this.universityId = universityId;
   }
 
   public getIsHidden(): boolean {
