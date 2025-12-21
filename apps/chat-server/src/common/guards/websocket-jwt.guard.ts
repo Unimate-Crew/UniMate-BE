@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Socket } from 'socket.io';
+import { ErrorCode, ErrorMessage } from '@app/common';
 import { WebSocketUser } from '../decorators/websocket-user.decorator';
 
 @Injectable()
@@ -19,9 +20,9 @@ export class WebSocketJwtGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    try {
-      const client = context.switchToWs().getClient<Socket>();
+    const client = context.switchToWs().getClient<Socket>();
 
+    try {
       // 1. Check if user was already authenticated via handshake middleware
       const existingUser = (client as any).user as WebSocketUser;
       if (existingUser?.userId) {
@@ -47,7 +48,11 @@ export class WebSocketJwtGuard implements CanActivate {
             this.logger.warn(
               `Token re-verification failed: ${tokenError.message}`,
             );
-            // Token expired or invalid - disconnect the client
+            // Token expired or invalid - send error event and disconnect the client
+            client.emit('authError', {
+              code: ErrorCode.TOKEN_EXPIRED,
+              message: ErrorMessage[ErrorCode.TOKEN_EXPIRED],
+            });
             client.disconnect();
             return false;
           }
@@ -68,6 +73,11 @@ export class WebSocketJwtGuard implements CanActivate {
         this.logger.error(
           `No authentication token found for socket ${client.id}`,
         );
+        client.emit('authError', {
+          code: ErrorCode.TOKEN_INVALID,
+          message: ErrorMessage[ErrorCode.TOKEN_INVALID],
+        });
+        client.disconnect();
         return false;
       }
 
@@ -77,6 +87,11 @@ export class WebSocketJwtGuard implements CanActivate {
 
       if (!payload.userId) {
         this.logger.error(`Invalid token payload for socket ${client.id}`);
+        client.emit('authError', {
+          code: ErrorCode.TOKEN_INVALID,
+          message: ErrorMessage[ErrorCode.TOKEN_INVALID],
+        });
+        client.disconnect();
         return false;
       }
 
@@ -91,6 +106,11 @@ export class WebSocketJwtGuard implements CanActivate {
       return true;
     } catch (error) {
       this.logger.error(`WebSocket authentication failed: ${error.message}`);
+      client.emit('authError', {
+        code: ErrorCode.TOKEN_INVALID,
+        message: ErrorMessage[ErrorCode.TOKEN_INVALID],
+      });
+      client.disconnect();
       return false;
     }
   }

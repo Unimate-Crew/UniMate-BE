@@ -53,10 +53,15 @@ async function bootstrap() {
   const redisAdapterConfig = app.get(WebSocketRedisAdapterConfig);
   const ioAdapter = new IoAdapter(app);
 
-  // IoAdapter를 확장하여 Redis 어댑터 설정
+  // IoAdapter를 확장하여 Redis 어댑터 설정 및 Socket.IO 옵션 조정
   const originalCreateIOServer = ioAdapter.createIOServer;
   ioAdapter.createIOServer = function (port: number, options?: any) {
-    const server = originalCreateIOServer.call(this, port, options);
+    const serverOptions = {
+      ...options,
+      pingInterval: 10000, // 10초마다 ping (기본 25초)
+      pingTimeout: 5000, // 5초 내 pong 없으면 연결 끊김 (기본 20초)
+    };
+    const server = originalCreateIOServer.call(this, port, serverOptions);
     // Redis 어댑터 설정을 비동기로 처리
     redisAdapterConfig.setupRedisAdapter(server);
     return server;

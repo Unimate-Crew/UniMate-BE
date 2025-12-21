@@ -34,6 +34,23 @@ export class RedisClient implements OnApplicationShutdown {
     return this.client.set(key, value);
   }
 
+  /**
+   * SET if Not eXists - 원자적으로 키가 없을 때만 값을 설정합니다.
+   *
+   * @param key Redis 키
+   * @param value 설정할 값
+   * @param ttl TTL (초 단위, 선택)
+   * @returns 설정 성공 시 true, 키가 이미 존재하면 false
+   */
+  async setNx(key: string, value: string, ttl?: number): Promise<boolean> {
+    if (ttl) {
+      const result = await this.client.set(key, value, 'EX', ttl, 'NX');
+      return result === 'OK';
+    }
+    const result = await this.client.setnx(key, value);
+    return result === 1;
+  }
+
   async del(key: string): Promise<number> {
     return this.client.del(key);
   }

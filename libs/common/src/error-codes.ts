@@ -61,6 +61,9 @@ export enum ErrorCode {
   LEAVE_ROOM_FAILED = 'CH002',
   SEND_MESSAGE_FAILED = 'CH003',
   MARK_READ_FAILED = 'CH004',
+  SESSION_REGISTRATION_FAILED = 'CH005',
+  TOKEN_EXPIRED = 'CH006',
+  TOKEN_INVALID = 'CH007',
 
   // 유저 차단
   USER_BLOCK_SELF_NOT_ALLOWED = 'UB001',
@@ -96,4 +99,8 @@ export const ErrorMessage = {
   [ErrorCode.LEAVE_ROOM_FAILED]: 'Failed to leave room',
   [ErrorCode.SEND_MESSAGE_FAILED]: 'Failed to send message',
   [ErrorCode.MARK_READ_FAILED]: 'Failed to mark messages as read',
+  [ErrorCode.SESSION_REGISTRATION_FAILED]:
+    '세션 등록에 실패했습니다. 다시 연결해주세요.',
+  [ErrorCode.TOKEN_EXPIRED]: '토큰이 만료되었습니다.',
+  [ErrorCode.TOKEN_INVALID]: '유효하지 않은 토큰입니다.',
 } as const;

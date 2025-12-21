@@ -18,6 +18,7 @@ import {
   ParticipantCacheRepository,
   ConversationParticipantCache,
   UserOnlineRoomsCacheRepository,
+  MessageRequestCacheRepository,
 } from '@app/redis';
 import { ErrorCode } from '@app/common';
 import { SqsClient } from '@app/common/sqs/sqs.client';
@@ -43,6 +44,7 @@ export class ChatService {
     private readonly roomOnlineCacheRepository: RoomOnlineCacheRepository,
     private readonly participantCacheRepository: ParticipantCacheRepository,
     private readonly userOnlineRoomsCacheRepository: UserOnlineRoomsCacheRepository,
+    private readonly messageRequestCacheRepository: MessageRequestCacheRepository,
     private readonly userRepository: UserRepository,
     private readonly deviceRepository: DeviceRepository,
     private readonly sqsClient: SqsClient,
@@ -318,6 +320,45 @@ export class ChatService {
     type: ConversationMessageType;
     requestId?: string;
   }): Promise<MessageEmissionResultDto> {
+    // 0. 원자적 중복 요청 체크 (requestId가 있는 경우)
+    if (params.requestId) {
+      // 0-1. 먼저 이미 완료된 요청인지 확인
+      const existingMessageId =
+        await this.messageRequestCacheRepository.getMessageRequest(
+          params.conversationId,
+          params.requestId,
+        );
+
+      if (existingMessageId) {
+        this.logger.log(
+          `Duplicate request detected (completed): conversationId=${params.conversationId}, requestId=${params.requestId}, messageId=${existingMessageId}`,
+        );
+        return this.createEmissionForExistingMessage(
+          existingMessageId,
+          params.conversationId,
+          params.requestId,
+        );
+      }
+
+      // 0-2. 원자적으로 락 획득 시도
+      const lockAcquired =
+        await this.messageRequestCacheRepository.tryAcquireLock(
+          params.conversationId,
+          params.requestId,
+        );
+
+      if (!lockAcquired) {
+        // 다른 요청이 처리 중 - 완료될 때까지 대기
+        this.logger.log(
+          `Duplicate request detected (processing): conversationId=${params.conversationId}, requestId=${params.requestId}`,
+        );
+        return this.waitAndReturnExistingMessage(
+          params.conversationId,
+          params.requestId,
+        );
+      }
+    }
+
     // 1. 참여자 정보 로드 (캐시 또는 DB)
     const participants = await this.loadParticipants(params.conversationId);
 
@@ -326,6 +367,15 @@ export class ChatService {
 
     // 3. 메시지 저장 (트랜잭션)
     const message = await this.saveMessage(params);
+
+    // 3-1. 중복 방지를 위해 락 해제 및 결과 캐시 저장
+    if (params.requestId) {
+      await this.messageRequestCacheRepository.completeRequest(
+        params.conversationId,
+        params.requestId,
+        message.getId(),
+      );
+    }
 
     // 4. 온라인 사용자 조회 및 이벤트 생성
     const onlineUsers = await this.getOnlineUsersInConversation({
@@ -358,6 +408,38 @@ export class ChatService {
       message: MessageResultDto.from(message),
       emissions,
     };
+  }
+
+  /**
+   * 처리 중인 중복 요청의 완료를 기다린 후 기존 메시지를 반환합니다.
+   *
+   * @param conversationId 대화방 ID
+   * @param requestId 요청 ID
+   * @returns MessageEmissionResultDto
+   */
+  private async waitAndReturnExistingMessage(
+    conversationId: number,
+    requestId: string,
+  ): Promise<MessageEmissionResultDto> {
+    const messageId =
+      await this.messageRequestCacheRepository.waitForCompletion(
+        conversationId,
+        requestId,
+      );
+
+    if (messageId) {
+      return this.createEmissionForExistingMessage(
+        messageId,
+        conversationId,
+        requestId,
+      );
+    }
+
+    // 타임아웃 시 에러 발생 (드문 경우)
+    throw WebSocketChatException.withCode(
+      ErrorCode.SEND_MESSAGE_FAILED,
+      requestId,
+    );
   }
 
   /**
@@ -768,13 +850,14 @@ export class ChatService {
       type: ConversationMessageType;
     },
   ): Promise<void> {
-    // 오프라인 사용자 필터링
+    // 오프라인 사용자 필터링 (뮤트한 사용자 제외)
     const offlineUserIds = participants
       .filter(
         (p) =>
           !onlineUsers.includes(p.userId) &&
           p.userId !== params.senderId &&
-          !p.isBlockingOther,
+          !p.isBlockingOther &&
+          !p.isMuted,
       )
       .map((p) => p.userId);
 
@@ -815,6 +898,36 @@ export class ChatService {
       );
       // 푸시알림 실패해도 메시지 전송은 정상 처리
     }
+  }
+
+  /**
+   * 중복 요청 시 기존 메시지 정보로 emission을 생성합니다.
+   *
+   * @param messageId 기존 메시지 ID
+   * @param conversationId 대화방 ID
+   * @param requestId 요청 ID
+   * @returns MessageEmissionResultDto (빈 emissions 배열 - 이미 브로드캐스트됨)
+   */
+  private async createEmissionForExistingMessage(
+    messageId: number,
+    conversationId: number,
+    requestId: string,
+  ): Promise<MessageEmissionResultDto> {
+    const existingMessage = await this.messageRepository.findById(messageId);
+
+    if (!existingMessage) {
+      throw WebSocketChatException.withCode(
+        ErrorCode.CONVERSATION_NOT_FOUND,
+        requestId,
+      );
+    }
+
+    // 중복 요청이므로 브로드캐스트는 하지 않고, 메시지 정보만 반환
+    // (이미 첫 번째 요청에서 브로드캐스트됨)
+    return {
+      message: MessageResultDto.from(existingMessage),
+      emissions: [],
+    };
   }
 
   /**

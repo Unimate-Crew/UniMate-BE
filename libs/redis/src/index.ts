@@ -6,5 +6,6 @@ export * from './repositories/room-online-cache.repository';
 export * from './repositories/participant-cache.repository';
 export * from './repositories/verification-code-cache.repository';
 export * from './repositories/user-online-rooms-cache.repository';
+export * from './repositories/message-request-cache.repository';
 export * from './entities/conversation-participant-cache.entity';
 export * from './entities/verification-code-cache.entity';

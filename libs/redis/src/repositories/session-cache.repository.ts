@@ -10,7 +10,7 @@ export class SessionCacheRepository {
 
   private readonly SOCKET_USER_PREFIX = 'socket';
 
-  private readonly SESSION_TTL = 86400; // 24시간
+  private readonly SESSION_TTL = 600; // 10분
 
   async setUserSocket(userId: number, socketId: string): Promise<void> {
     const userSocketKey = buildRedisKey(
