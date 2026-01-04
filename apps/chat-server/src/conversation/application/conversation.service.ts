@@ -14,7 +14,13 @@ import { TradeProgressRepository } from '@app/database/entites/trade-progress/tr
 import { Conversation } from '@app/database/entites/conversation/conversation.entity';
 import { ConversationParticipant } from '@app/database/entites/conversation-participant/conversation-participant.entity';
 import { TradeStatus } from '@app/database/common/enums';
-import { Slice, PageRequest, ErrorCode, S3Service } from '@app/common';
+import {
+  Slice,
+  PageRequest,
+  ErrorCode,
+  S3Service,
+  PresignedUrlDto,
+} from '@app/common';
 import {
   RoomOnlineCacheRepository,
   ParticipantCacheRepository,
@@ -562,6 +568,22 @@ export class ConversationService {
 
     // 10. 판매중 또는 예약중 → 모든 참여자 발송 가능
     return CheckSendPermissionResultDto.of(true);
+  }
+
+  async generatePresignedUrlList(
+    fileNames: string[],
+  ): Promise<PresignedUrlDto[]> {
+    return Promise.all(
+      fileNames.map(async (fileName) => {
+        const { presignedUrl, key } =
+          await this.s3Service.generatePutPresignedUrl({
+            fileName,
+            path: 'conversation',
+          });
+
+        return PresignedUrlDto.of(presignedUrl, key);
+      }),
+    );
   }
 
   /**
