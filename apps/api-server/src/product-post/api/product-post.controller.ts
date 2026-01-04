@@ -18,7 +18,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SortDirection } from '@app/database/common/enums';
-import { Slice, PageRequest } from '@app/common';
+import {
+  Slice,
+  PageRequest,
+  GeneratePresignedUrlListRequestDto,
+  GeneratePresignedUrlListResponseDto,
+} from '@app/common';
 import { JwtAuthGuard, UserTokenInfo, CurrentUser } from '@app/auth';
 import { ProductPostService } from '../application/product-post.service';
 import { FindPagedProductPostsRequestDto } from './dto/find-paged-product-posts.request.dto';
@@ -26,8 +31,6 @@ import { FindPagedProductPostsResponseDto } from './dto/find-paged-product-posts
 import { ErrorResponse } from '../../common/error-response';
 import { SearchProductPostsRequestDto } from './dto/search-product-posts.request.dto';
 import { CreateProductPostRequestDto } from './dto/create-product-post.request.dto';
-import { GeneratePresignedUrlListRequestDto } from './dto/generate-presigned-url-list.request.dto';
-import { GeneratePresignedUrlListResponseDto } from './dto/generate-presigned-url-list.response.dto';
 import { ProductPostResultDto } from '../application/dto/product-post.result.dto';
 import { FindCategoriesRequestDto } from './dto/find-categories.request.dto';
 import { FindCategoriesResponseDto } from './dto/find-categories.response.dto';

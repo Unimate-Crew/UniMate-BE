@@ -18,7 +18,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CurrentUser, JwtAuthGuard, UserTokenInfo } from '@app/auth';
-import { PageRequest } from '@app/common';
+import {
+  PageRequest,
+  GeneratePresignedUrlListRequestDto,
+  GeneratePresignedUrlListResponseDto,
+} from '@app/common';
 import { ConversationService } from '../application/conversation.service';
 import { CreateConversationRequestDto } from './dto/create-conversation-request.dto';
 import { CreateConversationResponseDto } from './dto/create-conversation-response.dto';
@@ -205,5 +209,24 @@ export class ConversationController {
     });
 
     return CheckSendPermissionResponseDto.from(result);
+  }
+
+  @ApiOperation({ summary: '채팅 이미지 업로드를 위한 Presigned URL 발급' })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned URL 발급 성공',
+    type: GeneratePresignedUrlListResponseDto,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @Post('presigned-url')
+  async generatePresignedUrlList(
+    @Body()
+    generatePresignedUrlListRequestDto: GeneratePresignedUrlListRequestDto,
+  ): Promise<GeneratePresignedUrlListResponseDto> {
+    const urlList = await this.conversationService.generatePresignedUrlList(
+      generatePresignedUrlListRequestDto.fileNames,
+    );
+
+    return GeneratePresignedUrlListResponseDto.of(urlList);
   }
 }
