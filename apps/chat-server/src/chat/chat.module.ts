@@ -12,8 +12,10 @@ import {
 import { RedisModule } from '@app/redis';
 import { SqsModule } from '@app/common';
 import { ChatGateway } from './api/chat.gateway';
+import { InternalChatController } from './api/internal-chat.controller';
 import { ChatService } from './application/chat.service';
 import { WebSocketAuthMiddleware } from '../common/middleware/websocket-auth.middleware';
+import { InternalApiGuard } from '../common/guards/internal-api.guard';
 
 @Module({
   imports: [
@@ -35,7 +37,13 @@ import { WebSocketAuthMiddleware } from '../common/middleware/websocket-auth.mid
       }),
     }),
   ],
-  providers: [ChatGateway, ChatService, WebSocketAuthMiddleware],
-  exports: [ChatService],
+  controllers: [InternalChatController],
+  providers: [
+    ChatGateway,
+    ChatService,
+    WebSocketAuthMiddleware,
+    InternalApiGuard,
+  ],
+  exports: [ChatService, ChatGateway],
 })
 export class ChatModule {}

@@ -10,6 +10,7 @@ import { TradeProgress } from '@app/database/entites/trade-progress/trade-progre
 import { ProductPostController } from './api/product-post.controller';
 import { ProductPostService } from './application/product-post.service';
 import { NotificationModule } from '../notification/notification.module';
+import { ChatClientModule } from '../chat-client/chat-client.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { NotificationModule } from '../notification/notification.module';
     ]),
     S3Module,
     NotificationModule,
+    ChatClientModule,
   ],
   controllers: [ProductPostController],
   providers: [ProductPostService],

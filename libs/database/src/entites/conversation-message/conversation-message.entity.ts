@@ -11,8 +11,8 @@ export class ConversationMessage extends BaseEntity {
   @Property({ type: 'bigint' })
   conversationId!: number;
 
-  @Property()
-  senderId!: number;
+  @Property({ nullable: true })
+  senderId?: number;
 
   @Property({ type: 'bigint' })
   messageNumber!: number;
@@ -35,7 +35,7 @@ export class ConversationMessage extends BaseEntity {
     this.conversationId = conversationId;
   }
 
-  public getSenderId(): number {
+  public getSenderId(): number | undefined {
     return this.senderId;
   }
 

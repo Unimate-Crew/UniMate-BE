@@ -956,4 +956,155 @@ export class ChatService {
         return content;
     }
   }
+
+  /**
+   * 시스템 메시지를 대화방에 전송합니다.
+   * 시스템 메시지는 senderId가 없고, 차단 검증을 건너뜁니다.
+   *
+   * @param params.conversationId 대화방 ID
+   * @param params.content 시스템 메시지 내용
+   * @returns 전송된 메시지 정보와 WebSocket 전송 대상 목록
+   */
+  async sendSystemMessage(params: {
+    conversationId: number;
+    content: string;
+  }): Promise<MessageEmissionResultDto> {
+    // 1. 참여자 정보 로드 (캐시 또는 DB)
+    const participants = await this.loadParticipants(params.conversationId);
+
+    // 2. 시스템 메시지 저장 (트랜잭션)
+    const message = await this.saveSystemMessage(params);
+
+    // 3. 온라인 사용자 조회 및 이벤트 생성
+    const onlineUsers = await this.getOnlineUsersInConversation({
+      conversationId: params.conversationId,
+    });
+
+    const emissions = this.createSystemMessageEmissions(
+      participants,
+      onlineUsers,
+      message,
+      params,
+    );
+
+    // 4. 참여자 캐시 TTL 갱신 (활성 대화방 유지)
+    await this.participantCacheRepository.refreshTTL(params.conversationId);
+
+    // 5. 로깅 및 반환
+    this.logger.log(
+      `System message sent in conversation ${params.conversationId}: ${params.content}`,
+    );
+
+    return {
+      message: MessageResultDto.from(message),
+      emissions,
+    };
+  }
+
+  /**
+   * 시스템 메시지를 저장합니다 (트랜잭션).
+   *
+   * @param params 시스템 메시지 저장 파라미터
+   * @returns 저장된 메시지
+   */
+  private async saveSystemMessage(params: {
+    conversationId: number;
+    content: string;
+  }): Promise<ConversationMessage> {
+    return this.conversationRepository
+      .getEntityManager()
+      .transactional(async () => {
+        // 비관적 락으로 conversation 조회 (FOR UPDATE)
+        const conversation: Conversation | null =
+          await this.conversationRepository.findByIdWithLock(
+            params.conversationId,
+          );
+
+        if (!conversation) {
+          throw WebSocketChatException.withCode(
+            ErrorCode.CONVERSATION_NOT_FOUND,
+          );
+        }
+
+        const nextMessageNumber: number =
+          (conversation.getLastMessageNumber() || 0) + 1;
+
+        const newMessage: ConversationMessage = this.messageRepository.create({
+          conversationId: params.conversationId,
+          senderId: undefined, // 시스템 메시지는 senderId가 없음
+          content: params.content,
+          messageNumber: nextMessageNumber,
+          type: ConversationMessageType.SYSTEM,
+        });
+
+        conversation.setLastMessageNumber(nextMessageNumber);
+        conversation.setLastSentAt(new Date());
+
+        await this.messageRepository.persistAndFlush(newMessage);
+        await this.conversationRepository.persistAndFlush(conversation);
+
+        return newMessage;
+      });
+  }
+
+  /**
+   * 시스템 메시지에 대한 WebSocket emissions를 생성합니다.
+   *
+   * @param participants 참여자 목록
+   * @param onlineUsers 온라인 사용자 ID 목록
+   * @param message 메시지
+   * @param params 메시지 파라미터
+   * @returns WebSocket emissions
+   */
+  private createSystemMessageEmissions(
+    participants: CachedConversationParticipantDto[],
+    onlineUsers: number[],
+    message: ConversationMessage,
+    params: {
+      conversationId: number;
+      content: string;
+    },
+  ): Array<{ userId: number; event: string; data: any }> {
+    const nextMessageNumber = message.getMessageNumber();
+
+    return participants
+      .map((participant) => {
+        if (onlineUsers.includes(participant.userId)) {
+          // 온라인 사용자에게 newMessage 이벤트
+          return {
+            userId: participant.userId,
+            event: 'newMessage',
+            data: {
+              id: message.getId(),
+              conversationId: params.conversationId,
+              senderId: null, // 시스템 메시지는 senderId가 없음
+              content: params.content,
+              messageNumber: message.getMessageNumber(),
+              createdAt: message.createdAt,
+              type: ConversationMessageType.SYSTEM,
+            },
+          };
+        }
+
+        // 오프라인 사용자에게 chatRoomUpdated 이벤트
+        return {
+          userId: participant.userId,
+          event: 'chatRoomUpdated',
+          data: {
+            conversationId: params.conversationId,
+            lastMessage: params.content,
+            lastSentAt: new Date(),
+            unreadCount: Math.max(
+              0,
+              nextMessageNumber - (participant.lastReadMessageNumber || 0),
+            ),
+            lastMessageNumber: nextMessageNumber,
+          },
+        };
+      })
+      .filter(
+        (emission): emission is { userId: number; event: string; data: any } =>
+          emission !== null,
+      );
+  }
 }

@@ -51,6 +51,7 @@ import {
   PriceRangeItemDto,
 } from './dto/price-range.result.dto';
 import { NotificationService } from '../../notification/service/notification.service';
+import { ChatClientService } from '../../chat-client/chat-client.service';
 
 @Injectable()
 export class ProductPostService {
@@ -67,6 +68,7 @@ export class ProductPostService {
     private readonly reviewRepository: ReviewRepository,
     private readonly s3Service: S3Service,
     private readonly notificationService: NotificationService,
+    private readonly chatClientService: ChatClientService,
   ) {}
 
   /**
@@ -1103,6 +1105,12 @@ export class ProductPostService {
       await this.tradeProgressRepository.persist(tradeProgress);
 
       productPost.setTradeStatus(TradeStatus.RESERVED);
+
+      // 시스템 메시지 발송: 예약중으로 변경됨을 알림
+      await this.chatClientService.sendSystemMessage({
+        conversationId: params.conversationId,
+        content: '거래 상태가 [예약중]으로 변경되었어요',
+      });
     }
 
     // 케이스 2: FOR_SALE → COMPLETED
@@ -1148,11 +1156,20 @@ export class ProductPostService {
         });
       }
 
+      // 이전 예약자의 채팅방 ID 저장 (시스템 메시지 발송용)
+      const previousConversationId = currentTradeProgress.getConversationId();
+
       // 기존 TradeProgress 소프트 삭제
       currentTradeProgress.delete();
       await this.tradeProgressRepository.persist(currentTradeProgress);
 
       productPost.setTradeStatus(TradeStatus.FOR_SALE);
+
+      // 시스템 메시지 발송: 판매중으로 변경됨을 이전 예약자에게 알림
+      await this.chatClientService.sendSystemMessage({
+        conversationId: previousConversationId,
+        content: '거래 상태가 [판매중]으로 변경되었어요',
+      });
     }
 
     // 케이스 4: RESERVED → RESERVED (구매자 변경)
@@ -1189,6 +1206,9 @@ export class ProductPostService {
         });
       }
 
+      // 이전 예약자의 채팅방 ID 저장 (시스템 메시지 발송용)
+      const previousConversationId = currentTradeProgress.getConversationId();
+
       // 기존 TradeProgress 소프트 삭제 후 새로 생성
       currentTradeProgress.delete();
       await this.tradeProgressRepository.persist(currentTradeProgress);
@@ -1200,6 +1220,12 @@ export class ProductPostService {
         status: TradeProgressStatus.RESERVED,
       });
       await this.tradeProgressRepository.persist(newTradeProgress);
+
+      // 시스템 메시지 발송: 이전 예약자에게 예약 상대 변경 알림
+      await this.chatClientService.sendSystemMessage({
+        conversationId: previousConversationId,
+        content: '판매자가 예약 상대를 변경했어요',
+      });
     }
 
     // 케이스 5: RESERVED → COMPLETED
