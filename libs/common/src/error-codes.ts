@@ -90,6 +90,11 @@ export enum ErrorCode {
 
   // 알림
   NOTIFICATION_NOT_FOUND = 'NT001',
+
+  // 약관
+  TERMS_NOT_FOUND = 'T001',
+  INVALID_TERMS_TYPE = 'T002',
+  AGREEMENT_ALREADY_EXISTS = 'T003',
 }
 
 export const ErrorMessage = {

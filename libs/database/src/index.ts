@@ -37,4 +37,8 @@ export * from './entites/report/report.entity';
 export * from './entites/report/report.repository';
 export * from './entites/user-block/user-block.entity';
 export * from './entites/user-block/user-block.repository';
+export * from './entites/terms/terms.entity';
+export * from './entites/terms/terms.repository';
+export * from './entites/user-agreement/user-agreement.entity';
+export * from './entites/user-agreement/user-agreement.repository';
 export * from './common/enums';

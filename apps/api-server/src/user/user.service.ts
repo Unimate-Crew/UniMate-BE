@@ -24,6 +24,8 @@ import {
   ReportRepository,
   UserBlockRepository,
   DeviceRepository,
+  UserAgreementRepository,
+  TermsRepository,
 } from '@app/database';
 import { ErrorCode, USER_CONSTANTS } from '@app/common';
 import { S3Service } from '@app/common/s3/s3.service';
@@ -37,6 +39,7 @@ import { GetUserProfileResultDto } from './dto/get-user-profile-result.dto';
 import { UniversityInfoDto } from './dto/university-info.dto';
 import { UpdateUserProfileResultDto } from './dto/update-user-profile-result.dto';
 import { ReviewStatsResultDto } from './dto/review-stats-result.dto';
+import { UserAgreementResultDto } from './dto/get-user-agreements-result.dto';
 
 @Injectable()
 export class UserService {
@@ -56,6 +59,8 @@ export class UserService {
     private readonly reportRepository: ReportRepository,
     private readonly userBlockRepository: UserBlockRepository,
     private readonly deviceRepository: DeviceRepository,
+    private readonly userAgreementRepository: UserAgreementRepository,
+    private readonly termsRepository: TermsRepository,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -491,5 +496,83 @@ export class UserService {
       updatedNickname,
       updatedProfileImageUrl,
     );
+  }
+
+  async saveUserAgreements(userId: number, termsIds: number[]): Promise<void> {
+    // 1. 약관이 존재하는지 확인
+    const termsPromises = termsIds.map((termsId) =>
+      this.termsRepository.findById(termsId),
+    );
+    const termsResults = await Promise.all(termsPromises);
+
+    const notFoundTerms = termsResults.filter((terms) => !terms);
+    if (notFoundTerms.length > 0) {
+      throw new BadRequestException({
+        code: ErrorCode.TERMS_NOT_FOUND,
+        message: '유효하지 않은 약관 ID가 포함되어 있습니다.',
+      });
+    }
+
+    // 2. 이미 동의한 약관이 있는지 확인
+    for (const termsId of termsIds) {
+      const existing =
+        await this.userAgreementRepository.findByUserIdAndTermsId(
+          userId,
+          termsId,
+        );
+      if (existing) {
+        throw new BadRequestException({
+          code: ErrorCode.AGREEMENT_ALREADY_EXISTS,
+          message: `이미 동의한 약관입니다: ${termsId}`,
+        });
+      }
+    }
+
+    // 3. 사용자 존재 확인
+    const user = await this.userRepository.findOne(userId);
+    if (!user) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: '사용자를 찾을 수 없습니다.',
+      });
+    }
+
+    // 4. 동의 이력 저장
+    termsIds.forEach((termsId) => {
+      this.userAgreementRepository.create({
+        userId,
+        termsId,
+        agreedAt: new Date(),
+      });
+    });
+
+    await this.userAgreementRepository.flush();
+  }
+
+  async getUserAgreements(userId: number): Promise<UserAgreementResultDto[]> {
+    const agreements = await this.userAgreementRepository.findByUserId(userId);
+
+    // 약관 정보를 함께 조회
+    const results = await Promise.all(
+      agreements.map(async (agreement) => {
+        const terms = await this.termsRepository.findById(agreement.termsId);
+        if (!terms) {
+          throw new NotFoundException({
+            code: ErrorCode.TERMS_NOT_FOUND,
+            message: '약관을 찾을 수 없습니다.',
+          });
+        }
+
+        return UserAgreementResultDto.of(
+          agreement.termsId,
+          terms.type,
+          terms.title,
+          terms.url,
+          agreement.agreedAt,
+        );
+      }),
+    );
+
+    return results;
   }
 }

@@ -43,6 +43,9 @@ import { GetUserProfileResponseDto } from './dto/get-user-profile.response.dto';
 import { UpdateUserProfileRequestDto } from './dto/update-user-profile.request.dto';
 import { UpdateUserProfileResponseDto } from './dto/update-user-profile.response.dto';
 import { UpdateUserProfileResultDto } from './dto/update-user-profile-result.dto';
+import { SaveUserAgreementsRequestDto } from './dto/save-user-agreements-request.dto';
+import { GetUserAgreementsResponseDto } from './dto/get-user-agreements-response.dto';
+import { UserAgreementResultDto } from './dto/get-user-agreements-result.dto';
 
 @ApiTags('유저')
 @Controller({ path: 'users' })
@@ -469,5 +472,71 @@ export class UserController {
       userProfileResult.university,
       userProfileResult.reviewStats,
     );
+  }
+
+  @Post('/agreements')
+  @ApiOperation({
+    summary: '약관 동의 저장',
+    description: '사용자의 약관 동의를 저장합니다.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '약관 동의 저장 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    type: ErrorResponse,
+    description: 'code: T001(약관을 찾을 수 없음), T003(이미 동의한 약관)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: U001(유저가 존재하지 않음)',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async saveUserAgreements(
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+    @Body() saveUserAgreementsDto: SaveUserAgreementsRequestDto,
+  ): Promise<void> {
+    await this.userService.saveUserAgreements(
+      userTokenInfo.userId,
+      saveUserAgreementsDto.termsIds,
+    );
+  }
+
+  @Get('/me/agreements')
+  @ApiOperation({
+    summary: '내 약관 동의 이력 조회',
+    description: '로그인한 사용자의 약관 동의 이력을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '약관 동의 이력 조회 성공',
+    type: GetUserAgreementsResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증 실패',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ErrorResponse,
+    description: 'code: T001(약관을 찾을 수 없음)',
+  })
+  @ApiBearerAuth('accessToken')
+  @UseGuards(JwtAuthGuard)
+  async getUserAgreements(
+    @CurrentUser() userTokenInfo: UserTokenInfo,
+  ): Promise<GetUserAgreementsResponseDto> {
+    const agreementsResult: UserAgreementResultDto[] =
+      await this.userService.getUserAgreements(userTokenInfo.userId);
+
+    return GetUserAgreementsResponseDto.of(agreementsResult);
   }
 }

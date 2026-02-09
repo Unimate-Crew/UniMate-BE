@@ -92,3 +92,9 @@ export enum ReportReason {
   SEXUAL_HARASSMENT = 'SEXUAL_HARASSMENT', // 부적절한 성적 행위
   ETC = 'ETC', // 기타
 }
+
+export enum TermsType {
+  AGE_VERIFICATION = 'AGE_VERIFICATION', // 만 14세 이상
+  SERVICE_TERMS = 'SERVICE_TERMS', // 이용약관
+  PRIVACY_POLICY = 'PRIVACY_POLICY', // 개인정보 처리방침
+}
