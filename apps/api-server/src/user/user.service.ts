@@ -441,6 +441,7 @@ export class UserService {
       this.userBlockRepository.softDeleteByBlockerId(userId),
       this.deviceRepository.softDeleteByUserId(userId),
       this.interestRegionRepository.softDeleteByUserId(userId),
+      this.userAgreementRepository.softDeleteByUserId(userId),
     ]);
 
     // 4. 사용자 soft delete (refreshToken 무효화)
