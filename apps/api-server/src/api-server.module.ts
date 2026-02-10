@@ -16,6 +16,7 @@ import { UserBlockModule } from './user-block/user-block.module';
 import { UpdatePopupModule } from './update-popup/update-popup.module';
 import { DeviceModule } from './device/device.module';
 import { ReportModule } from './report/report.module';
+import { TermsModule } from './terms/terms.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ReportModule } from './report/report.module';
     UpdatePopupModule,
     DeviceModule,
     ReportModule,
+    TermsModule,
   ],
   controllers: [ApiServerController],
   providers: [ApiServerService],

@@ -14,6 +14,8 @@ import {
   Report,
   UserBlock,
   Device,
+  UserAgreement,
+  Terms,
 } from '@app/database';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
@@ -38,6 +40,8 @@ import { AuthModule } from '../auth/auth.module';
       Report,
       UserBlock,
       Device,
+      UserAgreement,
+      Terms,
     ]),
   ],
   controllers: [UserController],
